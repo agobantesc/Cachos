@@ -1,12 +1,29 @@
+import { useEffect, useState } from "react";
 import type { EstadoPublico, Pinta, ResolucionRonda, Sentido } from "../engine";
 import { Dado, DadoOculto, ManoDados } from "./Dado";
 import { BarraAcciones } from "./BarraAcciones";
 import { nombrarApuesta, PLURAL_PINTA } from "./util";
+import { Sonidos, sonidoActivado, alternarSonido } from "./sonido";
 import type { Instantanea, Transporte } from "./transporte";
 
 export function Mesa({ snap, transporte }: { snap: Instantanea; transporte: Transporte }) {
   const p = snap.publico!;
   const nombre = (id: string | null) => p.jugadores.find((j) => j.id === id)?.nombre ?? "—";
+  const [sonando, setSonando] = useState(sonidoActivado());
+
+  // Sonido por evento: dados al empezar ronda; ganar/perder en la resolución.
+  useEffect(() => {
+    if (p.fase === "EN_RONDA") {
+      Sonidos.dados();
+    } else if (p.fase === "FIN_RONDA" && p.ultimaResolucion) {
+      if (p.ultimaResolucion.perdedorId === snap.miId) Sonidos.perder();
+      else Sonidos.ganar();
+    } else if (p.fase === "FIN_JUEGO") {
+      if (p.ganadorId === snap.miId) Sonidos.ganar();
+      else Sonidos.perder();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [p.fase, p.numeroRonda]);
 
   if (p.fase === "FIN_JUEGO") {
     return (
@@ -27,6 +44,13 @@ export function Mesa({ snap, transporte }: { snap: Instantanea; transporte: Tran
         {p.esRondaCerrada && <span className="badge badge--cerrada">CERRADA · a ciegas</span>}
         <span className="badge">{p.sentido === 1 ? "→ izquierda" : "← derecha"}</span>
         <span className="dados-mesa">{p.totalDadosEnMesa} dados</span>
+        <button
+          className="mute"
+          onClick={() => setSonando(alternarSonido())}
+          aria-label={sonando ? "Silenciar" : "Activar sonido"}
+        >
+          {sonando ? "🔊" : "🔇"}
+        </button>
       </header>
 
       <section className="vasos">
@@ -91,11 +115,23 @@ function Revelacion({
   transporte: Transporte;
 }) {
   const nombre = (id: string | null) => publico.jugadores.find((j) => j.id === id)?.nombre ?? "—";
+  const esPaso = res.tipo === "PASO";
   const cuenta = (caras: Pinta[]) =>
     caras.filter((c) => c === res.pinta || (res.asesComoComodin && res.pinta !== 1 && c === 1)).length;
 
-  const texto =
-    res.tipo === "CALZO" && res.ganadorDadoId
+  const razonPaso = (caras: Pinta[]): string => {
+    const m = new Map<number, number>();
+    caras.forEach((c) => m.set(c, (m.get(c) ?? 0) + 1));
+    const g = [...m.values()].sort((a, b) => a - b);
+    if (g.length === 1) return "Cinco iguales ✓";
+    if (g.length === 5) return "Escalera: todos distintos ✓";
+    if (g.length === 2 && g[0] === 2) return "Full: tres y dos ✓";
+    return "No es mano de paso ✗";
+  };
+
+  const texto = esPaso
+    ? `${nombre(res.pasadorId ?? null)} pasó. El paso ${res.pasoEraValido ? "estaba validado" : "no estaba validado"}: ${nombre(res.perdedorId)} pierde un dado.`
+    : res.tipo === "CALZO" && res.ganadorDadoId
       ? `¡Calzó! Había exactamente ${res.cantidadReal} ${PLURAL_PINTA[res.pinta]}. ${nombre(res.ganadorDadoId)} recupera un dado.`
       : res.tipo === "CALZO"
         ? `Calzo fallido: había ${res.cantidadReal}, no ${res.cantidadDeclarada}. ${nombre(res.perdedorId)} pierde un dado.`
@@ -107,9 +143,12 @@ function Revelacion({
   return (
     <div className="revelacion">
       <div className="revelacion-caja">
-        <h2>Revelación</h2>
+        <h2>{esPaso ? "Paso dudado" : "Revelación"}</h2>
         <p className="resultado">{texto}</p>
         {res.siciliana && <p className="siciliana">¡La siciliana! (−2 dados, ases no cuentan)</p>}
+        {esPaso && res.pasadorId && (
+          <p className="siciliana">{razonPaso(res.dadosRevelados[res.pasadorId] ?? [])}</p>
+        )}
         <div className="reveal-grid">
           {Object.entries(res.dadosRevelados).map(([id, caras]) => (
             <div key={id} className="reveal-fila">
@@ -119,7 +158,7 @@ function Revelacion({
                   <Dado key={i} cara={c} tam={30} />
                 ))}
               </div>
-              <span className="reveal-cuenta">cuenta {cuenta(caras)}</span>
+              {!esPaso && <span className="reveal-cuenta">cuenta {cuenta(caras)}</span>}
             </div>
           ))}
         </div>

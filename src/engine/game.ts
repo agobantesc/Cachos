@@ -1,4 +1,4 @@
-import { agitarCacho, contarPinta, juntarDados, type Aleatorio } from "./dice.js";
+import { agitarCacho, contarPinta, juntarDados, pasoValido, type Aleatorio } from "./dice.js";
 import { validarApuesta } from "./bids.js";
 import { REGLAS_POR_DEFECTO } from "./config.js";
 import type {
@@ -160,6 +160,7 @@ export function crearJuego(
     apuestaActual: null,
     apuestaActualJugadorId: null,
     apuestasEnRonda: 0,
+    pasoPendienteJugadorId: null,
     esRondaObligado: false,
     esRondaCerrada: false,
     fase: "LOBBY",
@@ -226,6 +227,7 @@ export function iniciarRonda(estado: EstadoJuego, opciones: OpcionesRonda = {}):
   e.apuestaActual = null;
   e.apuestaActualJugadorId = null;
   e.apuestasEnRonda = 0;
+  e.pasoPendienteJugadorId = null;
   e.ultimaResolucion = null;
   e.fase = "EN_RONDA";
   e.numeroRonda += 1;
@@ -244,6 +246,12 @@ export function aplicarAccion(estado: EstadoJuego, accion: Accion): EstadoJuego 
     throw new ErrorDeJuego("No es el turno de ese jugador.");
   }
 
+  // Con un paso pendiente, el siguiente solo puede dudar el paso o subir la
+  // apuesta: no puede dudar/calzar la apuesta previa al paso, ni volver a pasar.
+  if (estado.pasoPendienteJugadorId !== null && accion.tipo !== "APOSTAR" && accion.tipo !== "DUDAR_PASO") {
+    throw new ErrorDeJuego("Hay un paso pendiente: solo puedes dudar el paso o subir la apuesta.");
+  }
+
   switch (accion.tipo) {
     case "APOSTAR":
       return aplicarApostar(estado, accion.jugadorId, accion.apuesta);
@@ -251,6 +259,10 @@ export function aplicarAccion(estado: EstadoJuego, accion: Accion): EstadoJuego 
       return aplicarDesafio(estado, accion.jugadorId, "DUDO");
     case "CALZAR":
       return aplicarDesafio(estado, accion.jugadorId, "CALZO");
+    case "PASAR":
+      return aplicarPasar(estado, accion.jugadorId);
+    case "DUDAR_PASO":
+      return aplicarDudarPaso(estado, accion.jugadorId);
   }
 }
 
@@ -272,10 +284,74 @@ function aplicarApostar(estado: EstadoJuego, jugadorId: string, apuesta: Apuesta
   }
 
   const e = structuredClone(estado);
+  // Subir la apuesta acepta tácitamente un paso pendiente (queda validado de hecho).
+  e.pasoPendienteJugadorId = null;
   e.apuestaActual = { ...apuesta };
   e.apuestaActualJugadorId = jugadorId;
   e.apuestasEnRonda += 1;
   e.indiceTurno = siguienteActivo(e, e.indiceTurno);
+  return e;
+}
+
+/**
+ * Pasar el turno. Solo se permite con los 5 dados, en ronda normal y sin un paso
+ * ya pendiente. No toca la apuesta; pasa el turno al siguiente, que deberá dudar
+ * el paso o subir la apuesta.
+ */
+function aplicarPasar(estado: EstadoJuego, jugadorId: string): EstadoJuego {
+  if (estado.esRondaObligado) {
+    throw new ErrorDeJuego("No se puede pasar en una ronda de obligado.");
+  }
+  const jugador = jugadorPorId(estado, jugadorId)!;
+  if (jugador.dados.length !== estado.reglas.dadosIniciales) {
+    throw new ErrorDeJuego("Solo se puede pasar con los 5 dados.");
+  }
+  const e = structuredClone(estado);
+  e.pasoPendienteJugadorId = jugadorId;
+  e.indiceTurno = siguienteActivo(e, e.indiceTurno);
+  return e;
+}
+
+/**
+ * Dudar el paso del jugador anterior. Si el paso estaba validado (5 iguales,
+ * todos distintos o full), pierde el que dudó; si no, pierde el que pasó.
+ */
+function aplicarDudarPaso(estado: EstadoJuego, dudadorId: string): EstadoJuego {
+  const pasadorIdPendiente = estado.pasoPendienteJugadorId;
+  if (pasadorIdPendiente === null) {
+    throw new ErrorDeJuego("No hay ningún paso que dudar.");
+  }
+  const e = structuredClone(estado);
+  const pasador = jugadorPorId(e, pasadorIdPendiente)!;
+  const valido = pasoValido(pasador.dados);
+  const perdedorId = valido ? dudadorId : pasador.id;
+
+  const resolucion: ResolucionRonda = {
+    tipo: "PASO",
+    pinta: 1,
+    cantidadDeclarada: 0,
+    cantidadReal: 0,
+    asesComoComodin: false,
+    perdedorId,
+    dadosPerdidos: 1,
+    ganadorDadoId: null,
+    siciliana: false,
+    dadosRevelados: { [pasador.id]: [...pasador.dados] },
+    pasadorId: pasador.id,
+    pasoEraValido: valido,
+  };
+
+  e.pasoPendienteJugadorId = null;
+  aplicarConsecuencias(e, resolucion);
+  e.ultimaResolucion = resolucion;
+
+  const activos = jugadoresActivos(e);
+  if (activos.length <= 1) {
+    e.fase = "FIN_JUEGO";
+    e.ganadorId = activos[0]?.id ?? null;
+    return e;
+  }
+  e.fase = "FIN_RONDA";
   return e;
 }
 

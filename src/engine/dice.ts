@@ -38,3 +38,20 @@ export function contarPinta(dados: Pinta[], pinta: Pinta, asComodin: boolean): n
 export function juntarDados(manos: Pinta[][]): Pinta[] {
   return manos.flat();
 }
+
+/**
+ * ¿Es una mano de "paso validado"? Con 5 dados, vale el paso si son:
+ *  - los 5 iguales,
+ *  - los 5 distintos (escalera), o
+ *  - un full: 3 de una pinta y 2 de otra.
+ */
+export function pasoValido(dados: Pinta[]): boolean {
+  if (dados.length !== 5) return false;
+  const conteo = new Map<Pinta, number>();
+  for (const d of dados) conteo.set(d, (conteo.get(d) ?? 0) + 1);
+  const grupos = [...conteo.values()].sort((a, b) => a - b);
+  if (grupos.length === 1 && grupos[0] === 5) return true; // 5 iguales
+  if (grupos.length === 5) return true; // todos distintos
+  if (grupos.length === 2 && grupos[0] === 2 && grupos[1] === 3) return true; // full 3+2
+  return false;
+}

@@ -13,7 +13,22 @@ import {
   type Pinta,
   type Sentido,
 } from "../engine";
-import { decidirBot } from "./bots";
+import { decidirBot, type JugadaBot, type Nivel } from "./bots";
+
+function accionDeJugada(jugada: JugadaBot, jugadorId: string): Accion {
+  switch (jugada.tipo) {
+    case "APOSTAR":
+      return { tipo: "APOSTAR", jugadorId, apuesta: jugada.apuesta };
+    case "CALZAR":
+      return { tipo: "CALZAR", jugadorId };
+    case "PASAR":
+      return { tipo: "PASAR", jugadorId };
+    case "DUDAR_PASO":
+      return { tipo: "DUDAR_PASO", jugadorId };
+    case "DUDAR":
+      return { tipo: "DUDAR", jugadorId };
+  }
+}
 
 export interface JugadorLobby {
   id: string;
@@ -43,6 +58,8 @@ export interface Transporte {
   apostar(apuesta: Apuesta): Promise<void>;
   dudar(): Promise<void>;
   calzar(): Promise<void>;
+  pasar(): Promise<void>;
+  dudarPaso(): Promise<void>;
   siguienteRonda(sentido?: Sentido): Promise<void>;
 }
 
@@ -56,11 +73,13 @@ export class TransporteLocal implements Transporte {
   private subs = new Set<() => void>();
   /** En modo solitario, el id del jugador humano (perspectiva fija). null = hot-seat. */
   private readonly humano: string | null;
+  private readonly nivel: Nivel;
   private temporizador: ReturnType<typeof setTimeout> | null = null;
 
-  constructor(jugadores: JugadorLobby[], opciones: { humanoId?: string } = {}) {
+  constructor(jugadores: JugadorLobby[], opciones: { humanoId?: string; nivel?: Nivel } = {}) {
     this.estado = crearJuego(jugadores);
     this.humano = opciones.humanoId ?? null;
+    this.nivel = opciones.nivel ?? "medio";
     if (this.humano !== null) {
       // Modo solitario: arranca de inmediato y deja a los bots jugar.
       this.estado = iniciarRonda(this.estado);
@@ -89,6 +108,12 @@ export class TransporteLocal implements Transporte {
   }
   async calzar() {
     this.jugar({ tipo: "CALZAR", jugadorId: this.turno() });
+  }
+  async pasar() {
+    this.jugar({ tipo: "PASAR", jugadorId: this.turno() });
+  }
+  async dudarPaso() {
+    this.jugar({ tipo: "DUDAR_PASO", jugadorId: this.turno() });
   }
   async siguienteRonda(sentido?: Sentido) {
     this.estado = iniciarRonda(this.estado, sentido ? { sentido } : {});
@@ -132,25 +157,30 @@ export class TransporteLocal implements Transporte {
   private jugarBot(botId: string) {
     if (jugadorDeTurnoId(this.estado) !== botId) return; // el estado cambió
     const vista = vistaJugador(this.estado, botId);
-    const jugada = decidirBot(vista.publico, vista.miMano, botId);
-    const accion: Accion =
-      jugada.tipo === "APOSTAR"
-        ? { tipo: "APOSTAR", jugadorId: botId, apuesta: jugada.apuesta }
-        : jugada.tipo === "CALZAR"
-          ? { tipo: "CALZAR", jugadorId: botId }
-          : { tipo: "DUDAR", jugadorId: botId };
-    try {
-      this.estado = aplicarAccion(this.estado, accion);
-    } catch {
-      // Salvaguarda: si la jugada elegida fuese inválida, duda.
-      try {
-        this.estado = aplicarAccion(this.estado, { tipo: "DUDAR", jugadorId: botId });
-      } catch {
-        /* sin acción posible: deja el estado como está */
+    const jugada = decidirBot(vista.publico, vista.miMano, botId, this.nivel);
+
+    if (!this.intentar(accionDeJugada(jugada, botId))) {
+      // Salvaguarda con una acción siempre legal, para no quedar en bucle.
+      const pub = vista.publico;
+      if (pub.pasoPendienteJugadorId !== null) {
+        this.intentar({ tipo: "DUDAR_PASO", jugadorId: botId });
+      } else if (pub.apuestaActual) {
+        this.intentar({ tipo: "DUDAR", jugadorId: botId });
+      } else {
+        this.intentar({ tipo: "APOSTAR", jugadorId: botId, apuesta: { cantidad: 1, pinta: 2 } });
       }
     }
     this.emitir();
     this.programar();
+  }
+
+  private intentar(accion: Accion): boolean {
+    try {
+      this.estado = aplicarAccion(this.estado, accion);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   instantanea(): Instantanea {

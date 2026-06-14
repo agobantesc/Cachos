@@ -124,12 +124,27 @@ input:focus { border-color: var(--oro); box-shadow: 0 0 0 2px rgba(200, 162, 74,
 .btn--calzar { background: linear-gradient(180deg, #4a6a76, var(--acero)); color: #fff; }
 .botonera { display: flex; gap: 10px; flex-wrap: wrap; }
 .botonera .btn { flex: 1; }
+.btn--pasar {
+  width: 100%; background: linear-gradient(180deg, #3a3d49, #262932); color: var(--hueso);
+  border: 1px solid var(--linea);
+}
+.btn--pasar .btn-sub { font-weight: 400; opacity: 0.7; font-size: 13px; }
+
+/* Segmento (selector de dificultad) */
+.segmento { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.seg-btn {
+  padding: 12px 6px; border-radius: 12px; border: 1px solid var(--linea);
+  background: var(--humo); color: var(--texto); font-weight: 700;
+}
+.seg-btn.sel { background: var(--oro); color: #15110a; border-color: var(--oro); }
+.nivel-desc { text-align: center; margin-top: 4px; min-height: 1.2em; }
 
 /* ---------- Mesa ---------- */
 .mesa { display: flex; flex-direction: column; gap: 14px; padding-top: 10px; }
 .mesa-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; }
 .ronda { font-weight: 700; font-family: var(--display); letter-spacing: 1px; color: var(--oro); text-transform: uppercase; }
 .dados-mesa { margin-left: auto; color: var(--tenue); }
+.mute { background: none; border: none; font-size: 18px; padding: 2px 4px; line-height: 1; }
 .badge { background: rgba(255, 255, 255, 0.06); border: 1px solid var(--linea); padding: 3px 9px; border-radius: 999px; font-size: 12px; }
 .badge--obligado { background: var(--oro); color: #15110a; font-weight: 800; border-color: transparent; }
 .badge--cerrada { background: var(--sangre); color: #fff; border-color: transparent; }
@@ -161,6 +176,10 @@ input:focus { border-color: var(--oro); box-shadow: 0 0 0 2px rgba(200, 162, 74,
 .pasa-telefono {
   text-align: center; background: rgba(200, 162, 74, 0.1); border: 1px dashed var(--linea);
   padding: 8px; border-radius: 12px; font-size: 14px; color: var(--texto);
+}
+.aviso-paso {
+  text-align: center; background: rgba(200, 162, 74, 0.12); border: 1px dashed var(--linea);
+  padding: 8px 10px; border-radius: 12px; font-size: 14px; color: var(--texto);
 }
 
 /* ---------- Tu mano (elemento protagonista) ---------- */

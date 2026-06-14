@@ -126,6 +126,12 @@ export class TransporteSupabase implements Transporte {
   async calzar() {
     await this.invocar({ tipo: "accion", salaId: this.salaId, jugada: { tipo: "CALZAR" } });
   }
+  async pasar() {
+    await this.invocar({ tipo: "accion", salaId: this.salaId, jugada: { tipo: "PASAR" } });
+  }
+  async dudarPaso() {
+    await this.invocar({ tipo: "accion", salaId: this.salaId, jugada: { tipo: "DUDAR_PASO" } });
+  }
   async siguienteRonda(sentido?: Sentido) {
     await this.invocar({ tipo: "siguienteRonda", salaId: this.salaId, ...(sentido ? { sentido } : {}) });
   }

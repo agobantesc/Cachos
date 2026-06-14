@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { validarApuesta, type Apuesta, type EstadoPublico, type Pinta } from "../engine";
 import { nombrarApuesta, PINTAS, SINGULAR_PINTA } from "./util";
+import { Sonidos } from "./sonido";
 import type { Transporte } from "./transporte";
 
 export function BarraAcciones({
@@ -41,6 +42,13 @@ export function BarraAcciones({
   const puedeDudar = publico.apuestaActual !== null;
   const puedeCalzar = publico.calzoDisponible && !(publico.esRondaObligado && misDados > 1);
 
+  // Paso: con los 5 dados se puede pasar; si hay un paso pendiente, solo cabe
+  // dudar el paso o subir la apuesta.
+  const hayPaso = publico.pasoPendienteJugadorId !== null;
+  const nombrePasador =
+    publico.jugadores.find((j) => j.id === publico.pasoPendienteJugadorId)?.nombre ?? "Alguien";
+  const puedoPasar = !hayPaso && !publico.esRondaObligado && misDados === publico.dadosIniciales;
+
   if (!esMiTurno) {
     return (
       <div className="acciones acciones--espera">
@@ -54,6 +62,12 @@ export function BarraAcciones({
 
   return (
     <div className="acciones">
+      {hayPaso && (
+        <div className="aviso-paso">
+          🤫 <b>{nombrePasador}</b> pasó. Dúdale el paso o sube la apuesta.
+        </div>
+      )}
+
       <div className="constructor">
         <div className="stepper">
           <button onClick={() => setCantidad(-1)} aria-label="menos">−</button>
@@ -77,17 +91,75 @@ export function BarraAcciones({
         </div>
       </div>
 
-      <div className="botonera">
-        <button className="btn btn--apostar" disabled={!apuestaOk} onClick={() => transporte.apostar(propuesta)}>
-          Apostar {nombrarApuesta(propuesta)}
-        </button>
-        <button className="btn btn--dudar" disabled={!puedeDudar} onClick={() => transporte.dudar()}>
-          Dudo
-        </button>
-        <button className="btn btn--calzar" disabled={!puedeCalzar} onClick={() => transporte.calzar()}>
-          Calzo
-        </button>
-      </div>
+      {hayPaso ? (
+        <div className="botonera">
+          <button
+            className="btn btn--apostar"
+            disabled={!apuestaOk}
+            onClick={() => {
+              Sonidos.apostar();
+              transporte.apostar(propuesta);
+            }}
+          >
+            Apostar {nombrarApuesta(propuesta)}
+          </button>
+          <button
+            className="btn btn--dudar"
+            onClick={() => {
+              Sonidos.dudar();
+              transporte.dudarPaso();
+            }}
+          >
+            Dudar el paso
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="botonera">
+            <button
+              className="btn btn--apostar"
+              disabled={!apuestaOk}
+              onClick={() => {
+                Sonidos.apostar();
+                transporte.apostar(propuesta);
+              }}
+            >
+              Apostar {nombrarApuesta(propuesta)}
+            </button>
+            <button
+              className="btn btn--dudar"
+              disabled={!puedeDudar}
+              onClick={() => {
+                Sonidos.dudar();
+                transporte.dudar();
+              }}
+            >
+              Dudo
+            </button>
+            <button
+              className="btn btn--calzar"
+              disabled={!puedeCalzar}
+              onClick={() => {
+                Sonidos.calzar();
+                transporte.calzar();
+              }}
+            >
+              Calzo
+            </button>
+          </div>
+          {puedoPasar && (
+            <button
+              className="btn btn--pasar"
+              onClick={() => {
+                Sonidos.pasar();
+                transporte.pasar();
+              }}
+            >
+              Pasar 🤫 <span className="btn-sub">(con tus 5 dados)</span>
+            </button>
+          )}
+        </>
+      )}
 
       {!apuestaOk && (
         <div className="hint">{rompeObligado ? "Obligado: con 2+ dados no puedes cambiar la pinta." : validez.motivo}</div>

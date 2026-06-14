@@ -3,6 +3,15 @@ import { Mesa } from "./Mesa";
 import { TransporteLocal, type Transporte } from "./transporte";
 import { TransporteSupabase, supabaseConfigurado } from "./transporteSupabase";
 import { useInstantanea } from "./util";
+import { desbloquearAudio } from "./sonido";
+import type { Nivel } from "./bots";
+
+const ETIQUETA_NIVEL: Record<Nivel, string> = { facil: "Fácil", medio: "Medio", avanzado: "Avanzado" };
+const DESC_NIVEL: Record<Nivel, string> = {
+  facil: "Arriesgada y errática: fácil de cazar.",
+  medio: "Juega prudente y razonable.",
+  avanzado: "Muy fina: calza, pasa y farolea.",
+};
 
 export function App() {
   const [transporte, setTransporte] = useState<Transporte | null>(null);
@@ -86,24 +95,38 @@ const NOMBRES_BOT = ["El Tuerto", "La Sombra", "Doña Suerte", "El Croata", "Pat
 function ConfigSolo({ onListo, volver }: { onListo: (t: Transporte) => void; volver: () => void }) {
   const [nombre, setNombre] = useState("Tú");
   const [rivales, setRivales] = useState(2);
+  const [nivel, setNivel] = useState<Nivel>("medio");
 
   const empezar = () => {
+    desbloquearAudio(); // habilita el audio dentro del gesto del usuario
     const yo = { id: "humano", nombre: nombre.trim() || "Tú" };
     const bots = NOMBRES_BOT.slice(0, rivales).map((n, i) => ({ id: `bot${i}`, nombre: n }));
-    onListo(new TransporteLocal([yo, ...bots], { humanoId: yo.id }));
+    onListo(new TransporteLocal([yo, ...bots], { humanoId: yo.id, nivel }));
   };
 
   return (
     <div className="pantalla config">
       <Cabecera titulo="Jugar solo" volver={volver} />
-      <p className="ayuda">Tú contra la banca. Elige cuántos rivales de la máquina enfrentas.</p>
+      <p className="ayuda">Tú contra la banca. Elige rivales y dificultad.</p>
       <input value={nombre} placeholder="Tu nombre" onChange={(e) => setNombre(e.target.value)} />
+
       <div className="campo-label">Rivales de la máquina</div>
       <div className="stepper">
         <button onClick={() => setRivales((r) => Math.max(1, r - 1))} aria-label="menos">−</button>
         <span className="cantidad">{rivales}</span>
         <button onClick={() => setRivales((r) => Math.min(NOMBRES_BOT.length, r + 1))} aria-label="más">+</button>
       </div>
+
+      <div className="campo-label">Dificultad</div>
+      <div className="segmento">
+        {(Object.keys(ETIQUETA_NIVEL) as Nivel[]).map((n) => (
+          <button key={n} className={"seg-btn" + (nivel === n ? " sel" : "")} onClick={() => setNivel(n)}>
+            {ETIQUETA_NIVEL[n]}
+          </button>
+        ))}
+      </div>
+      <p className="ayuda nivel-desc">{DESC_NIVEL[nivel]}</p>
+
       <button className="btn btn--apostar grande" onClick={empezar}>
         Sentarse a la mesa
       </button>
@@ -181,6 +204,22 @@ function Reglas({ volver }: { volver: () => void }) {
         <p>
           Declaras que la cantidad es <b>exacta</b>. Si aciertas, <b>recuperas un dado</b> (hasta 5).
           Solo se permite cuando aún queda al menos la <b>mitad</b> de los dados iniciales en la mesa.
+        </p>
+      </section>
+
+      <section className="regla-bloque destacado">
+        <h3>★ El paso</h3>
+        <p>
+          Solo con tus <b>5 dados</b> puedes pasar el turno sin apostar. El siguiente debe{" "}
+          <b>dudar el paso</b> o <b>subir la apuesta</b> (no puede calzar ni dudar la apuesta previa
+          al paso). Si lo duda:
+        </p>
+        <ul>
+          <li>si tu mano <b>no</b> estaba validada, pierdes un dado;</li>
+          <li>si <b>sí</b> lo estaba, pierde el que dudó.</li>
+        </ul>
+        <p>
+          Un paso se valida con <b>5 iguales</b>, <b>todos distintos</b> (escalera) o <b>full</b> (3 y 2).
         </p>
       </section>
 

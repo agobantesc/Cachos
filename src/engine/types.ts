@@ -61,12 +61,16 @@ export type Fase =
 export type Accion =
   | { tipo: "APOSTAR"; jugadorId: string; apuesta: Apuesta }
   | { tipo: "DUDAR"; jugadorId: string }
-  | { tipo: "CALZAR"; jugadorId: string };
+  | { tipo: "CALZAR"; jugadorId: string }
+  /** Pasar el turno (solo con los 5 dados). El siguiente duda el paso o sube. */
+  | { tipo: "PASAR"; jugadorId: string }
+  /** Dudar el paso del jugador anterior. */
+  | { tipo: "DUDAR_PASO"; jugadorId: string };
 
-/** Resultado de revelar la mesa tras un Dudo o un Calzo. */
+/** Resultado de revelar la mesa tras un Dudo, un Calzo o un Paso dudado. */
 export interface ResolucionRonda {
-  tipo: "DUDO" | "CALZO";
-  /** Pinta sobre la que se contó (la de la apuesta vigente). */
+  tipo: "DUDO" | "CALZO" | "PASO";
+  /** Pinta sobre la que se contó (la de la apuesta vigente; sin uso en PASO). */
   pinta: Pinta;
   /** Cantidad declarada en la apuesta vigente. */
   cantidadDeclarada: number;
@@ -84,6 +88,10 @@ export interface ResolucionRonda {
   siciliana: boolean;
   /** Caras de todos los dados reveladas, por jugador, para mostrar en la UI. */
   dadosRevelados: Record<string, Pinta[]>;
+  /** (Solo PASO) jugador que pasó. */
+  pasadorId?: string | null;
+  /** (Solo PASO) si el paso estaba validado (5 iguales, todos distintos o full). */
+  pasoEraValido?: boolean;
 }
 
 export interface EstadoJuego {
@@ -105,6 +113,8 @@ export interface EstadoJuego {
   apuestaActualJugadorId: string | null;
   /** Cuántas apuestas se han hecho en la ronda actual (para "la siciliana"). */
   apuestasEnRonda: number;
+  /** Si hay un "paso" pendiente de resolver, el id de quien pasó; si no, null. */
+  pasoPendienteJugadorId: string | null;
   /** Ronda "obligado": gatillada cuando el abridor tiene 1 dado. */
   esRondaObligado: boolean;
   /** Ronda "cerrada": los jugadores no ven sus propios dados (salvo excepciones). */
