@@ -192,3 +192,10 @@ input:focus { border-color: var(--oro); box-shadow: 0 0 0 2px rgba(200, 162, 74,
 
 .fin { text-align: center; gap: 20px; padding-top: 12vh; }
 .fin h1 { font-size: 34px; color: var(--oro); }
+
+/* Sello de versión: discreto, fijo en una esquina. Sirve para confirmar que el
+   navegador cargó la última versión (y no una cacheada por el service worker). */
+.build {
+  position: fixed; bottom: 4px; right: 7px; z-index: 50; pointer-events: none;
+  font-size: 10px; letter-spacing: 0.5px; color: rgba(217, 213, 201, 0.35);
+}

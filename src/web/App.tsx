@@ -6,8 +6,12 @@ import { useInstantanea } from "./util";
 
 export function App() {
   const [transporte, setTransporte] = useState<Transporte | null>(null);
-  if (!transporte) return <Inicio onListo={setTransporte} />;
-  return <Juego transporte={transporte} />;
+  return (
+    <>
+      {!transporte ? <Inicio onListo={setTransporte} /> : <Juego transporte={transporte} />}
+      <div className="build">v{__BUILD_TIME__}</div>
+    </>
+  );
 }
 
 function Juego({ transporte }: { transporte: Transporte }) {
