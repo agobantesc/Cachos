@@ -19,6 +19,7 @@ export class TransporteSupabase implements Transporte {
   private publico: EstadoPublico | null = null;
   private miMano: Pinta[] | null = null;
   private miId = "";
+  private canal: ReturnType<SupabaseClient["channel"]> | null = null;
 
   private constructor(sb: SupabaseClient) {
     this.sb = sb;
@@ -41,6 +42,13 @@ export class TransporteSupabase implements Transporte {
   suscribir(cb: () => void): () => void {
     this.subs.add(cb);
     return () => this.subs.delete(cb);
+  }
+  detener() {
+    this.subs.clear();
+    if (this.canal) {
+      void this.sb.removeChannel(this.canal);
+      this.canal = null;
+    }
   }
   private emitir() {
     for (const f of this.subs) f();
@@ -71,7 +79,7 @@ export class TransporteSupabase implements Transporte {
     await this.refrescarLobby();
     await this.refrescarMiMano();
 
-    this.sb
+    this.canal = this.sb
       .channel(`sala-${salaId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "salas", filter: `id=eq.${salaId}` }, (p) => {
         const fila = p.new as { estado_publico: EstadoPublico | null; anfitrion_id: string };

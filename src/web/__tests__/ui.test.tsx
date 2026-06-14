@@ -31,7 +31,7 @@ describe("Mesa (en juego)", () => {
 
   it("muestra los vasos, la apuesta vigente y la mano propia", () => {
     const t = mesaEnJuego();
-    const html = renderToStaticMarkup(<Mesa snap={t.instantanea()} transporte={t} />);
+    const html = renderToStaticMarkup(<Mesa snap={t.instantanea()} transporte={t} salir={() => {}} />);
     expect(html).toContain("Ana");
     expect(html).toContain("Beto");
     expect(html).toContain("Cata");
@@ -43,7 +43,7 @@ describe("Mesa (en juego)", () => {
   it("renderiza la revelación tras un dudo", () => {
     const t = mesaEnJuego();
     void t.dudar(); // Cata duda la apuesta de Beto
-    const html = renderToStaticMarkup(<Mesa snap={t.instantanea()} transporte={t} />);
+    const html = renderToStaticMarkup(<Mesa snap={t.instantanea()} transporte={t} salir={() => {}} />);
     expect(html).toContain("Revelación");
     expect(html).toContain("cuenta"); // muestra el conteo por jugador
   });

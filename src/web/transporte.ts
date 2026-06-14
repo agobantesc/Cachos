@@ -61,6 +61,8 @@ export interface Transporte {
   pasar(): Promise<void>;
   dudarPaso(): Promise<void>;
   siguienteRonda(sentido?: Sentido): Promise<void>;
+  /** Abandona: corta temporizadores/suscripciones (para volver al menú). */
+  detener(): void;
 }
 
 /**
@@ -75,6 +77,7 @@ export class TransporteLocal implements Transporte {
   private readonly humano: string | null;
   private readonly nivel: Nivel;
   private temporizador: ReturnType<typeof setTimeout> | null = null;
+  private detenido = false;
 
   constructor(jugadores: JugadorLobby[], opciones: { humanoId?: string; nivel?: Nivel } = {}) {
     this.estado = crearJuego(jugadores);
@@ -90,6 +93,14 @@ export class TransporteLocal implements Transporte {
   suscribir(cb: () => void): () => void {
     this.subs.add(cb);
     return () => this.subs.delete(cb);
+  }
+  detener() {
+    this.detenido = true;
+    if (this.temporizador) {
+      clearTimeout(this.temporizador);
+      this.temporizador = null;
+    }
+    this.subs.clear();
   }
   private emitir() {
     for (const f of this.subs) f();
@@ -141,7 +152,7 @@ export class TransporteLocal implements Transporte {
       clearTimeout(this.temporizador);
       this.temporizador = null;
     }
-    if (this.humano === null) return;
+    if (this.detenido || this.humano === null) return;
     const e = this.estado;
     if (e.fase === "EN_RONDA") {
       const turno = jugadorDeTurnoId(e);

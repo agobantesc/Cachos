@@ -15,21 +15,33 @@ const DESC_NIVEL: Record<Nivel, string> = {
 
 export function App() {
   const [transporte, setTransporte] = useState<Transporte | null>(null);
+  const salir = () => {
+    transporte?.detener();
+    setTransporte(null);
+  };
   return (
     <>
-      {!transporte ? <Inicio onListo={setTransporte} /> : <Juego transporte={transporte} />}
+      {!transporte ? <Inicio onListo={setTransporte} /> : <Juego transporte={transporte} salir={salir} />}
       <div className="build">v{__BUILD_TIME__}</div>
     </>
   );
 }
 
-function Juego({ transporte }: { transporte: Transporte }) {
+function Juego({ transporte, salir }: { transporte: Transporte; salir: () => void }) {
   const snap = useInstantanea(transporte);
-  if (snap.faseApp === "juego") return <Mesa snap={snap} transporte={transporte} />;
-  return <Lobby snap={snap} transporte={transporte} />;
+  if (snap.faseApp === "juego") return <Mesa snap={snap} transporte={transporte} salir={salir} />;
+  return <Lobby snap={snap} transporte={transporte} salir={salir} />;
 }
 
-function Lobby({ snap, transporte }: { snap: ReturnType<Transporte["instantanea"]>; transporte: Transporte }) {
+function Lobby({
+  snap,
+  transporte,
+  salir,
+}: {
+  snap: ReturnType<Transporte["instantanea"]>;
+  transporte: Transporte;
+  salir: () => void;
+}) {
   const soyAnfitrion = snap.anfitrionId === snap.miId;
   return (
     <div className="pantalla lobby">
@@ -58,6 +70,9 @@ function Lobby({ snap, transporte }: { snap: ReturnType<Transporte["instantanea"
       ) : (
         <p className="ayuda">Esperando que el anfitrión inicie…</p>
       )}
+      <button className="btn btn--dudar" onClick={salir}>
+        Salir del salón
+      </button>
     </div>
   );
 }

@@ -6,10 +6,23 @@ import { nombrarApuesta, PLURAL_PINTA } from "./util";
 import { Sonidos, sonidoActivado, alternarSonido } from "./sonido";
 import type { Instantanea, Transporte } from "./transporte";
 
-export function Mesa({ snap, transporte }: { snap: Instantanea; transporte: Transporte }) {
+export function Mesa({
+  snap,
+  transporte,
+  salir,
+}: {
+  snap: Instantanea;
+  transporte: Transporte;
+  salir: () => void;
+}) {
   const p = snap.publico!;
   const nombre = (id: string | null) => p.jugadores.find((j) => j.id === id)?.nombre ?? "—";
   const [sonando, setSonando] = useState(sonidoActivado());
+  const abandonar = () => {
+    if (typeof window === "undefined" || window.confirm("¿Abandonar la partida y volver al menú?")) {
+      salir();
+    }
+  };
 
   // Sonido por evento: dados al empezar ronda; ganar/perder en la resolución.
   useEffect(() => {
@@ -29,8 +42,8 @@ export function Mesa({ snap, transporte }: { snap: Instantanea; transporte: Tran
     return (
       <div className="mesa fin">
         <h1>🏆 ¡Ganó {nombre(p.ganadorId)}!</h1>
-        <button className="btn btn--apostar" onClick={() => location.reload()}>
-          Nueva partida
+        <button className="btn btn--apostar grande" onClick={salir}>
+          Volver al menú
         </button>
       </div>
     );
@@ -50,6 +63,9 @@ export function Mesa({ snap, transporte }: { snap: Instantanea; transporte: Tran
           aria-label={sonando ? "Silenciar" : "Activar sonido"}
         >
           {sonando ? "🔊" : "🔇"}
+        </button>
+        <button className="salir-mesa" onClick={abandonar}>
+          Salir
         </button>
       </header>
 
