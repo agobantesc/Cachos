@@ -124,6 +124,34 @@ describe("la siciliana", () => {
     expect(e.ultimaResolucion!.dadosPerdidos).toBe(2);
     expect(jugadorPorId(e, "A")!.dados.length).toBe(3);
   });
+
+  it("con 3+ jugadores el dudo inmediato al abridor anula el comodín (sigue activa)", () => {
+    let e = iniciarRonda(nuevaPartida(["A", "B", "C"]), { rng: rng0 });
+    setDados(e, "A", [5, 1, 3, 4, 6]); // 1 quina + 1 as
+    setDados(e, "B", [2, 2, 6, 6, 4]);
+    setDados(e, "C", [2, 3, 4, 6, 6]);
+    e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "A", apuesta: { cantidad: 2, pinta: 5 } });
+    e = aplicarAccion(e, { tipo: "DUDAR", jugadorId: "B" });
+    expect(e.ultimaResolucion!.siciliana).toBe(true);
+    expect(e.ultimaResolucion!.asesComoComodin).toBe(false); // el as NO cuenta
+    expect(e.ultimaResolucion!.cantidadReal).toBe(1); // sólo la quina literal
+    expect(e.ultimaResolucion!.perdedorId).toBe("A"); // 1 < 2 -> no se cumple
+  });
+
+  it("con SÓLO 2 jugadores se desactiva: el dudo inmediato cuenta los ases como comodín", () => {
+    let e = nuevaPartida(); // A, B
+    e.abridorRondaId = "A";
+    e = iniciarRonda(e, { rng: rng0 });
+    setDados(e, "A", [5, 1, 3, 4, 6]); // 1 quina + 1 as
+    setDados(e, "B", [5, 2, 2, 6, 6]); // 1 quina
+    e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "A", apuesta: { cantidad: 3, pinta: 5 } });
+    e = aplicarAccion(e, { tipo: "DUDAR", jugadorId: "B" });
+    expect(e.ultimaResolucion!.siciliana).toBe(false);
+    expect(e.ultimaResolucion!.asesComoComodin).toBe(true); // ases SÍ comodín
+    expect(e.ultimaResolucion!.cantidadReal).toBe(3); // 2 quinas + 1 as
+    expect(e.ultimaResolucion!.perdedorId).toBe("B"); // 3 >= 3 -> pierde el dudador
+    expect(e.ultimaResolucion!.dadosPerdidos).toBe(1); // sin siciliana, sólo 1
+  });
 });
 
 describe("partida en falso (abrir una ronda normal con ases)", () => {
