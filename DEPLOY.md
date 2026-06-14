@@ -40,14 +40,19 @@ Tu repo es público, así que Pages es gratis. El despliegue ya está automatiza
 **Authentication → Sign In / Providers → Anonymous** → actívalo. (Así cada
 dispositivo entra sin registrarse y sus dados son suyos.)
 
-### B4. Desplegar el "árbitro" (Edge Function) — necesita un computador con Node
+### B4. Desplegar el "árbitro" (Edge Function) — en un computador con Node
+El motor ya va empaquetado y versionado en el repo, así que NO hay que compilar
+nada: sólo conectar la CLI y desplegar.
 ```bash
-npm install -g supabase          # instala la CLI de Supabase
-supabase login
-supabase link --project-ref <TU_REF>   # el REF está en Project Settings → General
-npm run build:engine             # empaqueta el motor para la función
-supabase functions deploy jugar
+npx supabase login
+npx supabase link --project-ref <TU_REF>   # el REF está en Project Settings → General
+npx supabase functions deploy jugar
 ```
+> La función recibe sola las claves `SUPABASE_URL`, `SUPABASE_ANON_KEY` y
+> `SUPABASE_SERVICE_ROLE_KEY` (Supabase las inyecta); no hay que configurarlas.
+> Si en el futuro cambias el motor, corre `npm run build:engine` y vuelve a
+> desplegar.
+
 
 ### B5. Conectar el link con el backend
 1. En Supabase: **Project Settings → API**. Copia **Project URL** y la **anon public key**.
