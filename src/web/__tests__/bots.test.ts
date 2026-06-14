@@ -39,7 +39,7 @@ afterEach(() => {
 });
 
 describe("decidirBot", () => {
-  const niveles: Nivel[] = ["facil", "medio", "avanzado"];
+  const niveles: Nivel[] = ["facil", "medio", "avanzado", "experto"];
 
   it("juega partidas completas (solo bots) sin jugadas inválidas y siempre termina", () => {
     for (let partida = 0; partida < 30; partida++) {

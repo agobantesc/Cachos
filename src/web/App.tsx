@@ -6,11 +6,17 @@ import { useInstantanea } from "./util";
 import { desbloquearAudio } from "./sonido";
 import type { Nivel } from "./bots";
 
-const ETIQUETA_NIVEL: Record<Nivel, string> = { facil: "Fácil", medio: "Medio", avanzado: "Avanzado" };
+const ETIQUETA_NIVEL: Record<Nivel, string> = {
+  facil: "Fácil",
+  medio: "Medio",
+  avanzado: "Avanzado",
+  experto: "Experto",
+};
 const DESC_NIVEL: Record<Nivel, string> = {
   facil: "Arriesgada y errática: fácil de cazar.",
   medio: "Juega prudente y razonable.",
   avanzado: "Muy fina: calza, pasa y farolea.",
+  experto: "Implacable: lee el historial, sospecha faroles y casi no falla.",
 };
 
 export function App() {

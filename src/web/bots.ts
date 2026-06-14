@@ -13,7 +13,7 @@ import {
   type Pinta,
 } from "../engine";
 
-export type Nivel = "facil" | "medio" | "avanzado";
+export type Nivel = "facil" | "medio" | "avanzado" | "experto";
 
 export type JugadaBot =
   | { tipo: "DUDAR" }
@@ -44,17 +44,23 @@ interface ParamsNivel {
   descuentoFarol: number;
   /** Prob. de farolear una subida (subir más de lo seguro) para ser impredecible. */
   farolea: number;
+  /** Crédito extra por cada OTRO jugador que apostó esa pinta en la ronda
+   * (apoyo en el historial: una pinta muy declarada suele ser real). */
+  lecturaHistorial: number;
 }
 
 const PARAMS: Record<Nivel, ParamsNivel> = {
   // Fácil: agresivo y errático (sube de más y se deja cazar); ignora la señal de
   // la apuesta, así que duda mal. Ya no se suicida con la siciliana al abrir.
-  facil: { umbralApertura: 0.58, sesgoSubir: 0.18, ruido: 0.16, umbralCalzo: 0.42, pasaConValido: 0.5, bluffPaso: 0.03, dudaPaso: 0.06, creditoApuesta: 0.1, descuentoFarol: 0, farolea: 0.05 },
-  // Medio: equilibrado; lee algo la señal y sospecha de los saltos grandes.
-  medio: { umbralApertura: 0.74, sesgoSubir: 0.08, ruido: 0.06, umbralCalzo: 0.27, pasaConValido: 0.85, bluffPaso: 0.05, dudaPaso: 0.16, creditoApuesta: 0.9, descuentoFarol: 0.15, farolea: 0.04 },
-  // Avanzado: EV fuerte pero impredecible —lee la señal y calibra el farol por el
-  // tamaño del salto, calza/pasa óptimo y farolea de a poco para no dejarse leer.
-  avanzado: { umbralApertura: 0.85, sesgoSubir: 0.02, ruido: 0.035, umbralCalzo: 0.2, pasaConValido: 0.98, bluffPaso: 0.08, dudaPaso: 0.3, creditoApuesta: 1.4, descuentoFarol: 0.25, farolea: 0.06 },
+  facil: { umbralApertura: 0.56, sesgoSubir: 0.18, ruido: 0.16, umbralCalzo: 0.42, pasaConValido: 0.5, bluffPaso: 0.04, dudaPaso: 0.07, creditoApuesta: 0.1, descuentoFarol: 0, farolea: 0.06, lecturaHistorial: 0 },
+  // Medio: equilibrado; lee algo la señal y sospecha un poco de los saltos grandes.
+  medio: { umbralApertura: 0.74, sesgoSubir: 0.09, ruido: 0.06, umbralCalzo: 0.3, pasaConValido: 0.8, bluffPaso: 0.04, dudaPaso: 0.08, creditoApuesta: 0.8, descuentoFarol: 0.12, farolea: 0.05, lecturaHistorial: 0.2 },
+  // Avanzado: EV fuerte —lee la señal, calza/pasa bien y farolea de a poco.
+  avanzado: { umbralApertura: 0.8, sesgoSubir: 0.05, ruido: 0.035, umbralCalzo: 0.23, pasaConValido: 0.95, bluffPaso: 0.05, dudaPaso: 0.09, creditoApuesta: 1.1, descuentoFarol: 0.18, farolea: 0.06, lecturaHistorial: 0.3 },
+  // Experto: el núcleo EV de avanzado + castigo a los errores del humano —lee el
+  // HISTORIAL de la ronda (apoyo por pinta), afila la sospecha de farol y el calzo
+  // y es algo más impredecible. Contra un humano que farolea, pega más fuerte.
+  experto: { umbralApertura: 0.8, sesgoSubir: 0.04, ruido: 0.02, umbralCalzo: 0.2, pasaConValido: 1, bluffPaso: 0.05, dudaPaso: 0.09, creditoApuesta: 1.15, descuentoFarol: 0.28, farolea: 0.07, lecturaHistorial: 0.5 },
 };
 
 const PINTAS: Pinta[] = [2, 3, 4, 5, 6, 1]; // ases al final
@@ -172,7 +178,21 @@ export function decidirBot(
   const pUnit = probUnidad(actual.pinta);
   const esperadoNeutral = propiosDe(actual.pinta) + desconocidos * pUnit;
   const exceso = Math.max(0, actual.cantidad - esperadoNeutral); // cuánto excede lo neutral
-  const credito = Math.max(0, P.creditoApuesta - exceso * P.descuentoFarol);
+  // Apoyo en el historial: otros jugadores (no yo, no el apostador actual) que ya
+  // declararon esta pinta en la ronda -> probablemente la tienen (lectura experta).
+  const apoyadores = new Set(
+    publico.historialRonda
+      .filter(
+        (ev) =>
+          ev.tipo === "APUESTA" &&
+          ev.apuesta.pinta === actual.pinta &&
+          ev.jugadorId !== miId &&
+          ev.jugadorId !== publico.apuestaActualJugadorId,
+      )
+      .map((ev) => ev.jugadorId),
+  );
+  const credito =
+    Math.max(0, P.creditoApuesta - exceso * P.descuentoFarol) + apoyadores.size * P.lecturaHistorial;
   const kFaltan = Math.round(actual.cantidad - propiosDe(actual.pinta) - credito);
   const pSostiene = binomColaMayorIgual(desconocidos, kFaltan, pUnit);
   const pFalla = 1 - pSostiene; // P(es falsa) -> dudar gana
