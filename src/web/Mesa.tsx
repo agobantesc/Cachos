@@ -62,12 +62,12 @@ export function Mesa({ snap, transporte }: { snap: Instantanea; transporte: Tran
         )}
       </section>
 
-      {snap.esLocal && p.fase === "EN_RONDA" && (
+      {snap.esLocal && !snap.esSolo && p.fase === "EN_RONDA" && (
         <div className="pasa-telefono">Turno de <b>{turnoNombre}</b> — pásale el teléfono 📱</div>
       )}
 
       <section className="mi-mano">
-        <div className="mi-mano-titulo">Tu mano{snap.esLocal ? ` · ${turnoNombre}` : ""}</div>
+        <div className="mi-mano-titulo">Tu mano{snap.esLocal && !snap.esSolo ? ` · ${turnoNombre}` : ""}</div>
         {snap.miMano ? (
           <ManoDados caras={snap.miMano} tam={56} />
         ) : (
@@ -75,7 +75,7 @@ export function Mesa({ snap, transporte }: { snap: Instantanea; transporte: Tran
         )}
       </section>
 
-      {p.fase === "EN_RONDA" && <BarraAcciones publico={p} miId={p.turnoJugadorId ?? snap.miId} transporte={transporte} />}
+      {p.fase === "EN_RONDA" && <BarraAcciones publico={p} miId={snap.miId} transporte={transporte} />}
 
       {p.fase === "FIN_RONDA" && p.ultimaResolucion && (
         <Revelacion res={p.ultimaResolucion} publico={p} snap={snap} transporte={transporte} />

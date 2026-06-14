@@ -2,9 +2,9 @@ import type { Pinta } from "../engine";
 
 // Posición (en un viewBox 0..100) de cada punto posible en la grilla 3x3.
 const POS: ReadonlyArray<readonly [number, number]> = [
-  [25, 25], [50, 25], [75, 25],
-  [25, 50], [50, 50], [75, 50],
-  [25, 75], [50, 75], [75, 75],
+  [26, 26], [50, 26], [74, 26],
+  [26, 50], [50, 50], [74, 50],
+  [26, 74], [50, 74], [74, 74],
 ];
 
 // Qué celdas de la grilla 3x3 lleva encendidas cada cara.
@@ -18,26 +18,40 @@ const PIPS: Record<Pinta, number[]> = {
 };
 
 /**
- * Dibuja los puntos como SVG (círculos con coordenadas fijas). Es robusto en
- * todos los navegadores —en especial iOS Safari, que colapsaba los puntos
- * cuando dependían de alto en porcentaje dentro de una grilla CSS.
+ * Un dado es UN SVG autocontenido: el cuerpo (rect) y los puntos (circles) van
+ * dentro del mismo SVG, con tamaño en píxeles y colores en atributos `fill`.
+ * No depende de CSS ni de tamaños en porcentaje —se ve igual en todo navegador
+ * (iOS Safari incluido), que era justo donde los puntos desaparecían.
  */
 export function Dado({ cara, tam = 44 }: { cara: Pinta; tam?: number }) {
   const esAs = cara === 1;
+  const fondo = esAs ? "#fbf3d6" : "#e9e3d2";
+  const borde = esAs ? "#c8a24a" : "rgba(0,0,0,0.12)";
+  const punto = esAs ? "#b23a2e" : "#15110a";
   return (
-    <div className={"dado" + (esAs ? " dado--as" : "")} style={{ width: tam, height: tam }}>
-      <svg viewBox="0 0 100 100" width="100%" height="100%" role="img" aria-label={`dado ${cara}`}>
-        {PIPS[cara].map((i) => (
-          <circle key={i} className="pip" cx={POS[i]![0]} cy={POS[i]![1]} r={10.5} />
-        ))}
-      </svg>
-    </div>
+    <svg
+      className="dado"
+      width={tam}
+      height={tam}
+      viewBox="0 0 100 100"
+      role="img"
+      aria-label={`dado ${cara}`}
+    >
+      <rect x="3" y="3" width="94" height="94" rx="20" fill={fondo} stroke={borde} strokeWidth={esAs ? 3 : 2} />
+      {PIPS[cara].map((i) => (
+        <circle key={i} cx={POS[i]![0]} cy={POS[i]![1]} r={9.5} fill={punto} />
+      ))}
+    </svg>
   );
 }
 
 /** Dado boca abajo: para mostrar el vaso de otro jugador (sin revelar la cara). */
 export function DadoOculto({ tam = 28 }: { tam?: number }) {
-  return <div className="dado dado--oculto" style={{ width: tam, height: tam }} />;
+  return (
+    <svg className="dado" width={tam} height={tam} viewBox="0 0 100 100" aria-hidden="true">
+      <rect x="3" y="3" width="94" height="94" rx="20" fill="#1d1f27" stroke="rgba(200,162,74,0.25)" strokeWidth="2" />
+    </svg>
+  );
 }
 
 export function ManoDados({ caras, tam }: { caras: Pinta[]; tam?: number }) {

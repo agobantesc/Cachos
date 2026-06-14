@@ -140,6 +140,7 @@ export class TransporteSupabase implements Transporte {
       miMano: this.miMano,
       miId: this.miId,
       esLocal: false,
+      esSolo: false,
     };
   }
 }

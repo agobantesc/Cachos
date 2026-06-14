@@ -13,6 +13,7 @@ import {
   type Pinta,
   type Sentido,
 } from "../engine";
+import { decidirBot } from "./bots";
 
 export interface JugadorLobby {
   id: string;
@@ -31,6 +32,8 @@ export interface Instantanea {
   miId: string;
   /** true si es modo local (hot-seat: se pasa el teléfono). */
   esLocal: boolean;
+  /** true si es modo solitario contra la máquina (perspectiva fija en el humano). */
+  esSolo: boolean;
 }
 
 export interface Transporte {
@@ -51,9 +54,18 @@ export interface Transporte {
 export class TransporteLocal implements Transporte {
   private estado: EstadoJuego;
   private subs = new Set<() => void>();
+  /** En modo solitario, el id del jugador humano (perspectiva fija). null = hot-seat. */
+  private readonly humano: string | null;
+  private temporizador: ReturnType<typeof setTimeout> | null = null;
 
-  constructor(jugadores: JugadorLobby[]) {
+  constructor(jugadores: JugadorLobby[], opciones: { humanoId?: string } = {}) {
     this.estado = crearJuego(jugadores);
+    this.humano = opciones.humanoId ?? null;
+    if (this.humano !== null) {
+      // Modo solitario: arranca de inmediato y deja a los bots jugar.
+      this.estado = iniciarRonda(this.estado);
+      this.programar();
+    }
   }
 
   suscribir(cb: () => void): () => void {
@@ -67,6 +79,7 @@ export class TransporteLocal implements Transporte {
   async iniciar(sentido?: Sentido) {
     this.estado = iniciarRonda(this.estado, sentido ? { sentido } : {});
     this.emitir();
+    this.programar();
   }
   async apostar(apuesta: Apuesta) {
     this.jugar({ tipo: "APOSTAR", jugadorId: this.turno(), apuesta });
@@ -80,20 +93,72 @@ export class TransporteLocal implements Transporte {
   async siguienteRonda(sentido?: Sentido) {
     this.estado = iniciarRonda(this.estado, sentido ? { sentido } : {});
     this.emitir();
+    this.programar();
   }
 
   private jugar(accion: Accion) {
     this.estado = aplicarAccion(this.estado, accion);
     this.emitir();
+    this.programar();
   }
   private turno(): string {
     return jugadorDeTurnoId(this.estado) ?? this.estado.ordenAsientos[0]!;
+  }
+
+  // --- Modo solitario: agenda y ejecuta las jugadas de la máquina ---
+  private esBot(id: string | null): boolean {
+    return this.humano !== null && id !== null && id !== this.humano;
+  }
+
+  /** Agenda la próxima jugada automática (bot por jugar, o continuar de ronda). */
+  private programar() {
+    if (this.temporizador) {
+      clearTimeout(this.temporizador);
+      this.temporizador = null;
+    }
+    if (this.humano === null) return;
+    const e = this.estado;
+    if (e.fase === "EN_RONDA") {
+      const turno = jugadorDeTurnoId(e);
+      if (this.esBot(turno)) {
+        this.temporizador = setTimeout(() => this.jugarBot(turno!), 850);
+      }
+    } else if (e.fase === "FIN_RONDA" && this.esBot(e.abridorRondaId)) {
+      // El que abre la próxima ronda es un bot: continúa solo tras mostrar el reveal.
+      this.temporizador = setTimeout(() => void this.siguienteRonda(), 2200);
+    }
+  }
+
+  private jugarBot(botId: string) {
+    if (jugadorDeTurnoId(this.estado) !== botId) return; // el estado cambió
+    const vista = vistaJugador(this.estado, botId);
+    const jugada = decidirBot(vista.publico, vista.miMano, botId);
+    const accion: Accion =
+      jugada.tipo === "APOSTAR"
+        ? { tipo: "APOSTAR", jugadorId: botId, apuesta: jugada.apuesta }
+        : jugada.tipo === "CALZAR"
+          ? { tipo: "CALZAR", jugadorId: botId }
+          : { tipo: "DUDAR", jugadorId: botId };
+    try {
+      this.estado = aplicarAccion(this.estado, accion);
+    } catch {
+      // Salvaguarda: si la jugada elegida fuese inválida, duda.
+      try {
+        this.estado = aplicarAccion(this.estado, { tipo: "DUDAR", jugadorId: botId });
+      } catch {
+        /* sin acción posible: deja el estado como está */
+      }
+    }
+    this.emitir();
+    this.programar();
   }
 
   instantanea(): Instantanea {
     const e = this.estado;
     const lobby = e.jugadores.map((j) => ({ id: j.id, nombre: j.nombre }));
     const anfitrion = e.ordenAsientos[0] ?? null;
+
+    const esSolo = this.humano !== null;
 
     if (e.fase === "LOBBY") {
       return {
@@ -105,14 +170,17 @@ export class TransporteLocal implements Transporte {
         miMano: null,
         miId: anfitrion ?? "",
         esLocal: true,
+        esSolo,
       };
     }
 
-    // Perspectiva: en juego, el de turno; tras una revelación, quien abre la próxima.
+    // Perspectiva: en solitario, siempre el humano; en hot-seat, el de turno
+    // (y tras una revelación, quien abre la próxima ronda).
     const persp =
-      e.fase === "EN_RONDA"
+      this.humano ??
+      (e.fase === "EN_RONDA"
         ? jugadorDeTurnoId(e)!
-        : e.abridorRondaId ?? jugadorDeTurnoId(e) ?? e.ordenAsientos[0]!;
+        : e.abridorRondaId ?? jugadorDeTurnoId(e) ?? e.ordenAsientos[0]!);
     const v = vistaJugador(e, persp);
     return {
       faseApp: "juego",
@@ -123,6 +191,7 @@ export class TransporteLocal implements Transporte {
       miMano: v.miMano,
       miId: persp,
       esLocal: true,
+      esSolo,
     };
   }
 }

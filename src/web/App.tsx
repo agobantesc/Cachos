@@ -54,8 +54,9 @@ function Lobby({ snap, transporte }: { snap: ReturnType<Transporte["instantanea"
 }
 
 function Inicio({ onListo }: { onListo: (t: Transporte) => void }) {
-  const [vista, setVista] = useState<"home" | "local" | "online">("home");
+  const [vista, setVista] = useState<"home" | "solo" | "local" | "online">("home");
 
+  if (vista === "solo") return <ConfigSolo onListo={onListo} volver={() => setVista("home")} />;
   if (vista === "local") return <ConfigLocal onListo={onListo} volver={() => setVista("home")} />;
   if (vista === "online") return <ConfigOnline onListo={onListo} volver={() => setVista("home")} />;
 
@@ -64,12 +65,50 @@ function Inicio({ onListo }: { onListo: (t: Transporte) => void }) {
       <div className="logo">🎲</div>
       <h1>La Asociación<br />de Cachos</h1>
       <p className="sub">Solo para socios. El dudo se juega en las sombras.</p>
-      <button className="btn btn--apostar grande" onClick={() => setVista("local")}>
+      <button className="btn btn--apostar grande" onClick={() => setVista("solo")}>
+        Jugar solo (vs la máquina)
+      </button>
+      <button className="btn btn--calzar grande" onClick={() => setVista("local")}>
         Mesa local (pasar el teléfono)
       </button>
       <button className="btn btn--dudar grande" onClick={() => setVista("online")}>
         Mesa en línea
       </button>
+    </div>
+  );
+}
+
+const NOMBRES_BOT = ["El Tuerto", "La Sombra", "Doña Suerte", "El Croata", "Patas Negras"];
+
+function ConfigSolo({ onListo, volver }: { onListo: (t: Transporte) => void; volver: () => void }) {
+  const [nombre, setNombre] = useState("Tú");
+  const [rivales, setRivales] = useState(2);
+
+  const empezar = () => {
+    const yo = { id: "humano", nombre: nombre.trim() || "Tú" };
+    const bots = NOMBRES_BOT.slice(0, rivales).map((n, i) => ({ id: `bot${i}`, nombre: n }));
+    onListo(new TransporteLocal([yo, ...bots], { humanoId: yo.id }));
+  };
+
+  return (
+    <div className="pantalla config">
+      <h2>Jugar solo</h2>
+      <p className="ayuda">Tú contra la banca. Elige cuántos rivales de la máquina enfrentas.</p>
+      <input value={nombre} placeholder="Tu nombre" onChange={(e) => setNombre(e.target.value)} />
+      <div className="mi-mano-titulo">Rivales de la máquina</div>
+      <div className="stepper">
+        <button onClick={() => setRivales((r) => Math.max(1, r - 1))} aria-label="menos">−</button>
+        <span className="cantidad">{rivales}</span>
+        <button onClick={() => setRivales((r) => Math.min(NOMBRES_BOT.length, r + 1))} aria-label="más">+</button>
+      </div>
+      <div className="botonera">
+        <button className="btn btn--dudar" onClick={volver}>
+          Volver
+        </button>
+        <button className="btn btn--apostar" onClick={empezar}>
+          Empezar
+        </button>
+      </div>
     </div>
   );
 }
