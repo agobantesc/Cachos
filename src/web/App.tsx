@@ -108,13 +108,13 @@ function Inicio({ onListo }: { onListo: (t: Transporte) => void }) {
 const NOMBRES_BOT = ["El Tuerto", "La Sombra", "Doña Suerte", "El Croata", "Patas Negras"];
 
 function ConfigSolo({ onListo, volver }: { onListo: (t: Transporte) => void; volver: () => void }) {
-  const [nombre, setNombre] = useState("Tú");
+  const [nombre, setNombre] = useState("Miembro");
   const [rivales, setRivales] = useState(2);
   const [nivel, setNivel] = useState<Nivel>("medio");
 
   const empezar = () => {
     desbloquearAudio(); // habilita el audio dentro del gesto del usuario
-    const yo = { id: "humano", nombre: nombre.trim() || "Tú" };
+    const yo = { id: "humano", nombre: nombre.trim() || "Miembro" };
     const bots = NOMBRES_BOT.slice(0, rivales).map((n, i) => ({ id: `bot${i}`, nombre: n }));
     onListo(new TransporteLocal([yo, ...bots], { humanoId: yo.id, nivel }));
   };

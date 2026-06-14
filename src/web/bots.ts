@@ -42,12 +42,12 @@ interface ParamsNivel {
 }
 
 const PARAMS: Record<Nivel, ParamsNivel> = {
-  // Fácil: abre alto y juega errático (fácil de cazar con un dudo).
-  facil: { umbralApertura: 0.5, umbralDuda: 0.42, ruido: 0.18, umbralCalzo: 0.4, pasaConValido: 0.45, bluffPaso: 0.02, dudaPaso: 0.05, subeSiSeguro: 0.72 },
+  // Fácil: algo más arriesgado y errático, pero ya no se suicida con la siciliana.
+  facil: { umbralApertura: 0.58, umbralDuda: 0.4, ruido: 0.15, umbralCalzo: 0.42, pasaConValido: 0.5, bluffPaso: 0.03, dudaPaso: 0.06, subeSiSeguro: 0.7 },
   // Medio: prudente y razonable.
-  medio: { umbralApertura: 0.72, umbralDuda: 0.33, ruido: 0.06, umbralCalzo: 0.28, pasaConValido: 0.8, bluffPaso: 0.04, dudaPaso: 0.16, subeSiSeguro: 0.6 },
-  // Avanzado: muy prudente, calza y pasa óptimo, farolea de vez en cuando.
-  avanzado: { umbralApertura: 0.8, umbralDuda: 0.29, ruido: 0.03, umbralCalzo: 0.24, pasaConValido: 0.97, bluffPaso: 0.08, dudaPaso: 0.3, subeSiSeguro: 0.55 },
+  medio: { umbralApertura: 0.74, umbralDuda: 0.33, ruido: 0.06, umbralCalzo: 0.27, pasaConValido: 0.85, bluffPaso: 0.05, dudaPaso: 0.16, subeSiSeguro: 0.6 },
+  // Avanzado: muy fino —abre seguro, calza y pasa óptimo, farolea de vez en cuando.
+  avanzado: { umbralApertura: 0.85, umbralDuda: 0.3, ruido: 0.025, umbralCalzo: 0.22, pasaConValido: 0.98, bluffPaso: 0.1, dudaPaso: 0.33, subeSiSeguro: 0.55 },
 };
 
 const PINTAS: Pinta[] = [2, 3, 4, 5, 6, 1]; // ases al final
@@ -86,25 +86,11 @@ export function decidirBot(
 
   const probUnidad = (Q: Pinta) => (asesComodin && Q !== 1 ? 1 / 3 : 1 / 6);
   const propiosDe = (Q: Pinta) => contarPinta(mano, Q, asesComodin);
-  const estimadoDe = (Q: Pinta) => propiosDe(Q) + desconocidos * probUnidad(Q);
   const probAlMenos = (Q: Pinta, cant: number) =>
     binomColaMayorIgual(desconocidos, cant - propiosDe(Q), probUnidad(Q));
   const probExacto = (Q: Pinta, cant: number) => {
     const faltan = cant - propiosDe(Q);
     return faltan < 0 ? 0 : binomPMF(desconocidos, faltan, probUnidad(Q));
-  };
-
-  const mejorPinta = (): Pinta => {
-    let mejor: Pinta = 5;
-    let score = -1;
-    for (const Q of PINTAS) {
-      const s = propiosDe(Q) * 2 + estimadoDe(Q);
-      if (s > score) {
-        score = s;
-        mejor = Q;
-      }
-    }
-    return mejor;
   };
 
   const actual = publico.apuestaActual;
@@ -113,11 +99,25 @@ export function decidirBot(
   // Mejor apuesta válida (apertura o subida) y su credibilidad.
   const construirApuesta = (): { apuesta: Apuesta; prob: number } => {
     if (!actual) {
-      const Q = mejorPinta();
+      // Apertura A PRUEBA DE SICILIANA: si la dudan de inmediato, los ases NO
+      // cuentan como comodín. Calculamos la apertura segura bajo ese conteo
+      // (probabilidad 1/6 por dado, contando solo literales). Así abrir y que te
+      // duden al toque normalmente lo paga el que duda, no el bot.
+      const propiosSic = (Q: Pinta) => contarPinta(mano, Q, false);
+      let Q: Pinta = 5;
+      let best = -1;
+      for (const cand of PINTAS) {
+        const score = propiosSic(cand) * 2 + desconocidos / 6;
+        if (score > best) {
+          best = score;
+          Q = cand;
+        }
+      }
+      const probSic = (c: number) => binomColaMayorIgual(desconocidos, c - propiosSic(Q), 1 / 6);
       let c = 1;
-      while (probAlMenos(Q, c + 1) >= P.umbralApertura) c++;
+      while (probSic(c + 1) >= P.umbralApertura) c++;
       const cantidad = Math.max(1, c);
-      return { apuesta: { cantidad, pinta: Q }, prob: probAlMenos(Q, cantidad) };
+      return { apuesta: { cantidad, pinta: Q }, prob: probSic(cantidad) };
     }
     const pintasPosibles: Pinta[] = obligadoBloqueaPinta ? [actual.pinta] : PINTAS;
     const cands: { apuesta: Apuesta; prob: number }[] = [];
