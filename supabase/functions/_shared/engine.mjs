@@ -182,7 +182,9 @@ function crearJuego(jugadores, reglas = REGLAS_POR_DEFECTO) {
     // Se rellenan en iniciarRonda; acá sólo fijamos la cantidad de dados.
     dados: new Array(reglas.dadosIniciales).fill(1),
     eliminado: false,
-    yaJugoObligado: false
+    eliminadoEnRonda: null,
+    yaJugoObligado: false,
+    stats: { dadosPerdidos: 0, calzosAcertados: 0 }
   }));
   return {
     reglas,
@@ -202,6 +204,7 @@ function crearJuego(jugadores, reglas = REGLAS_POR_DEFECTO) {
     fase: "LOBBY",
     numeroRonda: 0,
     ganadorId: null,
+    ordenEliminacion: [],
     ultimaResolucion: null
   };
 }
@@ -362,6 +365,9 @@ function aplicarDesafio(estado, jugadorId, tipo) {
   for (const j of jugadoresActivos(e)) dadosRevelados[j.id] = [...j.dados];
   const resolucion = tipo === "DUDO" ? resolverDudo(e, jugadorId, apuesta, real, asesComodin, siciliana, dadosRevelados) : resolverCalzo(e, jugadorId, apuesta, real, asesComodin, dadosRevelados);
   aplicarConsecuencias(e, resolucion);
+  if (tipo === "CALZO" && resolucion.perdedorId === null) {
+    jugadorPorId(e, jugadorId).stats.calzosAcertados += 1;
+  }
   e.ultimaResolucion = resolucion;
   const activos = jugadoresActivos(e);
   if (activos.length <= 1) {
@@ -421,10 +427,17 @@ function aplicarConsecuencias(estado, r) {
   }
   if (r.perdedorId) {
     const perdedor = jugadorPorId(estado, r.perdedorId);
+    let perdidos = 0;
     for (let i = 0; i < r.dadosPerdidos && perdedor.dados.length > 0; i++) {
       perdedor.dados.pop();
+      perdidos++;
     }
-    if (perdedor.dados.length === 0) perdedor.eliminado = true;
+    perdedor.stats.dadosPerdidos += perdidos;
+    if (perdedor.dados.length === 0 && !perdedor.eliminado) {
+      perdedor.eliminado = true;
+      perdedor.eliminadoEnRonda = estado.numeroRonda;
+      estado.ordenEliminacion.push(perdedor.id);
+    }
     proximoAbridor = r.perdedorId;
   }
   estado.abridorRondaId = proximoAbridor;
@@ -438,7 +451,9 @@ function proyeccionPublica(estado) {
       nombre: j.nombre,
       cantidadDados: j.dados.length,
       eliminado: j.eliminado,
-      yaJugoObligado: j.yaJugoObligado
+      eliminadoEnRonda: j.eliminadoEnRonda,
+      yaJugoObligado: j.yaJugoObligado,
+      stats: { ...j.stats }
     })),
     ordenAsientos: [...estado.ordenAsientos],
     sentido: estado.sentido,
@@ -456,6 +471,7 @@ function proyeccionPublica(estado) {
     fase: estado.fase,
     numeroRonda: estado.numeroRonda,
     ganadorId: estado.ganadorId,
+    ordenEliminacion: [...estado.ordenEliminacion],
     totalDadosEnMesa: totalDadosEnMesa(estado),
     dadosIniciales: estado.reglas.dadosIniciales,
     pasoPendienteJugadorId: estado.pasoPendienteJugadorId,

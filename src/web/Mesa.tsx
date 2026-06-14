@@ -46,9 +46,57 @@ export function Mesa({
   }, [p.fase, p.numeroRonda]);
 
   if (p.fase === "FIN_JUEGO") {
+    // Puesto: el ganador es 1º; el resto según el orden de eliminación inverso
+    // (el último en caer es 2º, el primero en caer va último).
+    const totalEliminados = p.ordenEliminacion.length;
+    const puestoDe = (id: string) => {
+      if (id === p.ganadorId) return 1;
+      const idx = p.ordenEliminacion.indexOf(id);
+      return idx === -1 ? 1 : totalEliminados + 1 - idx;
+    };
+    const ranking = [...p.jugadores].sort((a, b) => puestoDe(a.id) - puestoDe(b.id));
+    const gane = p.ganadorId === snap.miId;
+    const medalla = (n: number) => (n === 1 ? "🥇" : n === 2 ? "🥈" : n === 3 ? "🥉" : `${n}º`);
+
     return (
       <div className="mesa fin">
-        <h1>🏆 ¡Ganó {nombre(p.ganadorId)}!</h1>
+        <h1 className="fin-titulo">{gane ? "🏆 ¡Ganaste!" : `🏆 Ganó ${nombre(p.ganadorId)}`}</h1>
+        <ol className="resultados">
+          {ranking.map((j) => {
+            const puesto = puestoDe(j.id);
+            const soyYo = j.id === snap.miId;
+            return (
+              <li
+                key={j.id}
+                className={
+                  "resultado" +
+                  (puesto === 1 ? " resultado--campeon" : "") +
+                  (soyYo ? " resultado--yo" : "")
+                }
+              >
+                <span className="res-puesto">{medalla(puesto)}</span>
+                <div className="res-info">
+                  <div className="res-nombre">
+                    {j.nombre}
+                    {soyYo && <span className="yo"> (tú)</span>}
+                    {j.yaJugoObligado && <span className="res-tag">obligó</span>}
+                  </div>
+                  <div className="res-estado">
+                    {puesto === 1
+                      ? `Campeón · ${j.cantidadDados} ${j.cantidadDados === 1 ? "dado" : "dados"} en pie`
+                      : `Eliminado en la ronda ${j.eliminadoEnRonda}`}
+                  </div>
+                </div>
+                <div className="res-stats">
+                  <span title="Dados perdidos">💀 {j.stats.dadosPerdidos}</span>
+                  {j.stats.calzosAcertados > 0 && (
+                    <span title="Calzos acertados">🎯 {j.stats.calzosAcertados}</span>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ol>
         <button className="btn btn--apostar grande" onClick={salir}>
           Volver al menú
         </button>

@@ -198,6 +198,7 @@ describe("calzo", () => {
     expect(e.ultimaResolucion!.cantidadReal).toBe(3); // 2 de A + 1 de B
     expect(e.ultimaResolucion!.ganadorDadoId).toBe("A");
     expect(jugadorPorId(e, "A")!.dados.length).toBe(5);
+    expect(jugadorPorId(e, "A")!.stats.calzosAcertados).toBe(1); // se registra para el resumen
   });
 
   it("no se puede calzar bajo la mitad de los dados iniciales", () => {
@@ -343,5 +344,24 @@ describe("fin de juego", () => {
     expect(e.ultimaResolucion!.perdedorId).toBe("A");
     expect(e.ultimaResolucion!.dadosPerdidos).toBe(1);
     expect(jugadorPorId(e, "A")!.dados.length).toBe(4);
+  });
+
+  it("registra el resumen final: dados perdidos, ronda y orden de eliminación", () => {
+    let e = nuevaPartida(); // A, B
+    e.abridorRondaId = "A";
+    e = iniciarRonda(e, { rng: rng0 }); // numeroRonda = 1
+    setDados(e, "A", [5, 5, 5, 5, 5]);
+    setDados(e, "B", [2]); // B con 1 dado caerá esta ronda
+    e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "A", apuesta: { cantidad: 1, pinta: 5 } });
+    e = aplicarAccion(e, { tipo: "DUDAR", jugadorId: "B" });
+    expect(e.fase).toBe("FIN_JUEGO");
+    expect(e.ganadorId).toBe("A");
+    // Perdedor: 1 dado perdido, eliminado en la ronda 1, registrado en el orden.
+    expect(jugadorPorId(e, "B")!.stats.dadosPerdidos).toBe(1);
+    expect(jugadorPorId(e, "B")!.eliminadoEnRonda).toBe(1);
+    expect(e.ordenEliminacion).toEqual(["B"]);
+    // Ganador: sin eliminación.
+    expect(jugadorPorId(e, "A")!.eliminadoEnRonda).toBeNull();
+    expect(jugadorPorId(e, "A")!.stats.dadosPerdidos).toBe(0);
   });
 });

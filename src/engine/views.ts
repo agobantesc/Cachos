@@ -13,6 +13,7 @@
  */
 import type {
   Apuesta,
+  EstadisticasJugador,
   EstadoJuego,
   EventoRonda,
   Fase,
@@ -35,7 +36,11 @@ export interface JugadorPublico {
   nombre: string;
   cantidadDados: number;
   eliminado: boolean;
+  /** Ronda en que fue eliminado (null si sigue / ganó). */
+  eliminadoEnRonda: number | null;
   yaJugoObligado: boolean;
+  /** Estadísticas acumuladas para el resumen final. */
+  stats: EstadisticasJugador;
 }
 
 /** Estado público de la mesa (sin dados secretos). */
@@ -63,6 +68,8 @@ export interface EstadoPublico {
   fase: Fase;
   numeroRonda: number;
   ganadorId: string | null;
+  /** Ids en el orden en que fueron eliminados (para el puesto final). */
+  ordenEliminacion: string[];
   totalDadosEnMesa: number;
   /** Dados con que parte cada jugador (para saber quién puede pasar). */
   dadosIniciales: number;
@@ -84,7 +91,9 @@ export function proyeccionPublica(estado: EstadoJuego): EstadoPublico {
       nombre: j.nombre,
       cantidadDados: j.dados.length,
       eliminado: j.eliminado,
+      eliminadoEnRonda: j.eliminadoEnRonda,
       yaJugoObligado: j.yaJugoObligado,
+      stats: { ...j.stats },
     })),
     ordenAsientos: [...estado.ordenAsientos],
     sentido: estado.sentido,
@@ -102,6 +111,7 @@ export function proyeccionPublica(estado: EstadoJuego): EstadoPublico {
     fase: estado.fase,
     numeroRonda: estado.numeroRonda,
     ganadorId: estado.ganadorId,
+    ordenEliminacion: [...estado.ordenEliminacion],
     totalDadosEnMesa: totalDadosEnMesa(estado),
     dadosIniciales: estado.reglas.dadosIniciales,
     pasoPendienteJugadorId: estado.pasoPendienteJugadorId,

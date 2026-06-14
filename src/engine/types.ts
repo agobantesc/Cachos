@@ -41,6 +41,14 @@ export type EventoRonda =
  */
 export type Sentido = 1 | -1;
 
+/** Estadísticas acumuladas de un jugador durante toda la partida. */
+export interface EstadisticasJugador {
+  /** Total de dados perdidos (dudos perdidos, calzos fallidos, pasos dudados). */
+  dadosPerdidos: number;
+  /** Calzos acertados (la cantidad era exacta). */
+  calzosAcertados: number;
+}
+
 export interface Jugador {
   id: string;
   nombre: string;
@@ -48,11 +56,15 @@ export interface Jugador {
   dados: Pinta[];
   /** true cuando el jugador se quedó sin dados. */
   eliminado: boolean;
+  /** Número de ronda en que fue eliminado (null si sigue en pie / ganó). */
+  eliminadoEnRonda: number | null;
   /**
    * true cuando este jugador ya vivió su ronda de "obligado".
    * (En esta casa el obligado se juega la primera vez que el jugador llega a 1 dado.)
    */
   yaJugoObligado: boolean;
+  /** Estadísticas acumuladas para el resumen final. */
+  stats: EstadisticasJugador;
 }
 
 /** Fase de la máquina de estados del juego. */
@@ -129,6 +141,8 @@ export interface EstadoJuego {
   fase: Fase;
   numeroRonda: number;
   ganadorId: string | null;
+  /** Ids en el orden en que fueron eliminados (para calcular el puesto final). */
+  ordenEliminacion: string[];
   /** Detalle de la última resolución (para que la UI muestre el reveal). */
   ultimaResolucion: ResolucionRonda | null;
 }

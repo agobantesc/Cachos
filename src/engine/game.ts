@@ -165,7 +165,9 @@ export function crearJuego(
     // Se rellenan en iniciarRonda; acá sólo fijamos la cantidad de dados.
     dados: new Array<Pinta>(reglas.dadosIniciales).fill(1),
     eliminado: false,
+    eliminadoEnRonda: null,
     yaJugoObligado: false,
+    stats: { dadosPerdidos: 0, calzosAcertados: 0 },
   }));
 
   return {
@@ -186,6 +188,7 @@ export function crearJuego(
     fase: "LOBBY",
     numeroRonda: 0,
     ganadorId: null,
+    ordenEliminacion: [],
     ultimaResolucion: null,
   };
 }
@@ -433,6 +436,9 @@ function aplicarDesafio(
       : resolverCalzo(e, jugadorId, apuesta, real, asesComodin, dadosRevelados);
 
   aplicarConsecuencias(e, resolucion);
+  if (tipo === "CALZO" && resolucion.perdedorId === null) {
+    jugadorPorId(e, jugadorId)!.stats.calzosAcertados += 1;
+  }
   e.ultimaResolucion = resolucion;
 
   const activos = jugadoresActivos(e);
@@ -521,10 +527,17 @@ function aplicarConsecuencias(estado: EstadoJuego, r: ResolucionRonda): void {
 
   if (r.perdedorId) {
     const perdedor = jugadorPorId(estado, r.perdedorId)!;
+    let perdidos = 0;
     for (let i = 0; i < r.dadosPerdidos && perdedor.dados.length > 0; i++) {
       perdedor.dados.pop();
+      perdidos++;
     }
-    if (perdedor.dados.length === 0) perdedor.eliminado = true;
+    perdedor.stats.dadosPerdidos += perdidos;
+    if (perdedor.dados.length === 0 && !perdedor.eliminado) {
+      perdedor.eliminado = true;
+      perdedor.eliminadoEnRonda = estado.numeroRonda;
+      estado.ordenEliminacion.push(perdedor.id);
+    }
     // El perdedor abre la siguiente ronda. Si quedó eliminado, iniciarRonda
     // pasa el turno al jugador a su derecha.
     proximoAbridor = r.perdedorId;

@@ -262,8 +262,30 @@ input:focus { border-color: var(--oro); box-shadow: 0 0 0 2px rgba(200, 162, 74,
 .reveal-cuenta { font-size: 12px; color: var(--tenue); }
 .siguiente { text-align: center; display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
 
-.fin { text-align: center; gap: 20px; padding-top: 12vh; }
-.fin h1 { font-size: 34px; color: var(--oro); }
+.fin { text-align: center; gap: 18px; padding-top: 7vh; display: flex; flex-direction: column; align-items: center; }
+.fin h1, .fin-titulo { font-size: 32px; color: var(--oro); }
+
+.resultados {
+  list-style: none; margin: 4px 0; padding: 0; width: 100%; max-width: 460px;
+  display: flex; flex-direction: column; gap: 8px; text-align: left;
+}
+.resultado {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--humo); border: 1px solid var(--linea); border-radius: 14px;
+  padding: 10px 14px;
+}
+.resultado--campeon { border-color: var(--oro); box-shadow: 0 0 18px rgba(200, 162, 74, 0.28); }
+.resultado--yo { background: #2a241b; }
+.res-puesto { font-size: 24px; min-width: 32px; text-align: center; font-family: var(--display); color: var(--hueso); }
+.res-info { flex: 1; min-width: 0; }
+.res-nombre { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.res-nombre .yo { color: var(--oro); font-weight: 400; }
+.res-tag {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+  background: var(--linea); color: var(--hueso); border-radius: 6px; padding: 1px 6px;
+}
+.res-estado { font-size: 12.5px; color: var(--tenue); margin-top: 2px; }
+.res-stats { display: flex; gap: 12px; font-size: 14px; color: var(--hueso); white-space: nowrap; }
 
 /* Sello de versión: discreto, fijo en una esquina. Sirve para confirmar que el
    navegador cargó la última versión (y no una cacheada por el service worker). */
