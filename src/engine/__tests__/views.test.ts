@@ -60,13 +60,23 @@ describe("vistaJugador", () => {
   });
 
   it("en ronda cerrada, el jugador con 2+ dados recibe su mano en null (a ciegas)", () => {
-    let e = partida();
+    // 3 jugadores: con 2 ya no se obliga (no hay ronda cerrada).
+    let e = crearJuego(
+      [
+        { id: "A", nombre: "Ana" },
+        { id: "B", nombre: "Beto" },
+        { id: "C", nombre: "Cata" },
+      ],
+      crearReglas(),
+    );
     setDados(e, "A", [1]);
     setDados(e, "B", [5, 5, 5]);
+    setDados(e, "C", [5, 5, 5, 5, 5]);
     e.abridorRondaId = "A";
     e = iniciarRonda(e, { rng: rng0 });
     setDados(e, "A", [1]);
     setDados(e, "B", [5, 5, 1]);
+    expect(e.esRondaCerrada).toBe(true);
     expect(vistaJugador(e, "A").miMano).toEqual([1]); // 1 dado -> ve
     expect(vistaJugador(e, "B").miMano).toBeNull(); // 3 dados -> a ciegas
   });

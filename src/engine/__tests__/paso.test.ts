@@ -120,10 +120,12 @@ describe("pasar", () => {
   });
 
   it("no se puede pasar en una ronda de obligado", () => {
+    // 3 jugadores: con 2 ya no se obliga.
     let e = crearJuego(
       [
         { id: "A", nombre: "A" },
         { id: "B", nombre: "B" },
+        { id: "C", nombre: "C" },
       ],
       crearReglas(),
     );
@@ -132,6 +134,7 @@ describe("pasar", () => {
     e = iniciarRonda(e, { rng: rng0 });
     setDados(e, "A", [1]);
     setDados(e, "B", [5, 5, 5, 5, 5]);
+    setDados(e, "C", [5, 5, 5, 5, 5]);
     expect(e.esRondaObligado).toBe(true);
     // A abre; el turno pasa a B (5 dados), que intenta pasar -> prohibido en obligado.
     e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "A", apuesta: { cantidad: 1, pinta: 5 } });

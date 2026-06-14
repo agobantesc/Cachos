@@ -215,14 +215,17 @@ describe("calzo", () => {
 });
 
 describe("obligado (variantes de la casa)", () => {
+  // 3 jugadores: con 2 ya no se obliga. A abre obligado con 1 dado.
   function partidaObligado() {
-    let e = nuevaPartida();
+    let e = nuevaPartida(["A", "B", "C"]);
     setDados(e, "A", [1]); // A con 1 dado será el abridor obligado
     setDados(e, "B", [5, 5, 5]);
+    setDados(e, "C", [5, 5, 5, 5, 5]);
     e.abridorRondaId = "A";
     e = iniciarRonda(e, { rng: rng0 });
     setDados(e, "A", [1]);
     setDados(e, "B", [5, 5, 1]);
+    setDados(e, "C", [2, 3, 4, 6, 6]); // sin quinas ni ases, no altera el conteo
     return e;
   }
 
@@ -234,10 +237,10 @@ describe("obligado (variantes de la casa)", () => {
     expect(vistaDeJugador(e, "A")["A"]).toEqual([1]); // A ve su dado (tiene 1)
     expect(vistaDeJugador(e, "B")["B"]).toBeNull(); // B juega a ciegas (3 dados)
 
-    // A abre, B sube manteniendo la pinta, A duda (no siciliana).
+    // A abre, B sube manteniendo la pinta, C duda (no siciliana).
     e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "A", apuesta: { cantidad: 3, pinta: 5 } });
     e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "B", apuesta: { cantidad: 4, pinta: 5 } });
-    e = aplicarAccion(e, { tipo: "DUDAR", jugadorId: "A" });
+    e = aplicarAccion(e, { tipo: "DUDAR", jugadorId: "C" });
     expect(e.ultimaResolucion!.asesComoComodin).toBe(false);
     expect(e.ultimaResolucion!.cantidadReal).toBe(2); // sólo las 2 quinas, el as no suma
   });
@@ -266,6 +269,30 @@ describe("obligado (variantes de la casa)", () => {
     expect(e.ultimaResolucion!.perdedorId).toBe("B"); // la apuesta se cumple -> pierde el dudador
     expect(e.ultimaResolucion!.dadosPerdidos).toBe(1); // 1 dado, no 2
     expect(jugadorPorId(e, "B")!.dados.length).toBe(2);
+  });
+
+  it("un jugador sólo puede obligar UNA vez en toda la partida", () => {
+    let e = partidaObligado(); // A obliga con 1 dado -> queda marcado
+    expect(e.esRondaObligado).toBe(true);
+    expect(jugadorPorId(e, "A")!.yaJugoObligado).toBe(true);
+    // Otra ronda con A de abridor y todavía con 1 dado: ya NO obliga.
+    e.abridorRondaId = "A";
+    e = iniciarRonda(e, { rng: rng0 });
+    setDados(e, "A", [1]);
+    expect(jugadorPorId(e, "A")!.dados.length).toBe(1);
+    expect(e.esRondaObligado).toBe(false);
+  });
+
+  it("no se obliga cuando quedan sólo 2 jugadores", () => {
+    let e = nuevaPartida(); // A, B
+    setDados(e, "A", [1]);
+    setDados(e, "B", [5, 5, 5, 5, 5]);
+    e.abridorRondaId = "A";
+    e = iniciarRonda(e, { rng: rng0 });
+    setDados(e, "A", [1]);
+    expect(jugadorPorId(e, "A")!.dados.length).toBe(1);
+    expect(e.esRondaObligado).toBe(false); // con 2 jugadores no hay obligado
+    expect(jugadorPorId(e, "A")!.yaJugoObligado).toBe(false); // no gastó su obligación
   });
 });
 

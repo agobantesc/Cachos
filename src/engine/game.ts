@@ -237,9 +237,14 @@ export function iniciarRonda(estado: EstadoJuego, opciones: OpcionesRonda = {}):
     if (!j.eliminado) j.dados = agitarCacho(j.dados.length, rng);
   }
 
-  // Obligado: se gatilla la primera vez que el abridor abre con 1 dado.
+  // Obligado: se gatilla la primera vez que el abridor abre con 1 dado. Cada
+  // jugador sólo puede obligar UNA vez en toda la partida (yaJugoObligado), y no
+  // se obliga cuando quedan sólo 2 jugadores en pie.
   const gatillaObligado =
-    e.reglas.obligadoActivo && abridor.dados.length === 1 && !abridor.yaJugoObligado;
+    e.reglas.obligadoActivo &&
+    jugadoresActivos(e).length > 2 &&
+    abridor.dados.length === 1 &&
+    !abridor.yaJugoObligado;
   e.esRondaObligado = gatillaObligado;
   e.esRondaCerrada = gatillaObligado && e.reglas.obligadoCerradoParaOtros;
   if (gatillaObligado) abridor.yaJugoObligado = true;

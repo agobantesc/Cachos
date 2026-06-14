@@ -228,7 +228,7 @@ function iniciarRonda(estado, opciones = {}) {
   for (const j of e.jugadores) {
     if (!j.eliminado) j.dados = agitarCacho(j.dados.length, rng);
   }
-  const gatillaObligado = e.reglas.obligadoActivo && abridor.dados.length === 1 && !abridor.yaJugoObligado;
+  const gatillaObligado = e.reglas.obligadoActivo && jugadoresActivos(e).length > 2 && abridor.dados.length === 1 && !abridor.yaJugoObligado;
   e.esRondaObligado = gatillaObligado;
   e.esRondaCerrada = gatillaObligado && e.reglas.obligadoCerradoParaOtros;
   if (gatillaObligado) abridor.yaJugoObligado = true;
