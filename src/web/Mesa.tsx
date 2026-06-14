@@ -67,9 +67,9 @@ export function Mesa({ snap, transporte }: { snap: Instantanea; transporte: Tran
       )}
 
       <section className="mi-mano">
-        <div className="mi-mano-titulo">Tu cacho{snap.esLocal ? ` · ${turnoNombre}` : ""}</div>
+        <div className="mi-mano-titulo">Tu mano{snap.esLocal ? ` · ${turnoNombre}` : ""}</div>
         {snap.miMano ? (
-          <ManoDados caras={snap.miMano} />
+          <ManoDados caras={snap.miMano} tam={56} />
         ) : (
           <div className="a-ciegas">🥤 A ciegas (ronda cerrada)</div>
         )}

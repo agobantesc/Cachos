@@ -11,8 +11,8 @@ describe("App (inicio)", () => {
   it("renderiza la home con las dos formas de jugar", () => {
     const html = renderToStaticMarkup(<App />);
     expect(html).toContain("Cachos");
-    expect(html).toContain("Jugar local");
-    expect(html).toContain("Jugar en línea");
+    expect(html).toContain("Mesa local");
+    expect(html).toContain("Mesa en línea");
   });
 });
 
@@ -35,7 +35,7 @@ describe("Mesa (en juego)", () => {
     expect(html).toContain("Beto");
     expect(html).toContain("Cata");
     expect(html).toContain("quinas"); // "2 quinas"
-    expect(html).toContain("Tu cacho");
+    expect(html).toContain("Tu mano");
     expect(html).toContain("dado"); // se renderizan dados (clases .dado)
   });
 

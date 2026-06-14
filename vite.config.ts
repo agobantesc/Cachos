@@ -14,11 +14,11 @@ export default defineConfig({
       injectRegister: "auto",
       includeAssets: ["cacho.svg"],
       manifest: {
-        name: "Cachos — Dudo chileno",
-        short_name: "Cachos",
-        description: "Cacho/Dudo para jugar remoto con los amigos.",
-        theme_color: "#0b3d2e",
-        background_color: "#0b3d2e",
+        name: "La Asociación de Cachos",
+        short_name: "Asociación",
+        description: "El dudo clandestino para jugar con los socios.",
+        theme_color: "#0c0d10",
+        background_color: "#0c0d10",
         display: "standalone",
         orientation: "portrait",
         icons: [

@@ -20,11 +20,11 @@ function Lobby({ snap, transporte }: { snap: ReturnType<Transporte["instantanea"
   const soyAnfitrion = snap.anfitrionId === snap.miId;
   return (
     <div className="pantalla lobby">
-      <h1>Sala</h1>
+      <h1>Salón privado</h1>
       {snap.codigo && (
         <div className="codigo-sala">
-          Código: <strong>{snap.codigo}</strong>
-          <div className="ayuda">Comparte este código con tus amigos.</div>
+          Contraseña: <strong>{snap.codigo}</strong>
+          <div className="ayuda">Pásala solo a los socios de confianza.</div>
         </div>
       )}
       <ul className="lista-jugadores">
@@ -58,13 +58,13 @@ function Inicio({ onListo }: { onListo: (t: Transporte) => void }) {
   return (
     <div className="pantalla home">
       <div className="logo">🎲</div>
-      <h1>Cachos</h1>
-      <p className="sub">Dudo chileno para jugar con los amigos</p>
+      <h1>La Asociación<br />de Cachos</h1>
+      <p className="sub">Solo para socios. El dudo se juega en las sombras.</p>
       <button className="btn btn--apostar grande" onClick={() => setVista("local")}>
-        Jugar local (pasar el teléfono)
+        Mesa local (pasar el teléfono)
       </button>
       <button className="btn btn--dudar grande" onClick={() => setVista("online")}>
-        Jugar en línea
+        Mesa en línea
       </button>
     </div>
   );
