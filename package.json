@@ -6,10 +6,12 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:engine": "node scripts/bundle-engine.mjs"
   },
   "license": "MIT",
   "devDependencies": {
+    "esbuild": "^0.28.1",
     "typescript": "^5.6.3",
     "vitest": "^2.1.8"
   }

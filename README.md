@@ -50,10 +50,13 @@ console.log(estado.ultimaResolucion); // quién perdió, cuánto, dados revelado
 ## Arquitectura objetivo
 
 Juego de **información oculta** → necesita un **servidor autoritativo** que guarde
-todos los dados y a cada iPhone le muestre sólo los suyos (ver `vistaDeJugador`).
+todos los dados y a cada iPhone le muestre sólo lo que puede ver:
+
+- `proyeccionPublica(estado)` → la mesa (vasos, turno, apuesta, revelaciones).
+- `vistaJugador(estado, id)` → la mesa pública + la mano propia (o null si juega a ciegas).
 
 ```
-iPhone (Safari/PWA)  ──►  Servidor autoritativo (este motor + salas + tiempo real)
+iPhone (Safari/PWA)  ──►  Edge Function (este motor)  ──►  Postgres + Realtime (Supabase)
 ```
 
 Se reparte por **link** (PWA), sin App Store: cada amigo abre la URL y "Agrega a
@@ -61,9 +64,10 @@ pantalla de inicio".
 
 ## Roadmap
 
-- [x] **Fase 1 — Motor de reglas** (este repo)
-- [ ] **Fase 2 — Salas + tiempo real** (crear/unirse con código, sincronizar estado, repartir dados secretos)
-- [ ] **Fase 3 — UI iPhone** (dados, animación de agitar el cacho, táctil)
+- [x] **Fase 1 — Motor de reglas** (`src/engine`, 33 tests)
+- [~] **Fase 2 — Salas + tiempo real** (Supabase): esquema + RLS + Edge Function
+  autoritativa listos para desplegar → ver [`supabase/README.md`](supabase/README.md)
+- [ ] **Fase 3 — UI iPhone** (PWA React: dados, agitar el cacho, táctil)
 - [ ] **Fase 4 — Pulido** (reconexión, sonidos, chat)
 
 Reglas completas implementadas: ver [`docs/RULES.md`](docs/RULES.md).
