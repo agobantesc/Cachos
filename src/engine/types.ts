@@ -109,6 +109,8 @@ export interface ResolucionRonda {
   pasadorId?: string | null;
   /** (Solo PASO) si el paso estaba validado (5 iguales, todos distintos o full). */
   pasoEraValido?: boolean;
+  /** (Solo CALZO) jugador que calzó (gane o pierda el calzo). */
+  calzadorId?: string | null;
 }
 
 export interface EstadoJuego {

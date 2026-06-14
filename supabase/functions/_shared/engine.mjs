@@ -406,7 +406,8 @@ function resolverCalzo(estado, calzadorId, apuesta, real, asesComodin, dadosReve
     cantidadReal: real,
     asesComoComodin: asesComodin,
     siciliana: false,
-    dadosRevelados
+    dadosRevelados,
+    calzadorId
   };
   if (exacto) {
     return {
@@ -439,6 +440,9 @@ function aplicarConsecuencias(estado, r) {
       estado.ordenEliminacion.push(perdedor.id);
     }
     proximoAbridor = r.perdedorId;
+  }
+  if (proximoAbridor === null && r.tipo === "CALZO" && r.calzadorId) {
+    proximoAbridor = r.calzadorId;
   }
   estado.abridorRondaId = proximoAbridor;
 }

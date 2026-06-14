@@ -218,11 +218,11 @@ function Revelacion({
 
   const texto = esPaso
     ? `${nombre(res.pasadorId ?? null)} pasó. El paso ${res.pasoEraValido ? "estaba validado" : "no estaba validado"}: ${nombre(res.perdedorId)} pierde un dado.`
-    : res.tipo === "CALZO" && res.ganadorDadoId
-      ? `¡Calzó! Había exactamente ${res.cantidadReal} ${PLURAL_PINTA[res.pinta]}. ${nombre(res.ganadorDadoId)} recupera un dado.`
-      : res.tipo === "CALZO"
-        ? `Calzo fallido: había ${res.cantidadReal}, no ${res.cantidadDeclarada}. ${nombre(res.perdedorId)} pierde un dado.`
-        : `Se dudó ${res.cantidadDeclarada} ${PLURAL_PINTA[res.pinta]}: había ${res.cantidadReal}. ${nombre(res.perdedorId)} pierde ${res.dadosPerdidos} dado${res.dadosPerdidos > 1 ? "s" : ""}.`;
+    : res.tipo === "CALZO"
+      ? res.perdedorId === null
+        ? `¡${nombre(res.calzadorId ?? null)} calzó! Había justo ${res.cantidadReal} ${PLURAL_PINTA[res.pinta]}.${res.ganadorDadoId ? " Recupera un dado." : " (ya estaba al máximo de dados)."}`
+        : `Calzo fallido: ${nombre(res.calzadorId ?? res.perdedorId)} dijo ${res.cantidadDeclarada} pero había ${res.cantidadReal}. Pierde un dado.`
+      : `Se dudó ${res.cantidadDeclarada} ${PLURAL_PINTA[res.pinta]}: había ${res.cantidadReal}. ${nombre(res.perdedorId)} pierde ${res.dadosPerdidos} dado${res.dadosPerdidos > 1 ? "s" : ""}.`;
 
   const soyAbridor = snap.miId === publico.abridorRondaId;
   const iniciar = (sentido: Sentido) => transporte.siguienteRonda(sentido);

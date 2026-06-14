@@ -502,6 +502,7 @@ function resolverCalzo(
     asesComoComodin: asesComodin,
     siciliana: false,
     dadosRevelados,
+    calzadorId,
   };
 
   if (exacto) {
@@ -541,6 +542,12 @@ function aplicarConsecuencias(estado: EstadoJuego, r: ResolucionRonda): void {
     // El perdedor abre la siguiente ronda. Si quedó eliminado, iniciarRonda
     // pasa el turno al jugador a su derecha.
     proximoAbridor = r.perdedorId;
+  }
+
+  // Un calzo lo abre quien calzó, aunque haya acertado SIN recuperar dado (ya
+  // estaba al máximo): en ese caso no hay ganador de dado ni perdedor.
+  if (proximoAbridor === null && r.tipo === "CALZO" && r.calzadorId) {
+    proximoAbridor = r.calzadorId;
   }
 
   estado.abridorRondaId = proximoAbridor;

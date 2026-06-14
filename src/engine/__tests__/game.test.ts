@@ -201,6 +201,24 @@ describe("calzo", () => {
     expect(jugadorPorId(e, "A")!.stats.calzosAcertados).toBe(1); // se registra para el resumen
   });
 
+  it("calzo exacto con los 5 dados (al máximo): acierta sin recuperar y abre el calzador", () => {
+    let e = iniciarRonda(nuevaPartida(["A", "B", "C"]), { rng: rng0 });
+    setDados(e, "A", [5, 5, 3, 4, 6]); // 2 quinas, ya tiene los 5 dados (máximo)
+    setDados(e, "B", [5, 2, 6, 6, 4]); // 1 quina
+    setDados(e, "C", [5, 2, 3, 4, 6]); // 1 quina  -> total 4 quinas
+    e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "A", apuesta: { cantidad: 3, pinta: 5 } });
+    e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "B", apuesta: { cantidad: 4, pinta: 5 } });
+    e = aplicarAccion(e, { tipo: "CALZAR", jugadorId: "C" });
+    const r = e.ultimaResolucion!;
+    expect(r.cantidadReal).toBe(4); // calzó justo
+    expect(r.perdedorId).toBeNull(); // nadie pierde
+    expect(r.dadosPerdidos).toBe(0);
+    expect(r.ganadorDadoId).toBeNull(); // ya estaba al máximo, no recupera
+    expect(r.calzadorId).toBe("C");
+    expect(jugadorPorId(e, "C")!.stats.calzosAcertados).toBe(1);
+    expect(e.abridorRondaId).toBe("C"); // abre quien calzó (antes quedaba en null)
+  });
+
   it("no se puede calzar bajo la mitad de los dados iniciales", () => {
     const e = nuevaPartida(); // total inicial = 10, mitad = 5
     setDados(e, "A", [5, 5]);
