@@ -47,7 +47,9 @@ export function BarraAcciones({
   const hayPaso = publico.pasoPendienteJugadorId !== null;
   const nombrePasador =
     publico.jugadores.find((j) => j.id === publico.pasoPendienteJugadorId)?.nombre ?? "Alguien";
-  const puedoPasar = !hayPaso && !publico.esRondaObligado && misDados === publico.dadosIniciales;
+  const yaPase = publico.historialRonda.some((ev) => ev.tipo === "PASO" && ev.jugadorId === miId);
+  const puedoPasar =
+    !hayPaso && !yaPase && !publico.esRondaObligado && misDados === publico.dadosIniciales;
 
   if (!esMiTurno) {
     return (

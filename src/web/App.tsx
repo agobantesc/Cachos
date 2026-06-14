@@ -236,6 +236,10 @@ function Reglas({ volver }: { volver: () => void }) {
         <p>
           Un paso se valida con <b>5 iguales</b>, <b>todos distintos</b> (escalera) o <b>full</b> (3 y 2).
         </p>
+        <p>
+          Solo puedes pasar <b>una vez por ronda</b>, y no puedes pasar justo{" "}
+          <b>después de otro paso</b>.
+        </p>
       </section>
 
       <section className="regla-bloque destacado">

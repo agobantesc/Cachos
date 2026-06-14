@@ -140,8 +140,9 @@ export function decidirBot(
     return { tipo: "APOSTAR", apuesta };
   }
 
-  // 2) ¿Pasar? Solo con los 5 dados y en ronda normal.
-  if (!publico.esRondaObligado && misDados === publico.dadosIniciales && miMano) {
+  // 2) ¿Pasar? Solo con los 5 dados, en ronda normal y si no pasó ya esta ronda.
+  const yaPase = publico.historialRonda.some((ev) => ev.tipo === "PASO" && ev.jugadorId === miId);
+  if (!publico.esRondaObligado && misDados === publico.dadosIniciales && miMano && !yaPase) {
     if (pasoValido(miMano)) {
       if (Math.random() < P.pasaConValido) return { tipo: "PASAR" };
     } else if (Math.random() < P.bluffPaso) {

@@ -95,6 +95,16 @@ describe("pasar", () => {
     expect(() => aplicarAccion(e, { tipo: "PASAR", jugadorId: "B" })).toThrow(ErrorDeJuego);
   });
 
+  it("un jugador solo puede pasar una vez por ronda", () => {
+    let e = partida(); // A, B, C; abridor A
+    setDados(e, "A", [2, 3, 3, 4, 6]); // 5 dados
+    e = aplicarAccion(e, { tipo: "PASAR", jugadorId: "A" });
+    e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "B", apuesta: { cantidad: 1, pinta: 5 } });
+    e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "C", apuesta: { cantidad: 2, pinta: 5 } });
+    expect(jugadorDeTurnoId(e)).toBe("A"); // vuelve el turno a A, que aún tiene 5 dados
+    expect(() => aplicarAccion(e, { tipo: "PASAR", jugadorId: "A" })).toThrow(ErrorDeJuego);
+  });
+
   it("el historial registra apuestas y pasos en orden y se reinicia por ronda", () => {
     let e = partida(); // A, B, C; abridor A
     e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "A", apuesta: { cantidad: 2, pinta: 3 } });

@@ -309,6 +309,9 @@ function aplicarPasar(estado: EstadoJuego, jugadorId: string): EstadoJuego {
   if (jugador.dados.length !== estado.reglas.dadosIniciales) {
     throw new ErrorDeJuego("Solo se puede pasar con los 5 dados.");
   }
+  if (estado.historialRonda.some((ev) => ev.tipo === "PASO" && ev.jugadorId === jugadorId)) {
+    throw new ErrorDeJuego("Ya pasaste en esta ronda; solo se puede pasar una vez.");
+  }
   const e = structuredClone(estado);
   e.pasoPendienteJugadorId = jugadorId;
   e.historialRonda.push({ tipo: "PASO", jugadorId });
