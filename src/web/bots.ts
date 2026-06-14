@@ -39,17 +39,22 @@ interface ParamsNivel {
   dudaPaso: number;
   /** Dados que se asume tiene el apostador de su pinta (señal de la apuesta). */
   creditoApuesta: number;
+  /** Cuánto se descuenta ese crédito por cada dado de salto agresivo (sospecha
+   * de farol): a mayor salto sobre lo esperado, menos crédito y más ganas de dudar. */
+  descuentoFarol: number;
+  /** Prob. de farolear una subida (subir más de lo seguro) para ser impredecible. */
+  farolea: number;
 }
 
 const PARAMS: Record<Nivel, ParamsNivel> = {
   // Fácil: agresivo y errático (sube de más y se deja cazar); ignora la señal de
   // la apuesta, así que duda mal. Ya no se suicida con la siciliana al abrir.
-  facil: { umbralApertura: 0.58, sesgoSubir: 0.18, ruido: 0.16, umbralCalzo: 0.42, pasaConValido: 0.5, bluffPaso: 0.03, dudaPaso: 0.06, creditoApuesta: 0 },
-  // Medio: equilibrado; duda y sube según el valor probabilístico.
-  medio: { umbralApertura: 0.74, sesgoSubir: 0.08, ruido: 0.06, umbralCalzo: 0.27, pasaConValido: 0.85, bluffPaso: 0.05, dudaPaso: 0.16, creditoApuesta: 0.8 },
-  // Avanzado: casi puro EV —lee la señal de la apuesta, duda cuando toca, abre
-  // seguro, calza y pasa óptimo.
-  avanzado: { umbralApertura: 0.85, sesgoSubir: 0.02, ruido: 0.02, umbralCalzo: 0.22, pasaConValido: 0.98, bluffPaso: 0.1, dudaPaso: 0.33, creditoApuesta: 1.3 },
+  facil: { umbralApertura: 0.58, sesgoSubir: 0.18, ruido: 0.16, umbralCalzo: 0.42, pasaConValido: 0.5, bluffPaso: 0.03, dudaPaso: 0.06, creditoApuesta: 0.1, descuentoFarol: 0, farolea: 0.05 },
+  // Medio: equilibrado; lee algo la señal y sospecha de los saltos grandes.
+  medio: { umbralApertura: 0.74, sesgoSubir: 0.08, ruido: 0.06, umbralCalzo: 0.27, pasaConValido: 0.85, bluffPaso: 0.05, dudaPaso: 0.16, creditoApuesta: 0.9, descuentoFarol: 0.15, farolea: 0.04 },
+  // Avanzado: EV fuerte pero impredecible —lee la señal y calibra el farol por el
+  // tamaño del salto, calza/pasa óptimo y farolea de a poco para no dejarse leer.
+  avanzado: { umbralApertura: 0.85, sesgoSubir: 0.02, ruido: 0.035, umbralCalzo: 0.2, pasaConValido: 0.98, bluffPaso: 0.08, dudaPaso: 0.3, creditoApuesta: 1.4, descuentoFarol: 0.25, farolea: 0.06 },
 };
 
 const PINTAS: Pinta[] = [2, 3, 4, 5, 6, 1]; // ases al final
@@ -161,10 +166,15 @@ export function decidirBot(
   // 4) Calzar / Dudar / Subir — elige la acción con MAYOR probabilidad de buen
   //    resultado. Todo se mide con binomial sobre los dados desconocidos, es
   //    decir, según el total de dados en juego (que baja a lo largo de la mano).
-  // P(la apuesta vigente es cierta). Se acredita al apostador parte de su pinta:
-  // apostó porque algo tiene (señal). Sin esa lectura, el bot duda de más.
-  const kFaltan = Math.round(actual.cantidad - propiosDe(actual.pinta) - P.creditoApuesta);
-  const pSostiene = binomColaMayorIgual(desconocidos, kFaltan, probUnidad(actual.pinta));
+  // P(la apuesta vigente es cierta). Se acredita al apostador parte de su pinta
+  // (apostó porque algo tiene), PERO ese crédito se descuenta si la apuesta es un
+  // salto agresivo sobre lo esperado: ahí puede estar mintiendo. No se asume 100%.
+  const pUnit = probUnidad(actual.pinta);
+  const esperadoNeutral = propiosDe(actual.pinta) + desconocidos * pUnit;
+  const exceso = Math.max(0, actual.cantidad - esperadoNeutral); // cuánto excede lo neutral
+  const credito = Math.max(0, P.creditoApuesta - exceso * P.descuentoFarol);
+  const kFaltan = Math.round(actual.cantidad - propiosDe(actual.pinta) - credito);
+  const pSostiene = binomColaMayorIgual(desconocidos, kFaltan, pUnit);
   const pFalla = 1 - pSostiene; // P(es falsa) -> dudar gana
   const subida = construirApuesta(); // mejor subida y P(que sea cierta)
   const ruido = () => (Math.random() - 0.5) * P.ruido;
@@ -192,6 +202,12 @@ export function decidirBot(
         valor = valorCalzo;
       }
     }
+  }
+
+  // Farol propio: a veces sube un punto más de lo seguro para no dejarse leer
+  // (más frecuente en niveles altos). Sigue siendo una apuesta válida.
+  if (mejor.tipo === "APOSTAR" && Math.random() < P.farolea) {
+    mejor = { tipo: "APOSTAR", apuesta: { ...mejor.apuesta, cantidad: mejor.apuesta.cantidad + 1 } };
   }
 
   return mejor;
