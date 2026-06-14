@@ -1,0 +1,16 @@
+{
+  "name": "cachos",
+  "version": "0.1.0",
+  "description": "Cacho/Dudo chileno para jugar remoto entre amigos. Fase 1: motor de reglas.",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}

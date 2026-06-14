@@ -1,0 +1,44 @@
+import { describe, it, expect } from "vitest";
+import { validarApuesta, asesMinimosDesdeNormal, normalMinimoDesdeAses } from "../bids.js";
+
+const ok = (actual: Parameters<typeof validarApuesta>[0], nueva: Parameters<typeof validarApuesta>[1]) =>
+  validarApuesta(actual, nueva).valida;
+
+describe("validarApuesta - apertura", () => {
+  it("cualquier apuesta bien formada abre la ronda", () => {
+    expect(ok(null, { cantidad: 1, pinta: 3 })).toBe(true);
+    expect(ok(null, { cantidad: 0, pinta: 3 })).toBe(false);
+  });
+});
+
+describe("validarApuesta - normal a normal", () => {
+  it("subir la cantidad es válido con cualquier pinta", () => {
+    expect(ok({ cantidad: 3, pinta: 5 }, { cantidad: 4, pinta: 2 })).toBe(true);
+  });
+  it("misma cantidad exige subir la pinta", () => {
+    expect(ok({ cantidad: 3, pinta: 5 }, { cantidad: 3, pinta: 6 })).toBe(true);
+    expect(ok({ cantidad: 3, pinta: 5 }, { cantidad: 3, pinta: 4 })).toBe(false);
+    expect(ok({ cantidad: 3, pinta: 5 }, { cantidad: 3, pinta: 5 })).toBe(false);
+  });
+  it("bajar la cantidad nunca es válido", () => {
+    expect(ok({ cantidad: 4, pinta: 2 }, { cantidad: 3, pinta: 6 })).toBe(false);
+  });
+});
+
+describe("validarApuesta - conversión de ases (estilo Perudo)", () => {
+  it("entrar a ases requiere techo(cantidad/2)", () => {
+    expect(asesMinimosDesdeNormal(6)).toBe(3);
+    expect(ok({ cantidad: 6, pinta: 5 }, { cantidad: 3, pinta: 1 })).toBe(true);
+    expect(ok({ cantidad: 6, pinta: 5 }, { cantidad: 2, pinta: 1 })).toBe(false);
+    expect(asesMinimosDesdeNormal(5)).toBe(3); // techo(2.5)
+  });
+  it("salir de ases requiere cantidad*2 + 1", () => {
+    expect(normalMinimoDesdeAses(3)).toBe(7);
+    expect(ok({ cantidad: 3, pinta: 1 }, { cantidad: 7, pinta: 2 })).toBe(true);
+    expect(ok({ cantidad: 3, pinta: 1 }, { cantidad: 6, pinta: 6 })).toBe(false);
+  });
+  it("ases a ases sólo sube la cantidad", () => {
+    expect(ok({ cantidad: 2, pinta: 1 }, { cantidad: 3, pinta: 1 })).toBe(true);
+    expect(ok({ cantidad: 2, pinta: 1 }, { cantidad: 2, pinta: 1 })).toBe(false);
+  });
+});
