@@ -69,12 +69,17 @@ function normalMinimoDesdeAses(cantidadAses) {
 function apuestaBienFormada(a) {
   return Number.isInteger(a.cantidad) && a.cantidad >= 1 && Number.isInteger(a.pinta) && a.pinta >= 1 && a.pinta <= 6;
 }
-function validarApuesta(actual, nueva) {
+function validarApuesta(actual, nueva, asesComodin = true) {
   if (!apuestaBienFormada(nueva)) {
     return { valida: false, motivo: "Apuesta mal formada (cantidad >= 1, pinta 1..6)." };
   }
   if (actual === null) {
     return { valida: true };
+  }
+  if (!asesComodin) {
+    if (nueva.cantidad > actual.cantidad) return { valida: true };
+    if (nueva.cantidad === actual.cantidad && nueva.pinta > actual.pinta) return { valida: true };
+    return { valida: false, motivo: "Debes subir la cantidad, o mantenerla subiendo la pinta." };
   }
   const actualEsAs = ES_AS(actual.pinta);
   const nuevaEsAs = ES_AS(nueva.pinta);
@@ -118,6 +123,12 @@ function asesComodinEnRonda(estado) {
   if (!estado.reglas.asComodin) return false;
   if (estado.esRondaObligado && estado.reglas.obligadoAsesNoComodin) return false;
   return true;
+}
+function asesComodinParaApuesta(estado) {
+  if (!asesComodinEnRonda(estado)) return false;
+  const a = estado.apuestaActual;
+  const aperturaConAses = a !== null && a.pinta === 1 && estado.apuestasEnRonda === 1 && estado.apuestaActualJugadorId === estado.abridorRondaId;
+  return !aperturaConAses;
 }
 function puedeCalzarse(estado) {
   if (!estado.reglas.calzarPermitido) return false;
@@ -255,7 +266,7 @@ function aplicarAccion(estado, accion) {
   }
 }
 function aplicarApostar(estado, jugadorId, apuesta) {
-  const val = validarApuesta(estado.apuestaActual, apuesta);
+  const val = validarApuesta(estado.apuestaActual, apuesta, asesComodinParaApuesta(estado));
   if (!val.valida) {
     throw new ErrorDeJuego(val.motivo ?? "Apuesta inv\xE1lida.");
   }
@@ -343,7 +354,7 @@ function aplicarDesafio(estado, jugadorId, tipo) {
   }
   const e = structuredClone(estado);
   const apuesta = e.apuestaActual;
-  const siciliana = tipo === "DUDO" && e.reglas.sicilianaActiva && !e.esRondaObligado && e.apuestasEnRonda === 1 && e.apuestaActualJugadorId === e.abridorRondaId;
+  const siciliana = tipo === "DUDO" && e.reglas.sicilianaActiva && !e.esRondaObligado && jugadoresActivos(e).length > 2 && e.apuestasEnRonda === 1 && e.apuestaActualJugadorId === e.abridorRondaId;
   const asesComodin = asesComodinEnRonda(e) && !siciliana;
   const todos = juntarDados(jugadoresActivos(e).map((j) => j.dados));
   const real = contarPinta(todos, apuesta.pinta, asesComodin);
@@ -440,6 +451,8 @@ function proyeccionPublica(estado) {
     apuestasEnRonda: estado.apuestasEnRonda,
     esRondaObligado: estado.esRondaObligado,
     esRondaCerrada: estado.esRondaCerrada,
+    asesComodin: asesComodinEnRonda(estado),
+    asesComodinApuesta: asesComodinParaApuesta(estado),
     fase: estado.fase,
     numeroRonda: estado.numeroRonda,
     ganadorId: estado.ganadorId,
@@ -469,6 +482,7 @@ export {
   aplicarAccion,
   apuestaBienFormada,
   asesComodinEnRonda,
+  asesComodinParaApuesta,
   asesMinimosDesdeNormal,
   contarPinta,
   crearJuego,

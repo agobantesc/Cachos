@@ -22,6 +22,7 @@ import type {
 } from "./types.js";
 import {
   asesComodinEnRonda,
+  asesComodinParaApuesta,
   jugadorDeTurnoId,
   puedeCalzarse,
   totalDadosEnMesa,
@@ -51,8 +52,14 @@ export interface EstadoPublico {
   apuestasEnRonda: number;
   esRondaObligado: boolean;
   esRondaCerrada: boolean;
-  /** ¿El As cuenta como comodín en esta ronda? (false en obligado.) */
+  /** ¿El As cuenta como comodín al CONTAR (dudo/calzo)? (false en obligado.) */
   asesComodin: boolean;
+  /**
+   * ¿El As cuenta como comodín para VALIDAR la próxima subida? Además de
+   * obligado, es false tras una "partida en falso" (abrir la ronda con ases):
+   * ahí el siguiente jugador puede tratar el As como la pinta 1.
+   */
+  asesComodinApuesta: boolean;
   fase: Fase;
   numeroRonda: number;
   ganadorId: string | null;
@@ -91,6 +98,7 @@ export function proyeccionPublica(estado: EstadoJuego): EstadoPublico {
     esRondaObligado: estado.esRondaObligado,
     esRondaCerrada: estado.esRondaCerrada,
     asesComodin: asesComodinEnRonda(estado),
+    asesComodinApuesta: asesComodinParaApuesta(estado),
     fase: estado.fase,
     numeroRonda: estado.numeroRonda,
     ganadorId: estado.ganadorId,

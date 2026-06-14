@@ -52,6 +52,25 @@ export function asesComodinEnRonda(estado: EstadoJuego): boolean {
   return true;
 }
 
+/**
+ * ¿El As se trata como comodín al VALIDAR la próxima apuesta? Es false en
+ * obligado y también tras una "partida en falso": si el abridor abre una ronda
+ * normal con ases, el siguiente jugador puede tratar ese As como la pinta 1
+ * (ej.: abre "2 ases" -> el siguiente puede decir "3 quinas"). Ojo: esto sólo
+ * afecta a la regla de subida; para CONTAR (dudo/calzo) los ases siguen siendo
+ * comodín en una ronda normal.
+ */
+export function asesComodinParaApuesta(estado: EstadoJuego): boolean {
+  if (!asesComodinEnRonda(estado)) return false;
+  const a = estado.apuestaActual;
+  const aperturaConAses =
+    a !== null &&
+    a.pinta === 1 &&
+    estado.apuestasEnRonda === 1 &&
+    estado.apuestaActualJugadorId === estado.abridorRondaId;
+  return !aperturaConAses;
+}
+
 /** ¿Se puede calzar ahora mismo? (regla de la mitad de dados + permiso global). */
 export function puedeCalzarse(estado: EstadoJuego): boolean {
   if (!estado.reglas.calzarPermitido) return false;
@@ -269,7 +288,7 @@ export function aplicarAccion(estado: EstadoJuego, accion: Accion): EstadoJuego 
 }
 
 function aplicarApostar(estado: EstadoJuego, jugadorId: string, apuesta: Apuesta): EstadoJuego {
-  const val = validarApuesta(estado.apuestaActual, apuesta, asesComodinEnRonda(estado));
+  const val = validarApuesta(estado.apuestaActual, apuesta, asesComodinParaApuesta(estado));
   if (!val.valida) {
     throw new ErrorDeJuego(val.motivo ?? "Apuesta inválida.");
   }

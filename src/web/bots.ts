@@ -137,7 +137,7 @@ export function decidirBot(
     for (const Q of pintasPosibles) {
       for (let c = actual.cantidad; c <= actual.cantidad + 3; c++) {
         const apuesta: Apuesta = { cantidad: c, pinta: Q };
-        if (!validarApuesta(actual, apuesta, asesComodin).valida) continue;
+        if (!validarApuesta(actual, apuesta, publico.asesComodinApuesta).valida) continue;
         cands.push({ apuesta, prob: probAlMenos(Q, c) });
         break;
       }

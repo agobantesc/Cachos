@@ -6,6 +6,7 @@ import {
   jugadorPorId,
   jugadorDeTurnoId,
   asesComodinEnRonda,
+  asesComodinParaApuesta,
   puedeCalzarse,
   vistaDeJugador,
   totalDadosEnMesa,
@@ -122,6 +123,39 @@ describe("la siciliana", () => {
     expect(e.ultimaResolucion!.perdedorId).toBe("A"); // no se cumple -> pierde A
     expect(e.ultimaResolucion!.dadosPerdidos).toBe(2);
     expect(jugadorPorId(e, "A")!.dados.length).toBe(3);
+  });
+});
+
+describe("partida en falso (abrir una ronda normal con ases)", () => {
+  it("el siguiente jugador puede subir tratando el As como pinta 1", () => {
+    let e = iniciarRonda(nuevaPartida(["A", "B", "C"]), { rng: rng0 });
+    // A (abridor) abre la ronda normal con "2 ases" -> partida en falso.
+    e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "A", apuesta: { cantidad: 2, pinta: 1 } });
+    expect(asesComodinParaApuesta(e)).toBe(false);
+    // B puede decir "3 quinas" (As como 1: 3 > 2), sin la conversión Perudo.
+    e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "B", apuesta: { cantidad: 3, pinta: 5 } });
+    expect(e.apuestaActual).toEqual({ cantidad: 3, pinta: 5 });
+    // La ronda sigue siendo normal: para contar y subir, los ases vuelven a ser comodín.
+    expect(asesComodinEnRonda(e)).toBe(true);
+    expect(asesComodinParaApuesta(e)).toBe(true);
+  });
+
+  it("incluso 'misma cantidad' vale, porque el As es la pinta más baja", () => {
+    let e = iniciarRonda(nuevaPartida(["A", "B", "C"]), { rng: rng0 });
+    e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "A", apuesta: { cantidad: 2, pinta: 1 } });
+    e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "B", apuesta: { cantidad: 2, pinta: 5 } });
+    expect(e.apuestaActual).toEqual({ cantidad: 2, pinta: 5 });
+  });
+
+  it("sólo aplica a la apertura del abridor: un as a media ronda usa la conversión Perudo", () => {
+    let e = iniciarRonda(nuevaPartida(["A", "B", "C"]), { rng: rng0 });
+    e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "A", apuesta: { cantidad: 3, pinta: 5 } });
+    e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "B", apuesta: { cantidad: 2, pinta: 1 } }); // 3 quinas -> 2 ases (Perudo)
+    expect(asesComodinParaApuesta(e)).toBe(true);
+    // De "2 ases" (no es apertura) a normal exige 2*2+1 = 5; "3 quinas" debe fallar.
+    expect(() =>
+      aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "C", apuesta: { cantidad: 3, pinta: 5 } }),
+    ).toThrow(ErrorDeJuego);
   });
 });
 
