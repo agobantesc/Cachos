@@ -13,12 +13,58 @@ function leerPreferencia(): boolean {
   }
 }
 
+function crearCtx(): AudioContext | null {
+  if (typeof window === "undefined") return null;
+  const AC =
+    window.AudioContext ??
+    (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  return AC ? new AC() : null;
+}
+
 function ac(): AudioContext | null {
   if (typeof window === "undefined") return null;
-  const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-  if (!AC) return null;
-  if (!ctx) ctx = new AC();
+  if (!ctx) ctx = crearCtx();
   return ctx;
+}
+
+/**
+ * Deja el audio listo para sonar. En móvil el AudioContext se "suspende" (o, en
+ * Safari, queda "interrupted") al cerrar/reabrir la app y no revive solo: ahí
+ * intentamos reanudarlo y, si quedó inservible, lo recreamos desde cero.
+ */
+function asegurarAudio(): void {
+  const c = ac();
+  if (!c) return;
+  const estado = c.state as string;
+  if (estado === "running") return;
+  if (estado === "suspended") {
+    void c.resume();
+    return;
+  }
+  // "interrupted" / "closed" u otro: el contexto ya no sirve, se recrea.
+  try {
+    void c.close();
+  } catch {
+    /* ignore */
+  }
+  ctx = crearCtx();
+  if (ctx && ctx.state === "suspended") void ctx.resume();
+}
+
+// Reactivar el audio al volver a primer plano y en cualquier toque del usuario.
+// Esto recupera el sonido tras cerrar y reabrir la PWA (sin esto, en iOS el
+// contexto queda suspendido y se "pierde" el sonido).
+if (typeof window !== "undefined") {
+  const reactivar = () => {
+    if (activado) asegurarAudio();
+  };
+  window.addEventListener("pointerdown", reactivar, { passive: true });
+  window.addEventListener("touchstart", reactivar, { passive: true });
+  if (typeof document !== "undefined") {
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") reactivar();
+    });
+  }
 }
 
 export function sonidoActivado(): boolean {
@@ -27,8 +73,7 @@ export function sonidoActivado(): boolean {
 
 /** Debe llamarse dentro de un gesto del usuario (clic) para habilitar el audio. */
 export function desbloquearAudio(): void {
-  const c = ac();
-  if (c && c.state === "suspended") void c.resume();
+  asegurarAudio();
 }
 
 export function alternarSonido(): boolean {
@@ -38,15 +83,15 @@ export function alternarSonido(): boolean {
   } catch {
     /* sin persistencia */
   }
-  if (activado) desbloquearAudio();
+  if (activado) asegurarAudio();
   return activado;
 }
 
 function reproducir(fn: (c: AudioContext, t0: number) => void): void {
   if (!activado) return;
+  asegurarAudio();
   const c = ac();
   if (!c) return;
-  if (c.state === "suspended") void c.resume();
   try {
     fn(c, c.currentTime);
   } catch {

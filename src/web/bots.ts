@@ -65,6 +65,10 @@ const PARAMS: Record<Nivel, ParamsNivel> = {
 
 const PINTAS: Pinta[] = [2, 3, 4, 5, 6, 1]; // ases al final
 
+// Si la mejor jugada (dudar/subir/calzar) tiene un valor esperado por debajo de
+// esto, el bot está acorralado y recién ahí considera quemar su paso defensivo.
+const UMBRAL_APURO = 0.42;
+
 function combinaciones(n: number, k: number): number {
   if (k < 0 || k > n) return 0;
   k = Math.min(k, n - k);
@@ -153,17 +157,8 @@ export function decidirBot(
     return { tipo: "APOSTAR", apuesta };
   }
 
-  // 2) ¿Pasar? Solo con los 5 dados, en ronda normal y si no pasó ya esta ronda.
-  const yaPase = publico.historialRonda.some((ev) => ev.tipo === "PASO" && ev.jugadorId === miId);
-  if (!publico.esRondaObligado && misDados === publico.dadosIniciales && miMano && !yaPase) {
-    if (pasoValido(miMano)) {
-      if (Math.random() < P.pasaConValido) return { tipo: "PASAR" };
-    } else if (Math.random() < P.bluffPaso) {
-      return { tipo: "PASAR" };
-    }
-  }
-
-  // 3) Apertura.
+  // 2) Apertura: el abridor SIEMPRE abre con una apuesta. Nunca parte pasando: el
+  //    paso es un recurso defensivo que se guarda para un apuro real (ver paso 5).
   if (!actual) {
     const { apuesta } = construirApuesta();
     return { tipo: "APOSTAR", apuesta };
@@ -221,6 +216,20 @@ export function decidirBot(
         mejor = { tipo: "CALZAR" };
         valor = valorCalzo;
       }
+    }
+  }
+
+  // Paso DEFENSIVO: sólo como escape de un apuro real —cuando ninguna jugada es
+  // buena (`valor` bajo)— y nunca al abrir. Un buen jugador guarda el paso para
+  // cuando lo acorralan, no lo malgasta. Requiere los 5 dados y no haber pasado.
+  const yaPase = publico.historialRonda.some((ev) => ev.tipo === "PASO" && ev.jugadorId === miId);
+  const puedePasar =
+    !publico.esRondaObligado && misDados === publico.dadosIniciales && !!miMano && !yaPase;
+  if (puedePasar && valor < UMBRAL_APURO) {
+    if (pasoValido(mano)) {
+      if (Math.random() < P.pasaConValido) return { tipo: "PASAR" };
+    } else if (Math.random() < P.bluffPaso) {
+      return { tipo: "PASAR" };
     }
   }
 
