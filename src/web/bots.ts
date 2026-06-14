@@ -25,11 +25,11 @@ export type JugadaBot =
 interface ParamsNivel {
   /** Probabilidad mínima al abrir (más alto = aperturas más prudentes). */
   umbralApertura: number;
-  /** Si la apuesta vigente tiene menos prob. que esto, el bot duda. */
-  umbralDuda: number;
+  /** Sesgo a subir en vez de dudar (más alto = más agresivo y menos preciso). */
+  sesgoSubir: number;
   /** Amplitud del ruido aleatorio en las decisiones (más alto = más errático). */
   ruido: number;
-  /** Prob. exacta mínima para animarse a calzar. */
+  /** Prob. exacta mínima para considerar calzar. */
   umbralCalzo: number;
   /** Prob. de pasar cuando la mano ES un paso válido. */
   pasaConValido: number;
@@ -37,17 +37,19 @@ interface ParamsNivel {
   bluffPaso: number;
   /** Prob. de dudar el paso de otro (llamar el farol). */
   dudaPaso: number;
-  /** Prob. mínima de una subida para preferirla a dudar. */
-  subeSiSeguro: number;
+  /** Dados que se asume tiene el apostador de su pinta (señal de la apuesta). */
+  creditoApuesta: number;
 }
 
 const PARAMS: Record<Nivel, ParamsNivel> = {
-  // Fácil: algo más arriesgado y errático, pero ya no se suicida con la siciliana.
-  facil: { umbralApertura: 0.58, umbralDuda: 0.4, ruido: 0.15, umbralCalzo: 0.42, pasaConValido: 0.5, bluffPaso: 0.03, dudaPaso: 0.06, subeSiSeguro: 0.7 },
-  // Medio: prudente y razonable.
-  medio: { umbralApertura: 0.74, umbralDuda: 0.33, ruido: 0.06, umbralCalzo: 0.27, pasaConValido: 0.85, bluffPaso: 0.05, dudaPaso: 0.16, subeSiSeguro: 0.6 },
-  // Avanzado: muy fino —abre seguro, calza y pasa óptimo, farolea de vez en cuando.
-  avanzado: { umbralApertura: 0.85, umbralDuda: 0.3, ruido: 0.025, umbralCalzo: 0.22, pasaConValido: 0.98, bluffPaso: 0.1, dudaPaso: 0.33, subeSiSeguro: 0.55 },
+  // Fácil: agresivo y errático (sube de más y se deja cazar); ignora la señal de
+  // la apuesta, así que duda mal. Ya no se suicida con la siciliana al abrir.
+  facil: { umbralApertura: 0.58, sesgoSubir: 0.18, ruido: 0.16, umbralCalzo: 0.42, pasaConValido: 0.5, bluffPaso: 0.03, dudaPaso: 0.06, creditoApuesta: 0 },
+  // Medio: equilibrado; duda y sube según el valor probabilístico.
+  medio: { umbralApertura: 0.74, sesgoSubir: 0.08, ruido: 0.06, umbralCalzo: 0.27, pasaConValido: 0.85, bluffPaso: 0.05, dudaPaso: 0.16, creditoApuesta: 0.8 },
+  // Avanzado: casi puro EV —lee la señal de la apuesta, duda cuando toca, abre
+  // seguro, calza y pasa óptimo.
+  avanzado: { umbralApertura: 0.85, sesgoSubir: 0.02, ruido: 0.02, umbralCalzo: 0.22, pasaConValido: 0.98, bluffPaso: 0.1, dudaPaso: 0.33, creditoApuesta: 1.3 },
 };
 
 const PINTAS: Pinta[] = [2, 3, 4, 5, 6, 1]; // ases al final
@@ -156,22 +158,41 @@ export function decidirBot(
     return { tipo: "APOSTAR", apuesta };
   }
 
-  // 4) Calzar / Dudar / Subir.
-  const probSostiene = probAlMenos(actual.pinta, actual.cantidad);
+  // 4) Calzar / Dudar / Subir — elige la acción con MAYOR probabilidad de buen
+  //    resultado. Todo se mide con binomial sobre los dados desconocidos, es
+  //    decir, según el total de dados en juego (que baja a lo largo de la mano).
+  // P(la apuesta vigente es cierta). Se acredita al apostador parte de su pinta:
+  // apostó porque algo tiene (señal). Sin esa lectura, el bot duda de más.
+  const kFaltan = Math.round(actual.cantidad - propiosDe(actual.pinta) - P.creditoApuesta);
+  const pSostiene = binomColaMayorIgual(desconocidos, kFaltan, probUnidad(actual.pinta));
+  const pFalla = 1 - pSostiene; // P(es falsa) -> dudar gana
+  const subida = construirApuesta(); // mejor subida y P(que sea cierta)
+  const ruido = () => (Math.random() - 0.5) * P.ruido;
+
+  // Valor probabilístico de cada opción (mayor = mejor):
+  let mejor: JugadaBot = { tipo: "DUDAR" };
+  let valor = pFalla + ruido();
+
+  // Subir traslada el riesgo al siguiente: vale según P(mi nueva apuesta sea
+  // cierta), con un pequeño sesgo a mantener presión (mayor en niveles fáciles).
+  const valorSubir = subida.prob + P.sesgoSubir + ruido();
+  if (valorSubir > valor) {
+    mejor = { tipo: "APOSTAR", apuesta: subida.apuesta };
+    valor = valorSubir;
+  }
+
+  // Calzar recupera un dado si la cantidad es EXACTA: lo valoramos con un bonus,
+  // sobre un piso de probabilidad por nivel.
   if (publico.calzoDisponible && !obligadoBloqueaPinta) {
-    const pe = probExacto(actual.pinta, actual.cantidad);
-    if (pe >= P.umbralCalzo && pe > 1 - probSostiene) return { tipo: "CALZAR" };
+    const pExact = probExacto(actual.pinta, actual.cantidad);
+    if (pExact >= P.umbralCalzo) {
+      const valorCalzo = pExact + 0.18 + ruido();
+      if (valorCalzo > valor) {
+        mejor = { tipo: "CALZAR" };
+        valor = valorCalzo;
+      }
+    }
   }
 
-  const subida = construirApuesta();
-  const umbralDuda = P.umbralDuda + (Math.random() - 0.5) * P.ruido;
-
-  if (probSostiene < umbralDuda) {
-    if (subida.prob >= P.subeSiSeguro) return { tipo: "APOSTAR", apuesta: subida.apuesta };
-    return { tipo: "DUDAR" };
-  }
-  if (subida.prob >= 0.32 || probSostiene >= 0.55) {
-    return { tipo: "APOSTAR", apuesta: subida.apuesta };
-  }
-  return { tipo: "DUDAR" };
+  return mejor;
 }
