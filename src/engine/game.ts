@@ -303,10 +303,12 @@ function aplicarDesafio(
   const apuesta = e.apuestaActual!;
 
   // La siciliana: dudo a la PRIMERA apuesta de la ronda, hecha por el abridor.
-  // En ese conteo los ases NO valen como comodín.
+  // En ese conteo los ases NO valen como comodín. No aplica en rondas de
+  // obligado (cuando alguien está obligando no hay siciliana).
   const siciliana =
     tipo === "DUDO" &&
     e.reglas.sicilianaActiva &&
+    !e.esRondaObligado &&
     e.apuestasEnRonda === 1 &&
     e.apuestaActualJugadorId === e.abridorRondaId;
 

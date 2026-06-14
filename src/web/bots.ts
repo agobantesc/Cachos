@@ -45,6 +45,7 @@ export function decidirBot(publico: EstadoPublico, miMano: Pinta[] | null, miId:
   const probUnidad = (P: Pinta) => (asesComodin && P !== 1 ? 1 / 3 : 1 / 6);
   const propiosDe = (P: Pinta) => contarPinta(mano, P, asesComodin);
   const estimadoDe = (P: Pinta) => propiosDe(P) + desconocidos * probUnidad(P);
+  // P(hay al menos `cant` de la pinta P en toda la mesa).
   const probAlMenos = (P: Pinta, cant: number) =>
     binomColaMayorIgual(desconocidos, cant - propiosDe(P), probUnidad(P));
   const probExacto = (P: Pinta, cant: number) => {
@@ -52,37 +53,36 @@ export function decidirBot(publico: EstadoPublico, miMano: Pinta[] | null, miId:
     return faltan < 0 ? 0 : binomPMF(desconocidos, faltan, probUnidad(P));
   };
 
-  const actual = publico.apuestaActual;
-
-  // --- Apertura de ronda: apuesta sobre la pinta donde el bot es más fuerte. ---
-  if (!actual) {
+  // Pinta donde el bot es más fuerte (más propios; desempata por estimado).
+  const mejorPinta = (): Pinta => {
     let mejor: Pinta = 5;
-    let mejorScore = -1;
+    let score = -1;
     for (const P of PINTAS) {
-      const score = propiosDe(P) * 2 + estimadoDe(P);
-      if (score > mejorScore) {
-        mejorScore = score;
+      const s = propiosDe(P) * 2 + estimadoDe(P);
+      if (s > score) {
+        score = s;
         mejor = P;
       }
     }
-    const cantidad = Math.max(1, Math.round(estimadoDe(mejor) * 0.8));
-    return { tipo: "APOSTAR", apuesta: { cantidad, pinta: mejor } };
+    return mejor;
+  };
+
+  const actual = publico.apuestaActual;
+
+  // --- Apertura PRUDENTE -----------------------------------------------------
+  // Abre con la cantidad más alta que aún sea muy probable que se cumpla (~72%).
+  // Así un dudo inmediato (siciliana) lo paga normalmente el que duda, no el bot.
+  if (!actual) {
+    const P = mejorPinta();
+    let cantidad = 1;
+    while (probAlMenos(P, cantidad + 1) >= 0.72) cantidad++;
+    return { tipo: "APOSTAR", apuesta: { cantidad: Math.max(1, cantidad), pinta: P } };
   }
 
   const obligadoBloqueaPinta = publico.esRondaObligado && misDados > 1;
   const probSostiene = probAlMenos(actual.pinta, actual.cantidad);
 
-  // --- Calzar: si está disponible y el valor EXACTO es bastante probable. ---
-  if (publico.calzoDisponible && !obligadoBloqueaPinta) {
-    const pe = probExacto(actual.pinta, actual.cantidad);
-    if (pe >= 0.25 && pe > 1 - probSostiene) return { tipo: "CALZAR" };
-  }
-
-  // --- Dudar: si la apuesta vigente es poco creíble. ---
-  const umbralDuda = 0.34 + (Math.random() - 0.5) * 0.08; // leve variación humana
-  if (probSostiene < umbralDuda) return { tipo: "DUDAR" };
-
-  // --- Subir: la apuesta válida más creíble. ---
+  // Mejor subida VÁLIDA y su credibilidad (la cantidad mínima legal por pinta).
   const pintasPosibles: Pinta[] = obligadoBloqueaPinta ? [actual.pinta] : PINTAS;
   const candidatos: { apuesta: Apuesta; prob: number }[] = [];
   for (const Q of pintasPosibles) {
@@ -90,13 +90,33 @@ export function decidirBot(publico: EstadoPublico, miMano: Pinta[] | null, miId:
       const apuesta: Apuesta = { cantidad: c, pinta: Q };
       if (!validarApuesta(actual, apuesta).valida) continue;
       candidatos.push({ apuesta, prob: probAlMenos(Q, c) });
-      break; // la mínima cantidad válida para esta pinta es suficiente
+      break;
     }
   }
   candidatos.sort((a, b) => b.prob - a.prob || a.apuesta.cantidad - b.apuesta.cantidad);
-  const elegido = candidatos[0];
-  if (elegido) return { tipo: "APOSTAR", apuesta: elegido.apuesta };
+  const mejorSubida = candidatos[0];
 
-  // Salvaguarda (no debería ocurrir): si no hubo subida válida, duda.
+  // --- Calzar: si está disponible y el valor EXACTO es lo más probable. ------
+  if (publico.calzoDisponible && !obligadoBloqueaPinta) {
+    const pe = probExacto(actual.pinta, actual.cantidad);
+    if (pe >= 0.28 && pe > 1 - probSostiene) return { tipo: "CALZAR" };
+  }
+
+  // --- Dudar vs Subir --------------------------------------------------------
+  const umbralDuda = 0.33 + (Math.random() - 0.5) * 0.06; // leve variación humana
+
+  // La apuesta vigente es poco creíble: dudar, salvo que tenga una subida segura.
+  if (probSostiene < umbralDuda) {
+    if (mejorSubida && mejorSubida.prob >= 0.6) {
+      return { tipo: "APOSTAR", apuesta: mejorSubida.apuesta };
+    }
+    return { tipo: "DUDAR" };
+  }
+
+  // La apuesta vigente es creíble: subir con lo mejor. Pero si ninguna subida es
+  // defendible y la vigente está al borde, es mejor dudar que mentir a ciegas.
+  if (mejorSubida && (mejorSubida.prob >= 0.32 || probSostiene >= 0.55)) {
+    return { tipo: "APOSTAR", apuesta: mejorSubida.apuesta };
+  }
   return { tipo: "DUDAR" };
 }

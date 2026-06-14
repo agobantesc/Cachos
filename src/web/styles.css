@@ -52,8 +52,21 @@ input:focus { border-color: var(--oro); box-shadow: 0 0 0 2px rgba(200, 162, 74,
   border-radius: 50%; background: radial-gradient(circle at 50% 35%, #20222b, #0c0d10 80%);
   border: 2px solid var(--oro); box-shadow: 0 0 0 6px rgba(200, 162, 74, 0.08), 0 14px 36px rgba(0, 0, 0, 0.6);
 }
-.home h1 { font-size: 38px; line-height: 1.05; letter-spacing: 1px; text-transform: uppercase; color: var(--hueso); }
+.home h1 { font-size: 34px; line-height: 1.06; letter-spacing: 1px; text-transform: uppercase; color: var(--hueso); }
+.marca { display: flex; flex-direction: column; gap: 1px; }
+.marca-fuerte { color: var(--oro); font-size: 1.2em; text-shadow: 0 2px 16px rgba(200, 162, 74, 0.35); }
 .home .sub { color: var(--tenue); font-style: italic; margin-bottom: 16px; max-width: 18em; }
+.btn-link {
+  background: none; border: none; color: var(--oro); font-size: 14px; padding: 10px;
+  text-decoration: underline; text-underline-offset: 3px; margin-top: 4px;
+}
+
+/* ---------- Reglas de la Asociación ---------- */
+.reglas-pantalla { text-align: left; }
+.reglas { display: flex; flex-direction: column; gap: 12px; padding-left: 22px; margin: 8px 0 18px; }
+.reglas li { line-height: 1.46; font-size: 15px; }
+.reglas li::marker { color: var(--oro); font-weight: 800; }
+.reglas b { color: var(--hueso); font-weight: 700; }
 .ayuda { color: var(--tenue); font-size: 14px; }
 .separador { text-align: center; color: var(--tenue); margin: 10px 0; font-size: 14px; }
 .config h2 { font-family: var(--display); text-transform: uppercase; letter-spacing: 1px; color: var(--hueso); }

@@ -11,8 +11,9 @@ describe("App (inicio)", () => {
   it("renderiza la home con las dos formas de jugar", () => {
     const html = renderToStaticMarkup(<App />);
     expect(html).toContain("Cachos");
-    expect(html).toContain("Mesa local");
+    expect(html).toContain("Jugar solo");
     expect(html).toContain("Mesa en línea");
+    expect(html).toContain("Reglas de la Asociación");
   });
 });
 

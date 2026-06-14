@@ -191,6 +191,18 @@ describe("obligado (variantes de la casa)", () => {
     const e2 = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "B", apuesta: { cantidad: 4, pinta: 5 } });
     expect(e2.apuestaActual).toEqual({ cantidad: 4, pinta: 5 });
   });
+
+  it("no hay siciliana cuando la ronda es de obligado", () => {
+    let e = partidaObligado(); // A obliga (1 dado), B tiene [5,5,1]
+    // A abre "1 quina" y B duda de inmediato (sería siciliana en ronda normal).
+    e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "A", apuesta: { cantidad: 1, pinta: 5 } });
+    e = aplicarAccion(e, { tipo: "DUDAR", jugadorId: "B" });
+    expect(e.ultimaResolucion!.siciliana).toBe(false);
+    expect(e.ultimaResolucion!.cantidadReal).toBe(2); // dos quinas (el as no es comodín)
+    expect(e.ultimaResolucion!.perdedorId).toBe("B"); // la apuesta se cumple -> pierde el dudador
+    expect(e.ultimaResolucion!.dadosPerdidos).toBe(1); // 1 dado, no 2
+    expect(jugadorPorId(e, "B")!.dados.length).toBe(2);
+  });
 });
 
 describe("apertura de la siguiente ronda", () => {

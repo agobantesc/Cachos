@@ -7,7 +7,6 @@ import type { Instantanea, Transporte } from "./transporte";
 export function Mesa({ snap, transporte }: { snap: Instantanea; transporte: Transporte }) {
   const p = snap.publico!;
   const nombre = (id: string | null) => p.jugadores.find((j) => j.id === id)?.nombre ?? "—";
-  const turnoNombre = nombre(p.turnoJugadorId);
 
   if (p.fase === "FIN_JUEGO") {
     return (
@@ -62,12 +61,8 @@ export function Mesa({ snap, transporte }: { snap: Instantanea; transporte: Tran
         )}
       </section>
 
-      {snap.esLocal && !snap.esSolo && p.fase === "EN_RONDA" && (
-        <div className="pasa-telefono">Turno de <b>{turnoNombre}</b> — pásale el teléfono 📱</div>
-      )}
-
       <section className="mi-mano">
-        <div className="mi-mano-titulo">Tu mano{snap.esLocal && !snap.esSolo ? ` · ${turnoNombre}` : ""}</div>
+        <div className="mi-mano-titulo">Tu mano</div>
         {snap.miMano ? (
           <ManoDados caras={snap.miMano} tam={56} />
         ) : (

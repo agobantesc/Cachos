@@ -54,25 +54,28 @@ function Lobby({ snap, transporte }: { snap: ReturnType<Transporte["instantanea"
 }
 
 function Inicio({ onListo }: { onListo: (t: Transporte) => void }) {
-  const [vista, setVista] = useState<"home" | "solo" | "local" | "online">("home");
+  const [vista, setVista] = useState<"home" | "solo" | "online" | "reglas">("home");
 
   if (vista === "solo") return <ConfigSolo onListo={onListo} volver={() => setVista("home")} />;
-  if (vista === "local") return <ConfigLocal onListo={onListo} volver={() => setVista("home")} />;
   if (vista === "online") return <ConfigOnline onListo={onListo} volver={() => setVista("home")} />;
+  if (vista === "reglas") return <Reglas volver={() => setVista("home")} />;
 
   return (
     <div className="pantalla home">
       <div className="logo">🎲</div>
-      <h1>La Asociación<br />de Cachos</h1>
-      <p className="sub">Solo para socios. El dudo se juega en las sombras.</p>
+      <h1 className="marca">
+        La Asociación
+        <span className="marca-fuerte">de Cachos</span>
+      </h1>
+      <p className="sub">El dudo de la casa, entre socios.</p>
       <button className="btn btn--apostar grande" onClick={() => setVista("solo")}>
         Jugar solo (vs la máquina)
       </button>
-      <button className="btn btn--calzar grande" onClick={() => setVista("local")}>
-        Mesa local (pasar el teléfono)
-      </button>
       <button className="btn btn--dudar grande" onClick={() => setVista("online")}>
         Mesa en línea
+      </button>
+      <button className="btn-link" onClick={() => setVista("reglas")}>
+        📜 Reglas de la Asociación
       </button>
     </div>
   );
@@ -113,30 +116,47 @@ function ConfigSolo({ onListo, volver }: { onListo: (t: Transporte) => void; vol
   );
 }
 
-function ConfigLocal({ onListo, volver }: { onListo: (t: Transporte) => void; volver: () => void }) {
-  const [nombres, setNombres] = useState<string[]>(["Ana", "Beto", "Cata", "", "", ""]);
-  const set = (i: number, v: string) => setNombres((n) => n.map((x, j) => (j === i ? v : x)));
-  const jugadores = nombres.map((n, i) => ({ id: `p${i}`, nombre: n.trim() })).filter((j) => j.nombre);
-
+function Reglas({ volver }: { volver: () => void }) {
   return (
-    <div className="pantalla config">
-      <h2>Jugadores</h2>
-      <p className="ayuda">Entre 2 y 6. En este modo se pasa el teléfono por turnos.</p>
-      {nombres.map((n, i) => (
-        <input key={i} value={n} placeholder={`Jugador ${i + 1}`} onChange={(e) => set(i, e.target.value)} />
-      ))}
-      <div className="botonera">
-        <button className="btn btn--dudar" onClick={volver}>
-          Volver
-        </button>
-        <button
-          className="btn btn--apostar"
-          disabled={jugadores.length < 2}
-          onClick={() => onListo(new TransporteLocal(jugadores))}
-        >
-          Empezar ({jugadores.length})
-        </button>
-      </div>
+    <div className="pantalla config reglas-pantalla">
+      <h2>Reglas de la Asociación</h2>
+      <ol className="reglas">
+        <li>
+          <b>El reparto.</b> Cada socio parte con <b>5 dados</b> y los agita en secreto. La apuesta
+          es sobre <b>todos</b> los dados de la mesa, no solo los tuyos.
+        </li>
+        <li>
+          <b>El as es comodín.</b> La pinta 1 (As) cuenta como cualquier pinta… salvo cuando alguien
+          está obligando (ahí el as vale solo como as).
+        </li>
+        <li>
+          <b>Apostar.</b> En tu turno subes la apuesta: más cantidad de la misma pinta, o la misma
+          cantidad subiendo la pinta. Entrar y salir de ases sigue la conversión de la casa.
+        </li>
+        <li>
+          <b>Dudar.</b> Si crees que no hay tantos, dudas y se cuenta. Si la apuesta no se cumple,
+          el que apostó pierde un dado; si se cumple, pierdes tú.
+        </li>
+        <li>
+          <b>Calzar.</b> Declaras que la cantidad es <b>exacta</b>. Si aciertas, recuperas un dado.
+          Solo se permite con al menos la mitad de los dados aún en la mesa.
+        </li>
+        <li>
+          <b>La siciliana.</b> Si dudas la <b>primera</b> apuesta de la ronda (la del que abrió) y
+          pierde, se pierden <b>2 dados</b> (y los ases no son comodín en esa cuenta).{" "}
+          <b>No aplica</b> en rondas de obligado.
+        </li>
+        <li>
+          <b>El obligado.</b> Cuando un socio queda con <b>1 dado</b>, abre una ronda especial: los
+          demás juegan <b>a ciegas</b> (sin ver su cacho).
+        </li>
+        <li>
+          <b>Gana</b> el último socio que conserve dados. Lo demás es niebla.
+        </li>
+      </ol>
+      <button className="btn btn--apostar grande" onClick={volver}>
+        Volver
+      </button>
     </div>
   );
 }
