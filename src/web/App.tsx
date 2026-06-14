@@ -95,67 +95,119 @@ function ConfigSolo({ onListo, volver }: { onListo: (t: Transporte) => void; vol
 
   return (
     <div className="pantalla config">
-      <h2>Jugar solo</h2>
+      <Cabecera titulo="Jugar solo" volver={volver} />
       <p className="ayuda">Tú contra la banca. Elige cuántos rivales de la máquina enfrentas.</p>
       <input value={nombre} placeholder="Tu nombre" onChange={(e) => setNombre(e.target.value)} />
-      <div className="mi-mano-titulo">Rivales de la máquina</div>
+      <div className="campo-label">Rivales de la máquina</div>
       <div className="stepper">
         <button onClick={() => setRivales((r) => Math.max(1, r - 1))} aria-label="menos">−</button>
         <span className="cantidad">{rivales}</span>
         <button onClick={() => setRivales((r) => Math.min(NOMBRES_BOT.length, r + 1))} aria-label="más">+</button>
       </div>
-      <div className="botonera">
-        <button className="btn btn--dudar" onClick={volver}>
-          Volver
-        </button>
-        <button className="btn btn--apostar" onClick={empezar}>
-          Empezar
-        </button>
-      </div>
+      <button className="btn btn--apostar grande" onClick={empezar}>
+        Sentarse a la mesa
+      </button>
     </div>
+  );
+}
+
+function Cabecera({ titulo, volver }: { titulo: string; volver: () => void }) {
+  return (
+    <header className="cabecera">
+      <button className="volver" onClick={volver} aria-label="Volver">
+        ‹
+      </button>
+      <h2>{titulo}</h2>
+    </header>
   );
 }
 
 function Reglas({ volver }: { volver: () => void }) {
   return (
-    <div className="pantalla config reglas-pantalla">
-      <h2>Reglas de la Asociación</h2>
-      <ol className="reglas">
-        <li>
-          <b>El reparto.</b> Cada socio parte con <b>5 dados</b> y los agita en secreto. La apuesta
-          es sobre <b>todos</b> los dados de la mesa, no solo los tuyos.
-        </li>
-        <li>
-          <b>El as es comodín.</b> La pinta 1 (As) cuenta como cualquier pinta… salvo cuando alguien
-          está obligando (ahí el as vale solo como as).
-        </li>
-        <li>
-          <b>Apostar.</b> En tu turno subes la apuesta: más cantidad de la misma pinta, o la misma
-          cantidad subiendo la pinta. Entrar y salir de ases sigue la conversión de la casa.
-        </li>
-        <li>
-          <b>Dudar.</b> Si crees que no hay tantos, dudas y se cuenta. Si la apuesta no se cumple,
-          el que apostó pierde un dado; si se cumple, pierdes tú.
-        </li>
-        <li>
-          <b>Calzar.</b> Declaras que la cantidad es <b>exacta</b>. Si aciertas, recuperas un dado.
-          Solo se permite con al menos la mitad de los dados aún en la mesa.
-        </li>
-        <li>
-          <b>La siciliana.</b> Si dudas la <b>primera</b> apuesta de la ronda (la del que abrió) y
-          pierde, se pierden <b>2 dados</b> (y los ases no son comodín en esa cuenta).{" "}
+    <div className="pantalla reglas-pantalla">
+      <Cabecera titulo="Reglas de la Asociación" volver={volver} />
+      <p className="reglas-intro">El cacho de la casa, al completo. Lectura obligatoria para todo socio.</p>
+
+      <section className="regla-bloque">
+        <h3>El objetivo</h3>
+        <p>
+          Gana el último socio que conserve dados. Cada uno parte con <b>5</b> y los agita en
+          secreto; las apuestas son sobre <b>todos</b> los dados de la mesa, no solo los tuyos.
+        </p>
+      </section>
+
+      <section className="regla-bloque">
+        <h3>Las pintas</h3>
+        <p>
+          As (1) · Tonto (2) · Tren (3) · Cuadra (4) · Quina (5) · Sexta (6). El <b>As es comodín</b>:
+          cuenta como cualquier pinta… salvo en el obligado.
+        </p>
+      </section>
+
+      <section className="regla-bloque">
+        <h3>La apuesta</h3>
+        <p>En tu turno declaras cuántos dados de una pinta hay en la mesa. Para subir la apuesta:</p>
+        <ul>
+          <li>sube la <b>cantidad</b> (con cualquier pinta), o</li>
+          <li>mantén la cantidad y sube la <b>pinta</b>.</li>
+        </ul>
+      </section>
+
+      <section className="regla-bloque">
+        <h3>Los ases (conversión de la casa)</h3>
+        <ul>
+          <li>
+            De pinta normal a <b>ases</b>: al menos la <b>mitad</b> (redondeando hacia arriba). Tras
+            “6 quinas”, entras con “3 ases”.
+          </li>
+          <li>
+            De ases a pinta normal: el <b>doble más uno</b>. Tras “3 ases”, sales con “7” de cualquier
+            pinta.
+          </li>
+          <li>De ases a ases: solo sube la cantidad.</li>
+        </ul>
+      </section>
+
+      <section className="regla-bloque">
+        <h3>Dudar</h3>
+        <p>
+          Si crees que no hay tantos, dudas y se revela la mesa. Si la apuesta <b>no</b> se cumple,
+          el que apostó pierde un dado; si se cumple, lo pierdes tú.
+        </p>
+      </section>
+
+      <section className="regla-bloque">
+        <h3>Calzar</h3>
+        <p>
+          Declaras que la cantidad es <b>exacta</b>. Si aciertas, <b>recuperas un dado</b> (hasta 5).
+          Solo se permite cuando aún queda al menos la <b>mitad</b> de los dados iniciales en la mesa.
+        </p>
+      </section>
+
+      <section className="regla-bloque destacado">
+        <h3>★ La siciliana</h3>
+        <p>
+          Si dudas la <b>primera</b> apuesta de la ronda (la del que abrió) y esa apuesta pierde, el
+          perdedor cae <b>2 dados</b> de una. En esa cuenta los <b>ases no son comodín</b>.{" "}
           <b>No aplica</b> en rondas de obligado.
-        </li>
-        <li>
-          <b>El obligado.</b> Cuando un socio queda con <b>1 dado</b>, abre una ronda especial: los
-          demás juegan <b>a ciegas</b> (sin ver su cacho).
-        </li>
-        <li>
-          <b>Gana</b> el último socio que conserve dados. Lo demás es niebla.
-        </li>
-      </ol>
+        </p>
+      </section>
+
+      <section className="regla-bloque destacado">
+        <h3>★ El obligado</h3>
+        <p>
+          La primera vez que un socio queda con <b>1 dado</b>, abre una ronda especial de obligado:
+        </p>
+        <ul>
+          <li>Es <b>cerrada</b>: los demás juegan <b>a ciegas</b>; solo ve su cacho quien también tenga 1 dado.</li>
+          <li>Los <b>ases no son comodín</b>.</li>
+          <li>Con 2 o más dados no puedes cambiar la pinta (solo subir cantidad) ni calzar.</li>
+          <li>No corre la siciliana.</li>
+        </ul>
+      </section>
+
       <button className="btn btn--apostar grande" onClick={volver}>
-        Volver
+        Volver al salón
       </button>
     </div>
   );
@@ -170,14 +222,11 @@ function ConfigOnline({ onListo, volver }: { onListo: (t: Transporte) => void; v
   if (!supabaseConfigurado()) {
     return (
       <div className="pantalla config">
-        <h2>Jugar en línea</h2>
+        <Cabecera titulo="Mesa en línea" volver={volver} />
         <p className="ayuda">
           Falta configurar el backend. Define <code>VITE_SUPABASE_URL</code> y{" "}
           <code>VITE_SUPABASE_ANON_KEY</code> (ver <code>supabase/README.md</code>) y vuelve a cargar.
         </p>
-        <button className="btn btn--dudar" onClick={volver}>
-          Volver
-        </button>
       </div>
     );
   }
@@ -197,28 +246,25 @@ function ConfigOnline({ onListo, volver }: { onListo: (t: Transporte) => void; v
 
   return (
     <div className="pantalla config">
-      <h2>Jugar en línea</h2>
+      <Cabecera titulo="Mesa en línea" volver={volver} />
       <input value={nombre} placeholder="Tu nombre" onChange={(e) => setNombre(e.target.value)} />
       <button
-        className="btn btn--apostar"
+        className="btn btn--apostar grande"
         disabled={!nombre.trim() || cargando}
         onClick={() => correr((t) => t.crearSala(nombre.trim()))}
       >
         Crear sala
       </button>
-      <div className="separador">o únete con un código</div>
-      <input value={codigo} placeholder="CÓDIGO" onChange={(e) => setCodigo(e.target.value.toUpperCase())} />
+      <div className="separador">o únete con una contraseña</div>
+      <input value={codigo} placeholder="CONTRASEÑA" onChange={(e) => setCodigo(e.target.value.toUpperCase())} />
       <button
-        className="btn btn--apostar"
+        className="btn btn--calzar grande"
         disabled={!nombre.trim() || codigo.length < 4 || cargando}
         onClick={() => correr((t) => t.unirse(codigo.trim(), nombre.trim()))}
       >
         Unirse
       </button>
       {error && <div className="hint">{error}</div>}
-      <button className="btn btn--dudar" onClick={volver}>
-        Volver
-      </button>
     </div>
   );
 }
