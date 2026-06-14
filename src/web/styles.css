@@ -149,7 +149,9 @@ input:focus { border-color: var(--oro); box-shadow: 0 0 0 2px rgba(200, 162, 74,
 .badge--obligado { background: var(--oro); color: #15110a; font-weight: 800; border-color: transparent; }
 .badge--cerrada { background: var(--sangre); color: #fff; border-color: transparent; }
 
-.vasos { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+/* padding arriba/derecha para que la burbuja de la apuesta no se recorte
+   (el scroll horizontal también recorta lo que sobresale por arriba). */
+.vasos { display: flex; gap: 10px; overflow-x: auto; padding: 18px 8px 6px; }
 .vaso {
   position: relative; background: var(--humo); border-radius: 14px; padding: 10px;
   min-width: 92px; border: 1px solid var(--linea);
