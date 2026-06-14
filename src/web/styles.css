@@ -1,0 +1,141 @@
+:root {
+  --felt: #0b3d2e;
+  --felt-2: #0f4c39;
+  --crema: #f4f1e9;
+  --oro: #e8b84b;
+  --rojo: #c0473b;
+  --azul: #2e6f9e;
+  --texto: #f4f1e9;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  color: var(--texto);
+  background: radial-gradient(circle at 50% 0%, var(--felt-2), var(--felt) 70%);
+  min-height: 100dvh;
+}
+
+#root { max-width: 520px; margin: 0 auto; padding: env(safe-area-inset-top) 14px 24px; }
+
+h1 { margin: 6px 0; }
+button { font: inherit; cursor: pointer; }
+input {
+  font: inherit; padding: 12px 14px; border-radius: 12px; border: none; width: 100%;
+  margin: 6px 0; background: rgba(255,255,255,.92); color: #1a1a1a;
+}
+
+/* ---------- Pantallas simples ---------- */
+.pantalla { display: flex; flex-direction: column; gap: 10px; padding-top: 24px; }
+.home { align-items: center; text-align: center; gap: 14px; padding-top: 8vh; }
+.home .logo { font-size: 72px; }
+.home h1 { font-size: 44px; letter-spacing: 1px; }
+.home .sub { opacity: .8; margin-bottom: 16px; }
+.ayuda { opacity: .8; font-size: 14px; }
+.separador { text-align: center; opacity: .7; margin: 10px 0; font-size: 14px; }
+
+.codigo-sala { background: rgba(0,0,0,.25); padding: 14px; border-radius: 14px; text-align: center; }
+.codigo-sala strong { font-size: 30px; letter-spacing: 6px; color: var(--oro); }
+.lista-jugadores { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.lista-jugadores li { background: rgba(255,255,255,.08); padding: 12px 14px; border-radius: 12px; }
+
+/* ---------- Botones ---------- */
+.btn { border: none; border-radius: 14px; padding: 14px 16px; font-weight: 700; color: #15110a; }
+.btn:disabled { opacity: .4; }
+.btn.grande { width: 100%; padding: 18px; font-size: 18px; }
+.btn--apostar { background: var(--oro); }
+.btn--dudar { background: var(--rojo); color: #fff; }
+.btn--calzar { background: var(--azul); color: #fff; }
+.botonera { display: flex; gap: 10px; flex-wrap: wrap; }
+.botonera .btn { flex: 1; }
+
+/* ---------- Mesa ---------- */
+.mesa { display: flex; flex-direction: column; gap: 14px; padding-top: 10px; }
+.mesa-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; }
+.ronda { font-weight: 700; }
+.dados-mesa { margin-left: auto; opacity: .8; }
+.badge { background: rgba(255,255,255,.14); padding: 3px 9px; border-radius: 999px; font-size: 12px; }
+.badge--obligado { background: var(--oro); color: #15110a; font-weight: 800; }
+.badge--cerrada { background: var(--rojo); color: #fff; }
+
+.vasos { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+.vaso {
+  position: relative; background: rgba(0,0,0,.22); border-radius: 14px; padding: 10px;
+  min-width: 92px; border: 2px solid transparent;
+}
+.vaso--turno { border-color: var(--oro); box-shadow: 0 0 14px rgba(232,184,75,.45); }
+.vaso--out { opacity: .4; }
+.vaso-nombre { font-size: 13px; font-weight: 700; margin-bottom: 6px; white-space: nowrap; }
+.vaso .yo { color: var(--oro); font-weight: 400; }
+.vaso-dados { display: flex; flex-wrap: wrap; gap: 4px; min-height: 30px; }
+.burbuja {
+  position: absolute; top: -10px; right: -6px; background: var(--oro); color: #15110a;
+  font-size: 12px; font-weight: 800; padding: 2px 8px; border-radius: 999px; white-space: nowrap;
+}
+.out { font-size: 12px; opacity: .8; }
+
+.centro { text-align: center; padding: 8px 0; }
+.apuesta-grande .quien { display: block; opacity: .8; font-size: 14px; }
+.apuesta-grande strong { font-size: 34px; color: var(--oro); }
+
+.pasa-telefono { text-align: center; background: rgba(232,184,75,.16); padding: 8px; border-radius: 12px; font-size: 14px; }
+
+.mi-mano { background: rgba(0,0,0,.25); border-radius: 16px; padding: 12px; }
+.mi-mano-titulo { font-size: 13px; opacity: .8; margin-bottom: 8px; }
+.mano-dados { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.a-ciegas { text-align: center; padding: 14px; opacity: .85; }
+
+/* ---------- Acciones ---------- */
+.acciones { display: flex; flex-direction: column; gap: 12px; }
+.acciones--espera { text-align: center; opacity: .85; padding: 12px; }
+.constructor { display: flex; flex-direction: column; gap: 10px; }
+.stepper { display: flex; align-items: center; justify-content: center; gap: 18px; }
+.stepper button {
+  width: 52px; height: 52px; border-radius: 50%; border: none; font-size: 26px; font-weight: 800;
+  background: var(--crema); color: #15110a;
+}
+.stepper .cantidad { font-size: 40px; font-weight: 800; min-width: 56px; text-align: center; color: var(--oro); }
+.pintas { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.pinta-btn {
+  border: 2px solid rgba(255,255,255,.2); background: rgba(255,255,255,.06); color: var(--texto);
+  border-radius: 10px; padding: 10px 2px; font-size: 12px; font-weight: 700; text-transform: capitalize;
+}
+.pinta-btn.sel { background: var(--oro); color: #15110a; border-color: var(--oro); }
+.pinta-btn.as { color: var(--oro); }
+.pinta-btn.as.sel { color: #15110a; }
+.pinta-btn:disabled { opacity: .3; }
+.hint { color: var(--oro); font-size: 13px; text-align: center; }
+
+/* ---------- Dados ---------- */
+.dado {
+  display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
+  background: var(--crema); border-radius: 22%; padding: 12%; box-shadow: inset 0 -3px 0 rgba(0,0,0,.12);
+}
+.dado--as { background: #fff7e0; box-shadow: inset 0 0 0 2px var(--oro); }
+.dado--oculto { background: #143c30; box-shadow: inset 0 0 0 2px rgba(255,255,255,.12); }
+.pip { display: block; border-radius: 50%; margin: auto; width: 70%; height: 70%; }
+.pip--on { background: #15110a; }
+.dado--as .pip--on { background: var(--oro); }
+
+/* ---------- Revelación ---------- */
+.revelacion {
+  position: fixed; inset: 0; background: rgba(0,0,0,.6); display: flex; align-items: center;
+  justify-content: center; padding: 16px; z-index: 10;
+}
+.revelacion-caja {
+  background: var(--felt-2); border: 2px solid var(--oro); border-radius: 18px; padding: 18px;
+  width: 100%; max-width: 460px; max-height: 90dvh; overflow-y: auto;
+}
+.revelacion h2 { margin: 0 0 6px; color: var(--oro); }
+.resultado { font-size: 16px; }
+.siciliana { color: var(--oro); font-weight: 800; }
+.reveal-grid { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+.reveal-fila { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,.2); padding: 8px; border-radius: 10px; }
+.reveal-nombre { width: 64px; font-weight: 700; font-size: 13px; }
+.reveal-dados { display: flex; gap: 5px; flex: 1; flex-wrap: wrap; }
+.reveal-cuenta { font-size: 12px; opacity: .85; }
+.siguiente { text-align: center; display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+
+.fin { text-align: center; gap: 20px; padding-top: 12vh; }

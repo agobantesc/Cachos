@@ -3,30 +3,27 @@
 Cacho / Dudo chileno para jugar **remoto entre amigos desde el iPhone**, con las
 variantes de la casa (obligado cerrado, ases no comodín en obligado, "la siciliana").
 
-## Estado: Fase 1 — Motor de reglas ✅
-
-El plan es por fases. Esta primera entrega es el **motor del juego** en TypeScript
-puro: toda la lógica del Cacho, sin red ni interfaz todavía, con tests.
+## Estructura
 
 ```
-src/engine/
-  types.ts    Tipos del dominio (Pinta, Apuesta, Jugador, EstadoJuego, ReglasCasa…)
-  config.ts   Reglas de la casa por defecto (editables)
-  dice.ts     Agitar el cacho y contar pintas (con/sin comodín)
-  bids.ts     Validación de apuestas y conversión de ases (el corazón)
-  game.ts     Máquina de estados: crear juego, iniciar ronda, aplicar acciones, resolver
-  __tests__/  29 tests que cubren conteo, apuestas, sentido, calzo y las 3 variantes
-docs/
-  RULES.md    Las reglas exactas que implementa el motor (fuente de verdad)
+src/engine/   Motor del juego (TypeScript puro): reglas, máquina de estados, vistas
+src/web/      PWA en React: la interfaz para jugar
+supabase/     Backend serverless: esquema + RLS + Edge Function autoritativa
+docs/RULES.md Las reglas exactas que implementa el motor (fuente de verdad)
 ```
 
-### Probar
+### Correr
 
 ```bash
 npm install
-npm test        # corre los 29 tests
+npm run dev          # levanta la PWA en local (modo "pasar el teléfono" sin backend)
+npm test             # 36 tests (motor + render del UI)
 npm run typecheck
+npm run preview:html # genera preview/index.html (preview estática del look)
 ```
+
+Para jugar en línea de verdad hay que desplegar Supabase y definir
+`VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` (ver [`supabase/README.md`](supabase/README.md)).
 
 ### Ejemplo de uso del motor
 
@@ -64,10 +61,11 @@ pantalla de inicio".
 
 ## Roadmap
 
-- [x] **Fase 1 — Motor de reglas** (`src/engine`, 33 tests)
+- [x] **Fase 1 — Motor de reglas** (`src/engine`, con tests)
 - [~] **Fase 2 — Salas + tiempo real** (Supabase): esquema + RLS + Edge Function
   autoritativa listos para desplegar → ver [`supabase/README.md`](supabase/README.md)
-- [ ] **Fase 3 — UI iPhone** (PWA React: dados, agitar el cacho, táctil)
-- [ ] **Fase 4 — Pulido** (reconexión, sonidos, chat)
+- [x] **Fase 3 — UI iPhone** (`src/web`): PWA React con mesa, vasos, dados,
+  apuestas, revelación y modo local "pasar el teléfono"
+- [ ] **Fase 4 — Pulido** (animación de agitar el cacho, sonidos, reconexión, chat)
 
 Reglas completas implementadas: ver [`docs/RULES.md`](docs/RULES.md).
