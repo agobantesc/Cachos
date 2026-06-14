@@ -81,9 +81,10 @@ describe("flujo básico de ronda", () => {
 
 describe("resolución de dudo", () => {
   it("si la apuesta NO se cumple, pierde el apostador", () => {
-    let e = iniciarRonda(nuevaPartida(), { rng: rng0 });
+    let e = iniciarRonda(nuevaPartida(["A", "B", "C"]), { rng: rng0 });
     setDados(e, "A", [5, 3, 3, 4, 6]); // una quina
     setDados(e, "B", [2, 2, 6, 6, 4]); // cero quinas
+    setDados(e, "C", [2, 3, 4, 6, 6]); // cero quinas, cero ases
     e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "A", apuesta: { cantidad: 4, pinta: 5 } });
     e = aplicarAccion(e, { tipo: "DUDAR", jugadorId: "B" });
     expect(e.ultimaResolucion!.cantidadReal).toBe(1);
@@ -108,9 +109,10 @@ describe("resolución de dudo", () => {
 
 describe("la siciliana", () => {
   it("dudo inmediato al abridor hace perder 2 dados y los ases no valen comodín", () => {
-    let e = iniciarRonda(nuevaPartida(), { rng: rng0 });
+    let e = iniciarRonda(nuevaPartida(["A", "B", "C"]), { rng: rng0 });
     setDados(e, "A", [1, 1, 5, 4, 6]); // dos ases + una quina
     setDados(e, "B", [2, 2, 6, 6, 4]);
+    setDados(e, "C", [2, 3, 4, 6, 6]); // cero quinas, cero ases
     // A abre "3 quinas". Con comodín habría 3 (1+1+1); sin comodín (siciliana) sólo 1.
     e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "A", apuesta: { cantidad: 3, pinta: 5 } });
     e = aplicarAccion(e, { tipo: "DUDAR", jugadorId: "B" });
@@ -227,17 +229,30 @@ describe("apertura de la siguiente ronda", () => {
 
 describe("fin de juego", () => {
   it("cuando un jugador se queda sin dados, el otro gana", () => {
-    let e = nuevaPartida();
-    setDados(e, "A", [3, 3]); // A con 2 dados
-    e.abridorRondaId = "B";
+    let e = nuevaPartida(); // A, B
+    e.abridorRondaId = "A";
     e = iniciarRonda(e, { rng: rng0 });
-    setDados(e, "A", [3, 3]);
-    setDados(e, "B", [2, 2]); // B con 2 dados, cero quinas
-    // B abre 1 quina, A duda -> B pierde 2 (siciliana) -> B eliminado.
-    e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "B", apuesta: { cantidad: 1, pinta: 5 } });
-    e = aplicarAccion(e, { tipo: "DUDAR", jugadorId: "A" });
+    setDados(e, "A", [5, 5, 5, 5, 5]); // A: muchas quinas
+    setDados(e, "B", [2]); // B: 1 dado, cero quinas
+    // A abre "1 quina"; B duda. Real = 5 -> se cumple -> pierde B (sin siciliana: 2 jugadores).
+    e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "A", apuesta: { cantidad: 1, pinta: 5 } });
+    e = aplicarAccion(e, { tipo: "DUDAR", jugadorId: "B" });
     expect(jugadorPorId(e, "B")!.eliminado).toBe(true);
     expect(e.fase).toBe("FIN_JUEGO");
     expect(e.ganadorId).toBe("A");
+  });
+
+  it("no hay siciliana cuando quedan solo 2 jugadores", () => {
+    let e = nuevaPartida(); // A, B
+    e.abridorRondaId = "A";
+    e = iniciarRonda(e, { rng: rng0 });
+    setDados(e, "A", [2, 2, 3, 4, 6]); // A abre algo falso
+    setDados(e, "B", [6, 6, 6, 6, 6]); // cero quinas, cero ases
+    e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "A", apuesta: { cantidad: 3, pinta: 5 } });
+    e = aplicarAccion(e, { tipo: "DUDAR", jugadorId: "B" });
+    expect(e.ultimaResolucion!.siciliana).toBe(false);
+    expect(e.ultimaResolucion!.perdedorId).toBe("A");
+    expect(e.ultimaResolucion!.dadosPerdidos).toBe(1);
+    expect(jugadorPorId(e, "A")!.dados.length).toBe(4);
   });
 });

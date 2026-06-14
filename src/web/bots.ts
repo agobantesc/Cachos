@@ -90,7 +90,7 @@ export function decidirBot(
   nivel: Nivel = "medio",
 ): JugadaBot {
   const P = PARAMS[nivel];
-  const asesComodin = !publico.esRondaObligado; // aprox. con reglas por defecto
+  const asesComodin = publico.asesComodin;
   const total = publico.totalDadosEnMesa;
   const yo = publico.jugadores.find((j) => j.id === miId);
   const misDados = miMano ? miMano.length : yo?.cantidadDados ?? 0;
@@ -137,7 +137,7 @@ export function decidirBot(
     for (const Q of pintasPosibles) {
       for (let c = actual.cantidad; c <= actual.cantidad + 3; c++) {
         const apuesta: Apuesta = { cantidad: c, pinta: Q };
-        if (!validarApuesta(actual, apuesta).valida) continue;
+        if (!validarApuesta(actual, apuesta, asesComodin).valida) continue;
         cands.push({ apuesta, prob: probAlMenos(Q, c) });
         break;
       }

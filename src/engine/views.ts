@@ -21,6 +21,7 @@ import type {
   Sentido,
 } from "./types.js";
 import {
+  asesComodinEnRonda,
   jugadorDeTurnoId,
   puedeCalzarse,
   totalDadosEnMesa,
@@ -50,6 +51,8 @@ export interface EstadoPublico {
   apuestasEnRonda: number;
   esRondaObligado: boolean;
   esRondaCerrada: boolean;
+  /** ¿El As cuenta como comodín en esta ronda? (false en obligado.) */
+  asesComodin: boolean;
   fase: Fase;
   numeroRonda: number;
   ganadorId: string | null;
@@ -87,6 +90,7 @@ export function proyeccionPublica(estado: EstadoJuego): EstadoPublico {
     apuestasEnRonda: estado.apuestasEnRonda,
     esRondaObligado: estado.esRondaObligado,
     esRondaCerrada: estado.esRondaCerrada,
+    asesComodin: asesComodinEnRonda(estado),
     fase: estado.fase,
     numeroRonda: estado.numeroRonda,
     ganadorId: estado.ganadorId,

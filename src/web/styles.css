@@ -157,14 +157,15 @@ input:focus { border-color: var(--oro); box-shadow: 0 0 0 2px rgba(200, 162, 74,
    (el scroll horizontal también recorta lo que sobresale por arriba). */
 .vasos { display: flex; gap: 10px; overflow-x: auto; padding: 18px 8px 6px; }
 .vaso {
-  position: relative; background: var(--humo); border-radius: 14px; padding: 10px;
-  min-width: 92px; border: 1px solid var(--linea);
+  position: relative; background: var(--humo); border-radius: 12px; padding: 7px 11px;
+  min-width: 0; border: 1px solid var(--linea); text-align: center;
 }
 .vaso--turno { border-color: var(--oro); box-shadow: 0 0 16px rgba(200, 162, 74, 0.4); }
 .vaso--out { opacity: 0.4; }
-.vaso-nombre { font-size: 13px; font-weight: 700; margin-bottom: 6px; white-space: nowrap; }
+.vaso-nombre { font-size: 13px; font-weight: 700; margin-bottom: 2px; white-space: nowrap; }
 .vaso .yo { color: var(--oro); font-weight: 400; }
-.vaso-dados { display: flex; flex-wrap: wrap; gap: 4px; min-height: 30px; }
+.vaso-conteo { font-size: 14px; color: var(--tenue); white-space: nowrap; }
+.vaso-conteo b { color: var(--oro); font-size: 19px; font-family: var(--display); }
 .burbuja {
   position: absolute; top: -10px; right: -6px; background: var(--oro); color: #15110a;
   font-size: 12px; font-weight: 800; padding: 2px 8px; border-radius: 999px; white-space: nowrap;

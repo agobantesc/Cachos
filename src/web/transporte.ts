@@ -5,6 +5,7 @@ import {
   iniciarRonda,
   aplicarAccion,
   jugadorDeTurnoId,
+  jugadorPorId,
   vistaJugador,
   type Accion,
   type Apuesta,
@@ -159,9 +160,10 @@ export class TransporteLocal implements Transporte {
       if (this.esBot(turno)) {
         this.temporizador = setTimeout(() => this.jugarBot(turno!), 850);
       }
-    } else if (e.fase === "FIN_RONDA" && this.esBot(e.abridorRondaId)) {
-      // El que abre la próxima ronda es un bot: continúa solo tras mostrar el reveal.
-      this.temporizador = setTimeout(() => void this.siguienteRonda(), 2200);
+    } else if (e.fase === "FIN_RONDA" && jugadorPorId(e, this.humano)?.eliminado) {
+      // El humano ya está fuera: la mesa sigue sola hasta el final. Si el humano
+      // sigue en juego, la revelación espera a que pulse "Continuar".
+      this.temporizador = setTimeout(() => void this.siguienteRonda(), 1800);
     }
   }
 

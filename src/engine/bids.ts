@@ -56,13 +56,28 @@ export function apuestaBienFormada(a: Apuesta): boolean {
 /**
  * ¿Puede `nueva` reemplazar a `actual`? Si `actual` es null, es la apertura de la
  * ronda y basta con que esté bien formada.
+ *
+ * `asesComodin` (por defecto true) controla las reglas del As: cuando es comodín
+ * se usa la conversión estilo Perudo. En una ronda de obligado los ases NO son
+ * comodín: ahí el As vale como la pinta 1 normal (1 < 2 < … < 6), sin conversión.
  */
-export function validarApuesta(actual: Apuesta | null, nueva: Apuesta): ResultadoValidacion {
+export function validarApuesta(
+  actual: Apuesta | null,
+  nueva: Apuesta,
+  asesComodin = true,
+): ResultadoValidacion {
   if (!apuestaBienFormada(nueva)) {
     return { valida: false, motivo: "Apuesta mal formada (cantidad >= 1, pinta 1..6)." };
   }
   if (actual === null) {
     return { valida: true };
+  }
+
+  // Obligado (ases sin comodín): el As es la pinta 1, una pinta normal más.
+  if (!asesComodin) {
+    if (nueva.cantidad > actual.cantidad) return { valida: true };
+    if (nueva.cantidad === actual.cantidad && nueva.pinta > actual.pinta) return { valida: true };
+    return { valida: false, motivo: "Debes subir la cantidad, o mantenerla subiendo la pinta." };
   }
 
   const actualEsAs = ES_AS(actual.pinta);

@@ -269,7 +269,7 @@ export function aplicarAccion(estado: EstadoJuego, accion: Accion): EstadoJuego 
 }
 
 function aplicarApostar(estado: EstadoJuego, jugadorId: string, apuesta: Apuesta): EstadoJuego {
-  const val = validarApuesta(estado.apuestaActual, apuesta);
+  const val = validarApuesta(estado.apuestaActual, apuesta, asesComodinEnRonda(estado));
   if (!val.valida) {
     throw new ErrorDeJuego(val.motivo ?? "Apuesta inválida.");
   }
@@ -386,12 +386,13 @@ function aplicarDesafio(
   const apuesta = e.apuestaActual!;
 
   // La siciliana: dudo a la PRIMERA apuesta de la ronda, hecha por el abridor.
-  // En ese conteo los ases NO valen como comodín. No aplica en rondas de
-  // obligado (cuando alguien está obligando no hay siciliana).
+  // En ese conteo los ases NO valen como comodín. No aplica en rondas de obligado
+  // ni cuando quedan solo 2 jugadores en pie.
   const siciliana =
     tipo === "DUDO" &&
     e.reglas.sicilianaActiva &&
     !e.esRondaObligado &&
+    jugadoresActivos(e).length > 2 &&
     e.apuestasEnRonda === 1 &&
     e.apuestaActualJugadorId === e.abridorRondaId;
 

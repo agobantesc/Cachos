@@ -6,8 +6,5 @@ dist/
 .env.local
 coverage/
 
-# Bundle del motor generado para la Edge Function (correr `npm run build:engine`)
-supabase/functions/_shared/engine.mjs
-
 # Previsualización estática generada (correr `npm run preview:html`)
 preview/

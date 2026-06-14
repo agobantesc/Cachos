@@ -35,7 +35,10 @@ export function BarraAcciones({
     setPropuesta(inicial);
   }
 
-  const validez = useMemo(() => validarApuesta(publico.apuestaActual, propuesta), [publico.apuestaActual, propuesta]);
+  const validez = useMemo(
+    () => validarApuesta(publico.apuestaActual, propuesta, publico.asesComodin),
+    [publico.apuestaActual, propuesta, publico.asesComodin],
+  );
   const rompeObligado = pintaBloqueada !== null && propuesta.pinta !== pintaBloqueada;
   const apuestaOk = validez.valida && !rompeObligado;
 

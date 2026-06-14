@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { EstadoPublico, EventoRonda, Pinta, ResolucionRonda, Sentido } from "../engine";
-import { Dado, DadoOculto, ManoDados } from "./Dado";
+import { Dado, ManoDados } from "./Dado";
 import { BarraAcciones } from "./BarraAcciones";
 import { nombrarApuesta, PLURAL_PINTA } from "./util";
 import { Sonidos, sonidoActivado, alternarSonido } from "./sonido";
@@ -86,8 +86,14 @@ export function Mesa({
               <div className="vaso-nombre">
                 {j.nombre} {id === snap.miId && <span className="yo">(tú)</span>}
               </div>
-              <div className="vaso-dados">
-                {j.eliminado ? <span className="out">eliminado</span> : Array.from({ length: j.cantidadDados }, (_, i) => <DadoOculto key={i} />)}
+              <div className="vaso-conteo">
+                {j.eliminado ? (
+                  <span className="out">fuera</span>
+                ) : (
+                  <>
+                    🎲 <b>{j.cantidadDados}</b>
+                  </>
+                )}
               </div>
               {ev && <div className={"burbuja" + (ev.tipo === "PASO" ? " burbuja--paso" : "")}>{textoEvento(ev)}</div>}
             </div>
@@ -206,6 +212,13 @@ function Revelacion({
                 ← derecha
               </button>
             </div>
+          </div>
+        ) : snap.esSolo ? (
+          <div className="siguiente">
+            <span>Abre {nombre(publico.abridorRondaId)}.</span>
+            <button className="btn btn--apostar grande" onClick={() => transporte.siguienteRonda()}>
+              Continuar ▶
+            </button>
           </div>
         ) : (
           <p className="siguiente">Abre {nombre(publico.abridorRondaId)}…</p>
