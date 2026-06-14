@@ -29,6 +29,11 @@ export interface Apuesta {
   pinta: Pinta;
 }
 
+/** Lo que un jugador "dijo" en la ronda (para la bitácora / globos). */
+export type EventoRonda =
+  | { tipo: "APUESTA"; jugadorId: string; apuesta: Apuesta }
+  | { tipo: "PASO"; jugadorId: string };
+
 /**
  * Sentido del juego alrededor de la mesa. El abridor de cada ronda lo elige.
  *  - 1  = hacia la IZQUIERDA (avanza al siguiente asiento de `ordenAsientos`).
@@ -115,6 +120,8 @@ export interface EstadoJuego {
   apuestasEnRonda: number;
   /** Si hay un "paso" pendiente de resolver, el id de quien pasó; si no, null. */
   pasoPendienteJugadorId: string | null;
+  /** Lo que cada jugador declaró en la ronda actual, en orden (apuestas y pasos). */
+  historialRonda: EventoRonda[];
   /** Ronda "obligado": gatillada cuando el abridor tiene 1 dado. */
   esRondaObligado: boolean;
   /** Ronda "cerrada": los jugadores no ven sus propios dados (salvo excepciones). */

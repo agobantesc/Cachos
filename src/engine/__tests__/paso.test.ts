@@ -95,6 +95,20 @@ describe("pasar", () => {
     expect(() => aplicarAccion(e, { tipo: "PASAR", jugadorId: "B" })).toThrow(ErrorDeJuego);
   });
 
+  it("el historial registra apuestas y pasos en orden y se reinicia por ronda", () => {
+    let e = partida(); // A, B, C; abridor A
+    e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "A", apuesta: { cantidad: 2, pinta: 3 } });
+    e = aplicarAccion(e, { tipo: "PASAR", jugadorId: "B" });
+    expect(e.historialRonda).toEqual([
+      { tipo: "APUESTA", jugadorId: "A", apuesta: { cantidad: 2, pinta: 3 } },
+      { tipo: "PASO", jugadorId: "B" },
+    ]);
+    e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "C", apuesta: { cantidad: 3, pinta: 3 } });
+    expect(e.historialRonda).toHaveLength(3);
+    const e2 = iniciarRonda(e, { rng: rng0 });
+    expect(e2.historialRonda).toEqual([]);
+  });
+
   it("no se puede pasar en una ronda de obligado", () => {
     let e = crearJuego(
       [

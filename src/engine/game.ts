@@ -161,6 +161,7 @@ export function crearJuego(
     apuestaActualJugadorId: null,
     apuestasEnRonda: 0,
     pasoPendienteJugadorId: null,
+    historialRonda: [],
     esRondaObligado: false,
     esRondaCerrada: false,
     fase: "LOBBY",
@@ -228,6 +229,7 @@ export function iniciarRonda(estado: EstadoJuego, opciones: OpcionesRonda = {}):
   e.apuestaActualJugadorId = null;
   e.apuestasEnRonda = 0;
   e.pasoPendienteJugadorId = null;
+  e.historialRonda = [];
   e.ultimaResolucion = null;
   e.fase = "EN_RONDA";
   e.numeroRonda += 1;
@@ -289,6 +291,7 @@ function aplicarApostar(estado: EstadoJuego, jugadorId: string, apuesta: Apuesta
   e.apuestaActual = { ...apuesta };
   e.apuestaActualJugadorId = jugadorId;
   e.apuestasEnRonda += 1;
+  e.historialRonda.push({ tipo: "APUESTA", jugadorId, apuesta: { ...apuesta } });
   e.indiceTurno = siguienteActivo(e, e.indiceTurno);
   return e;
 }
@@ -308,6 +311,7 @@ function aplicarPasar(estado: EstadoJuego, jugadorId: string): EstadoJuego {
   }
   const e = structuredClone(estado);
   e.pasoPendienteJugadorId = jugadorId;
+  e.historialRonda.push({ tipo: "PASO", jugadorId });
   e.indiceTurno = siguienteActivo(e, e.indiceTurno);
   return e;
 }

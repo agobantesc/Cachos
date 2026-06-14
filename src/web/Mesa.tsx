@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { EstadoPublico, Pinta, ResolucionRonda, Sentido } from "../engine";
+import type { EstadoPublico, EventoRonda, Pinta, ResolucionRonda, Sentido } from "../engine";
 import { Dado, DadoOculto, ManoDados } from "./Dado";
 import { BarraAcciones } from "./BarraAcciones";
 import { nombrarApuesta, PLURAL_PINTA } from "./util";
@@ -17,6 +17,13 @@ export function Mesa({
 }) {
   const p = snap.publico!;
   const nombre = (id: string | null) => p.jugadores.find((j) => j.id === id)?.nombre ?? "—";
+  const textoEvento = (e: EventoRonda) => (e.tipo === "PASO" ? "pasó 🤫" : nombrarApuesta(e.apuesta));
+  const ultimoEventoDe = (id: string): EventoRonda | undefined => {
+    for (let i = p.historialRonda.length - 1; i >= 0; i--) {
+      if (p.historialRonda[i]!.jugadorId === id) return p.historialRonda[i];
+    }
+    return undefined;
+  };
   const [sonando, setSonando] = useState(sonidoActivado());
   const abandonar = () => {
     if (typeof window === "undefined" || window.confirm("¿Abandonar la partida y volver al menú?")) {
@@ -73,7 +80,7 @@ export function Mesa({
         {p.ordenAsientos.map((id) => {
           const j = p.jugadores.find((x) => x.id === id)!;
           const esTurno = p.turnoJugadorId === id && p.fase === "EN_RONDA";
-          const esApostador = p.apuestaActualJugadorId === id;
+          const ev = ultimoEventoDe(id);
           return (
             <div key={id} className={"vaso" + (esTurno ? " vaso--turno" : "") + (j.eliminado ? " vaso--out" : "")}>
               <div className="vaso-nombre">
@@ -82,11 +89,21 @@ export function Mesa({
               <div className="vaso-dados">
                 {j.eliminado ? <span className="out">eliminado</span> : Array.from({ length: j.cantidadDados }, (_, i) => <DadoOculto key={i} />)}
               </div>
-              {esApostador && p.apuestaActual && <div className="burbuja">{nombrarApuesta(p.apuestaActual)}</div>}
+              {ev && <div className={"burbuja" + (ev.tipo === "PASO" ? " burbuja--paso" : "")}>{textoEvento(ev)}</div>}
             </div>
           );
         })}
       </section>
+
+      {p.historialRonda.length > 0 && (
+        <section className="bitacora" aria-label="Lo que dijo cada jugador esta ronda">
+          {p.historialRonda.map((e, i) => (
+            <span key={i} className={"globo" + (e.jugadorId === snap.miId ? " globo--yo" : "")}>
+              <b>{nombre(e.jugadorId)}</b> {textoEvento(e)}
+            </span>
+          ))}
+        </section>
+      )}
 
       <section className="centro">
         {p.apuestaActual ? (

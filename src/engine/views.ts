@@ -14,6 +14,7 @@
 import type {
   Apuesta,
   EstadoJuego,
+  EventoRonda,
   Fase,
   Pinta,
   ResolucionRonda,
@@ -57,6 +58,8 @@ export interface EstadoPublico {
   dadosIniciales: number;
   /** Id de quien dejó un "paso" pendiente, o null. */
   pasoPendienteJugadorId: string | null;
+  /** Lo que cada jugador declaró en la ronda (apuestas y pasos), en orden. */
+  historialRonda: EventoRonda[];
   /** Si en este momento alguien podría calzar (regla de la mitad de dados). */
   calzoDisponible: boolean;
   /** Revelación del último dudo/calzo (dados de todos). null durante la ronda. */
@@ -90,6 +93,7 @@ export function proyeccionPublica(estado: EstadoJuego): EstadoPublico {
     totalDadosEnMesa: totalDadosEnMesa(estado),
     dadosIniciales: estado.reglas.dadosIniciales,
     pasoPendienteJugadorId: estado.pasoPendienteJugadorId,
+    historialRonda: structuredClone(estado.historialRonda),
     calzoDisponible: estado.fase === "EN_RONDA" && estado.apuestaActual !== null && puedeCalzarse(estado),
     // El reveal es público por naturaleza: en un dudo/calzo todos ven todo.
     ultimaResolucion: estado.ultimaResolucion
