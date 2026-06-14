@@ -19,6 +19,7 @@ export const REGLAS_POR_DEFECTO: ReglasCasa = {
 
   calzarPermitido: true,
   calzarRecuperaDado: true,
+  calzarSoloConMitadDeDados: true,
 };
 
 export function crearReglas(overrides: Partial<ReglasCasa> = {}): ReglasCasa {

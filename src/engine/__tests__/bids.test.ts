@@ -26,11 +26,15 @@ describe("validarApuesta - normal a normal", () => {
 });
 
 describe("validarApuesta - conversión de ases (estilo Perudo)", () => {
-  it("entrar a ases requiere techo(cantidad/2)", () => {
+  it("entrar a ases requiere techo(cantidad/2) = 'la mitad más grande'", () => {
     expect(asesMinimosDesdeNormal(6)).toBe(3);
     expect(ok({ cantidad: 6, pinta: 5 }, { cantidad: 3, pinta: 1 })).toBe(true);
     expect(ok({ cantidad: 6, pinta: 5 }, { cantidad: 2, pinta: 1 })).toBe(false);
     expect(asesMinimosDesdeNormal(5)).toBe(3); // techo(2.5)
+    // Caso del usuario: de "11 sextas" se baja a "6 ases".
+    expect(asesMinimosDesdeNormal(11)).toBe(6);
+    expect(ok({ cantidad: 11, pinta: 6 }, { cantidad: 6, pinta: 1 })).toBe(true);
+    expect(ok({ cantidad: 11, pinta: 6 }, { cantidad: 5, pinta: 1 })).toBe(false);
   });
   it("salir de ases requiere cantidad*2 + 1", () => {
     expect(normalMinimoDesdeAses(3)).toBe(7);

@@ -15,7 +15,7 @@ src/engine/
   dice.ts     Agitar el cacho y contar pintas (con/sin comodín)
   bids.ts     Validación de apuestas y conversión de ases (el corazón)
   game.ts     Máquina de estados: crear juego, iniciar ronda, aplicar acciones, resolver
-  __tests__/  23 tests que cubren conteo, apuestas y las 3 variantes
+  __tests__/  29 tests que cubren conteo, apuestas, sentido, calzo y las 3 variantes
 docs/
   RULES.md    Las reglas exactas que implementa el motor (fuente de verdad)
 ```
@@ -24,7 +24,7 @@ docs/
 
 ```bash
 npm install
-npm test        # corre los 23 tests
+npm test        # corre los 29 tests
 npm run typecheck
 ```
 
@@ -66,4 +66,4 @@ pantalla de inicio".
 - [ ] **Fase 3 — UI iPhone** (dados, animación de agitar el cacho, táctil)
 - [ ] **Fase 4 — Pulido** (reconexión, sonidos, chat)
 
-Reglas y supuestos a confirmar: ver [`docs/RULES.md`](docs/RULES.md).
+Reglas completas implementadas: ver [`docs/RULES.md`](docs/RULES.md).

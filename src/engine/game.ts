@@ -9,12 +9,17 @@ import type {
   Pinta,
   ReglasCasa,
   ResolucionRonda,
+  Sentido,
 } from "./types.js";
 
 export interface JugadorInicial {
   id: string;
   nombre: string;
 }
+
+/** Sentidos con nombre, según el mapeo de `Sentido` en types.ts. */
+export const IZQUIERDA: Sentido = 1;
+export const DERECHA: Sentido = -1;
 
 /** Error de regla: la acción no es legal en el estado actual. */
 export class ErrorDeJuego extends Error {}
@@ -40,10 +45,22 @@ export function totalDadosEnMesa(estado: EstadoJuego): number {
   return jugadoresActivos(estado).reduce((acc, j) => acc + j.dados.length, 0);
 }
 
-/** ¿Los ases cuentan como comodín en la ronda actual? */
+/** ¿Los ases cuentan como comodín en la ronda actual (fuera de un desafío puntual)? */
 export function asesComodinEnRonda(estado: EstadoJuego): boolean {
   if (!estado.reglas.asComodin) return false;
   if (estado.esRondaObligado && estado.reglas.obligadoAsesNoComodin) return false;
+  return true;
+}
+
+/** ¿Se puede calzar ahora mismo? (regla de la mitad de dados + permiso global). */
+export function puedeCalzarse(estado: EstadoJuego): boolean {
+  if (!estado.reglas.calzarPermitido) return false;
+  if (
+    estado.reglas.calzarSoloConMitadDeDados &&
+    totalDadosEnMesa(estado) < estado.dadosInicialesTotales / 2
+  ) {
+    return false;
+  }
   return true;
 }
 
@@ -68,6 +85,43 @@ export function vistaDeJugador(
     vista[j.id] = puedeVerLosSuyos ? [...j.dados] : null;
   }
   return vista;
+}
+
+// ---------------------------------------------------------------------------
+// Recorrido de la mesa (sensible al sentido)
+// ---------------------------------------------------------------------------
+
+function mod(a: number, n: number): number {
+  return ((a % n) + n) % n;
+}
+
+function indiceDeId(estado: EstadoJuego, id: string): number {
+  return estado.ordenAsientos.indexOf(id);
+}
+
+/**
+ * Busca el primer asiento ACTIVO partiendo de `desde` y avanzando en `sentido`.
+ * Si `incluirDesde` es true, considera primero el propio `desde`.
+ */
+function buscarActivo(
+  estado: EstadoJuego,
+  desde: number,
+  sentido: Sentido,
+  incluirDesde: boolean,
+): number {
+  const n = estado.ordenAsientos.length;
+  const inicio = incluirDesde ? 0 : 1;
+  for (let p = inicio; p <= inicio + n; p++) {
+    const idx = mod(desde + p * sentido, n);
+    const j = jugadorPorId(estado, estado.ordenAsientos[idx]!);
+    if (j && !j.eliminado) return idx;
+  }
+  return desde;
+}
+
+/** Siguiente asiento activo según el sentido del juego (para avanzar el turno). */
+function siguienteActivo(estado: EstadoJuego, desde: number): number {
+  return buscarActivo(estado, desde, estado.sentido, false);
 }
 
 // ---------------------------------------------------------------------------
@@ -99,6 +153,8 @@ export function crearJuego(
     reglas,
     jugadores: jugadoresEstado,
     ordenAsientos: jugadores.map((j) => j.id),
+    sentido: IZQUIERDA,
+    dadosInicialesTotales: jugadores.length * reglas.dadosIniciales,
     indiceTurno: 0,
     abridorRondaId: null,
     apuestaActual: null,
@@ -113,51 +169,42 @@ export function crearJuego(
   };
 }
 
-function indiceDeId(estado: EstadoJuego, id: string): number {
-  return estado.ordenAsientos.indexOf(id);
-}
-
-function siguienteIndiceActivo(estado: EstadoJuego, desde: number): number {
-  const n = estado.ordenAsientos.length;
-  for (let paso = 1; paso <= n; paso++) {
-    const idx = (desde + paso) % n;
-    const j = jugadorPorId(estado, estado.ordenAsientos[idx]!);
-    if (j && !j.eliminado) return idx;
-  }
-  return desde;
-}
-
-/** Primer jugador activo a partir de un índice (incluyéndolo). */
-function indiceActivoDesde(estado: EstadoJuego, desde: number): number {
-  const n = estado.ordenAsientos.length;
-  for (let paso = 0; paso < n; paso++) {
-    const idx = (desde + paso) % n;
-    const j = jugadorPorId(estado, estado.ordenAsientos[idx]!);
-    if (j && !j.eliminado) return idx;
-  }
-  return desde;
+export interface OpcionesRonda {
+  /** Fuente de aleatoriedad para agitar los cachos (y el primer abridor). */
+  rng?: Aleatorio;
+  /** Sentido elegido por el abridor para esta ronda. Por defecto mantiene el anterior. */
+  sentido?: Sentido;
 }
 
 /**
- * Inicia una nueva ronda: agita los cachos, fija al abridor, decide si la ronda
- * es de obligado/cerrada y resetea la apuesta. El abridor es `abridorRondaId`
- * (definido por la resolución anterior) o, si no hay, el primer asiento activo.
+ * Inicia una nueva ronda: fija al abridor, elige sentido, agita los cachos y
+ * decide si la ronda es de obligado/cerrada.
+ *
+ * El abridor es `abridorRondaId` (definido por la resolución anterior). Si es la
+ * primera ronda (null), se elige al AZAR. Si el abridor designado quedó
+ * eliminado, abre el jugador a su DERECHA.
  */
-export function iniciarRonda(estado: EstadoJuego, rng: Aleatorio = Math.random): EstadoJuego {
+export function iniciarRonda(estado: EstadoJuego, opciones: OpcionesRonda = {}): EstadoJuego {
   if (estado.fase === "FIN_JUEGO") {
     throw new ErrorDeJuego("El juego ya terminó.");
   }
+  const rng = opciones.rng ?? Math.random;
   const e = structuredClone(estado);
+
+  if (opciones.sentido !== undefined) e.sentido = opciones.sentido;
 
   // Determinar el abridor.
   let idxAbridor: number;
-  if (e.abridorRondaId && !jugadorPorId(e, e.abridorRondaId)?.eliminado) {
-    idxAbridor = indiceActivoDesde(e, indiceDeId(e, e.abridorRondaId));
-  } else if (e.abridorRondaId) {
-    // El abridor designado quedó eliminado: pasa al siguiente activo.
-    idxAbridor = siguienteIndiceActivo(e, indiceDeId(e, e.abridorRondaId));
+  if (e.abridorRondaId === null) {
+    // Primera ronda: abridor al azar.
+    const activos = jugadoresActivos(e);
+    const elegido = activos[Math.floor(rng() * activos.length)] ?? activos[0]!;
+    idxAbridor = indiceDeId(e, elegido.id);
+  } else if (!jugadorPorId(e, e.abridorRondaId)?.eliminado) {
+    idxAbridor = indiceDeId(e, e.abridorRondaId);
   } else {
-    idxAbridor = indiceActivoDesde(e, 0);
+    // El perdedor quedó eliminado: abre el jugador a su derecha.
+    idxAbridor = buscarActivo(e, indiceDeId(e, e.abridorRondaId), DERECHA, false);
   }
 
   e.indiceTurno = idxAbridor;
@@ -189,16 +236,11 @@ export function iniciarRonda(estado: EstadoJuego, rng: Aleatorio = Math.random):
 // Aplicar acciones
 // ---------------------------------------------------------------------------
 
-export function aplicarAccion(
-  estado: EstadoJuego,
-  accion: Accion,
-  rng: Aleatorio = Math.random,
-): EstadoJuego {
+export function aplicarAccion(estado: EstadoJuego, accion: Accion): EstadoJuego {
   if (estado.fase !== "EN_RONDA") {
     throw new ErrorDeJuego(`No se pueden aplicar acciones en la fase ${estado.fase}.`);
   }
-  const turnoId = jugadorDeTurnoId(estado);
-  if (accion.jugadorId !== turnoId) {
+  if (accion.jugadorId !== jugadorDeTurnoId(estado)) {
     throw new ErrorDeJuego("No es el turno de ese jugador.");
   }
 
@@ -206,9 +248,9 @@ export function aplicarAccion(
     case "APOSTAR":
       return aplicarApostar(estado, accion.jugadorId, accion.apuesta);
     case "DUDAR":
-      return aplicarDesafio(estado, accion.jugadorId, "DUDO", rng);
+      return aplicarDesafio(estado, accion.jugadorId, "DUDO");
     case "CALZAR":
-      return aplicarDesafio(estado, accion.jugadorId, "CALZO", rng);
+      return aplicarDesafio(estado, accion.jugadorId, "CALZO");
   }
 }
 
@@ -217,11 +259,23 @@ function aplicarApostar(estado: EstadoJuego, jugadorId: string, apuesta: Apuesta
   if (!val.valida) {
     throw new ErrorDeJuego(val.motivo ?? "Apuesta inválida.");
   }
+
+  // Obligado: sólo quien tiene 1 dado puede cambiar la pinta; el resto debe
+  // mantenerla (sólo agrandar la cantidad).
+  if (estado.esRondaObligado && estado.apuestaActual !== null) {
+    const jugador = jugadorPorId(estado, jugadorId)!;
+    if (jugador.dados.length > 1 && apuesta.pinta !== estado.apuestaActual.pinta) {
+      throw new ErrorDeJuego(
+        "Obligado: con más de 1 dado no puedes cambiar la pinta, sólo subir la cantidad.",
+      );
+    }
+  }
+
   const e = structuredClone(estado);
   e.apuestaActual = { ...apuesta };
   e.apuestaActualJugadorId = jugadorId;
   e.apuestasEnRonda += 1;
-  e.indiceTurno = siguienteIndiceActivo(e, e.indiceTurno);
+  e.indiceTurno = siguienteActivo(e, e.indiceTurno);
   return e;
 }
 
@@ -229,35 +283,48 @@ function aplicarDesafio(
   estado: EstadoJuego,
   jugadorId: string,
   tipo: "DUDO" | "CALZO",
-  rng: Aleatorio,
 ): EstadoJuego {
   if (estado.apuestaActual === null || estado.apuestaActualJugadorId === null) {
     throw new ErrorDeJuego("No hay apuesta que desafiar; el abridor debe apostar primero.");
   }
-  if (tipo === "CALZO" && !estado.reglas.calzarPermitido) {
-    throw new ErrorDeJuego("El calzo no está permitido en esta partida.");
+  const jugador = jugadorPorId(estado, jugadorId)!;
+
+  if (tipo === "CALZO") {
+    if (!puedeCalzarse(estado)) {
+      throw new ErrorDeJuego("El calzo no está disponible (regla de la mitad de los dados).");
+    }
+    // Obligado: con más de 1 dado sólo se puede dudar o agrandar, no calzar.
+    if (estado.esRondaObligado && jugador.dados.length > 1) {
+      throw new ErrorDeJuego("Obligado: con más de 1 dado no puedes calzar.");
+    }
   }
 
   const e = structuredClone(estado);
   const apuesta = e.apuestaActual!;
-  const asesComodin = asesComodinEnRonda(e);
+
+  // La siciliana: dudo a la PRIMERA apuesta de la ronda, hecha por el abridor.
+  // En ese conteo los ases NO valen como comodín.
+  const siciliana =
+    tipo === "DUDO" &&
+    e.reglas.sicilianaActiva &&
+    e.apuestasEnRonda === 1 &&
+    e.apuestaActualJugadorId === e.abridorRondaId;
+
+  const asesComodin = asesComodinEnRonda(e) && !siciliana;
   const todos = juntarDados(jugadoresActivos(e).map((j) => j.dados));
   const real = contarPinta(todos, apuesta.pinta, asesComodin);
 
   const dadosRevelados: Record<string, Pinta[]> = {};
   for (const j of jugadoresActivos(e)) dadosRevelados[j.id] = [...j.dados];
 
-  let resolucion: ResolucionRonda;
-  if (tipo === "DUDO") {
-    resolucion = resolverDudo(e, jugadorId, apuesta, real, asesComodin, dadosRevelados);
-  } else {
-    resolucion = resolverCalzo(e, jugadorId, apuesta, real, asesComodin, dadosRevelados);
-  }
+  const resolucion =
+    tipo === "DUDO"
+      ? resolverDudo(e, jugadorId, apuesta, real, asesComodin, siciliana, dadosRevelados)
+      : resolverCalzo(e, jugadorId, apuesta, real, asesComodin, dadosRevelados);
 
   aplicarConsecuencias(e, resolucion);
   e.ultimaResolucion = resolucion;
 
-  // ¿Terminó el juego?
   const activos = jugadoresActivos(e);
   if (activos.length <= 1) {
     e.fase = "FIN_JUEGO";
@@ -275,18 +342,13 @@ function resolverDudo(
   apuesta: Apuesta,
   real: number,
   asesComodin: boolean,
+  siciliana: boolean,
   dadosRevelados: Record<string, Pinta[]>,
 ): ResolucionRonda {
   // Dudo: "no hay tantos". Si real >= cantidad, la apuesta era buena y pierde el
   // dudador; si no, pierde el apostador.
   const apuestaSeCumple = real >= apuesta.cantidad;
   const perdedorId = apuestaSeCumple ? dudadorId : estado.apuestaActualJugadorId!;
-
-  // La siciliana: dudo a la PRIMERA apuesta de la ronda, hecha por el abridor.
-  const siciliana =
-    estado.reglas.sicilianaActiva &&
-    estado.apuestasEnRonda === 1 &&
-    estado.apuestaActualJugadorId === estado.abridorRondaId;
   const dadosPerdidos = siciliana ? estado.reglas.sicilianaDadosPerdidos : 1;
 
   return {
@@ -316,32 +378,25 @@ function resolverCalzo(
   const puedeRecuperar =
     estado.reglas.calzarRecuperaDado && calzador.dados.length < estado.reglas.dadosIniciales;
 
-  if (exacto) {
-    return {
-      tipo: "CALZO",
-      pinta: apuesta.pinta,
-      cantidadDeclarada: apuesta.cantidad,
-      cantidadReal: real,
-      asesComoComodin: asesComodin,
-      perdedorId: null,
-      dadosPerdidos: 0,
-      ganadorDadoId: puedeRecuperar ? calzadorId : null,
-      siciliana: false,
-      dadosRevelados,
-    };
-  }
-  return {
-    tipo: "CALZO",
+  const base = {
+    tipo: "CALZO" as const,
     pinta: apuesta.pinta,
     cantidadDeclarada: apuesta.cantidad,
     cantidadReal: real,
     asesComoComodin: asesComodin,
-    perdedorId: calzadorId,
-    dadosPerdidos: 1,
-    ganadorDadoId: null,
     siciliana: false,
     dadosRevelados,
   };
+
+  if (exacto) {
+    return {
+      ...base,
+      perdedorId: null,
+      dadosPerdidos: 0,
+      ganadorDadoId: puedeRecuperar ? calzadorId : null,
+    };
+  }
+  return { ...base, perdedorId: calzadorId, dadosPerdidos: 1, ganadorDadoId: null };
 }
 
 /** Aplica pérdida/ganancia de dados y define quién abre la próxima ronda. */
@@ -360,8 +415,8 @@ function aplicarConsecuencias(estado: EstadoJuego, r: ResolucionRonda): void {
       perdedor.dados.pop();
     }
     if (perdedor.dados.length === 0) perdedor.eliminado = true;
-    // El perdedor abre la siguiente ronda (si quedó eliminado, iniciarRonda
-    // avanza al siguiente activo).
+    // El perdedor abre la siguiente ronda. Si quedó eliminado, iniciarRonda
+    // pasa el turno al jugador a su derecha.
     proximoAbridor = r.perdedorId;
   }
 

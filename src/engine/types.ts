@@ -29,6 +29,13 @@ export interface Apuesta {
   pinta: Pinta;
 }
 
+/**
+ * Sentido del juego alrededor de la mesa. El abridor de cada ronda lo elige.
+ *  - 1  = hacia la IZQUIERDA (avanza al siguiente asiento de `ordenAsientos`).
+ *  - -1 = hacia la DERECHA (avanza al asiento anterior de `ordenAsientos`).
+ */
+export type Sentido = 1 | -1;
+
 export interface Jugador {
   id: string;
   nombre: string;
@@ -82,8 +89,12 @@ export interface ResolucionRonda {
 export interface EstadoJuego {
   reglas: ReglasCasa;
   jugadores: Jugador[];
-  /** Orden de los asientos en la mesa (ids), define el sentido del turno. */
+  /** Orden de los asientos en la mesa (ids). El turno avanza según `sentido`. */
   ordenAsientos: string[];
+  /** Sentido del juego en la ronda actual (lo elige el abridor). */
+  sentido: Sentido;
+  /** Total de dados con que partió la mesa (jugadores iniciales · dadosIniciales). Constante. */
+  dadosInicialesTotales: number;
   /** Índice dentro de ordenAsientos del jugador con el turno. */
   indiceTurno: number;
   /** Id del jugador que abrió (inició) la ronda actual. */
@@ -145,4 +156,9 @@ export interface ReglasCasa {
   calzarPermitido: boolean;
   /** Un calzo acertado recupera un dado (hasta el máximo de dadosIniciales). */
   calzarRecuperaDado: boolean;
+  /**
+   * Sólo se puede calzar mientras en la mesa quede al menos la MITAD de los dados
+   * iniciales totales. Ej: 4 jugadores · 5 dados = 20; se puede calzar con ≥ 10.
+   */
+  calzarSoloConMitadDeDados: boolean;
 }

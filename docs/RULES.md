@@ -3,10 +3,6 @@
 Este documento define EXACTAMENTE las reglas que implementa el motor (`src/engine`).
 Es la "fuente de verdad": si una regla cambia, se cambia acá y en el código.
 
-> ⚠️ **Marcadas con 🟡 hay supuestos que conviene confirmar con el grupo.** El
-> código ya funciona con estos defaults; cambiarlos es de una línea en
-> `src/engine/config.ts` o `src/engine/bids.ts`.
-
 ## Pintas
 
 | Valor | Nombre |
@@ -31,10 +27,10 @@ Para subir, la apuesta nueva debe ser estrictamente mayor:
 
 - **Normal → Normal:** subes la cantidad (con cualquier pinta), o mantienes la
   cantidad subiendo la pinta.
-- **Normal → Ases:** necesitas al menos **⌈cantidad/2⌉** ases. Ej: tras *"6 quinas"*
-  → *"3 ases"*. 🟡 *(convención estilo Perudo)*
+- **Normal → Ases:** necesitas al menos **⌈cantidad/2⌉** ases ("la mitad más grande").
+  Ej: de *"11 sextas"* → *"6 ases"*; de *"6 quinas"* → *"3 ases"*.
 - **Ases → Normal:** necesitas al menos **cantidad·2 + 1**. Ej: tras *"3 ases"* →
-  *"7 de cualquier pinta"*. 🟡
+  *"7 de cualquier pinta"*.
 - **Ases → Ases:** subes la cantidad de ases.
 
 ## Acciones por turno
@@ -44,42 +40,49 @@ Para subir, la apuesta nueva debe ser estrictamente mayor:
   - cantidad real **≥** declarada → la apuesta era buena → **pierde el dudador**.
   - cantidad real **<** declarada → **pierde el apostador**.
 - **Calzar:** "es exactamente esa cantidad". Se revela:
-  - exacto → el calzador **recupera un dado** (hasta 5). 🟡
+  - exacto → el calzador **recupera un dado** (hasta 5).
   - no exacto → el calzador **pierde un dado**.
+  - **Sólo se puede calzar mientras en la mesa quede al menos la MITAD de los dados
+    iniciales totales.** Ej: 4 jugadores · 5 dados = 20 → se puede calzar con ≥ 10
+    dados en juego.
 
 El perdedor de la ronda pierde **1 dado** (salvo la siciliana). Quien se queda en
 **0 dados queda eliminado**. Gana el último en pie.
 
-🟡 **Quién abre la siguiente ronda:** el perdedor de la ronda (si calza acertando,
-abre el calzador). Si el perdedor quedó eliminado, abre el siguiente activo.
+## Turno y apertura
 
-## Variantes de la casa (las que pediste)
+- **Primer abridor de la partida:** se elige **al azar**.
+- **Abridor de las siguientes rondas:** el **perdedor** de la ronda anterior. Si calza
+  acertando, abre el calzador.
+- **Si el perdedor queda eliminado**, abre el jugador a su **derecha**.
+- **Sentido del juego:** el abridor de cada ronda **elige si se juega hacia la
+  izquierda o hacia la derecha**.
+
+## Variantes de la casa
 
 ### 1. Obligado cerrado
-Cuando un jugador queda con **1 dado** y le toca **abrir** la ronda, ésta es de
-**obligado** y **cerrada**: los demás juegan **a ciegas** (no ven sus dados),
-**salvo** quien también tenga 1 dado, que sí ve el suyo.
+Cuando un jugador queda con **1 dado** y le toca **abrir** la ronda (la **primera
+vez** que esto ocurre), la ronda es de **obligado** y **cerrada**:
 
-- 🟡 Implementado: en ronda cerrada, **un jugador ve sus dados sólo si tiene
-  exactamente 1 dado** (incluido el obligado). Con 2+ dados, a ciegas.
-- 🟡 Implementado: el obligado se gatilla **la primera vez** que el jugador abre con
-  1 dado (`yaJugoObligado`). ¿Debe ser cada vez que abra con 1 dado? Fácil de cambiar.
+- El **obligado SÍ ve su propio dado**.
+- Los demás juegan **a ciegas**, **salvo** quien también tenga 1 dado, que sí ve el
+  suyo. (Regla efectiva: en ronda cerrada ves tus dados sólo si tienes exactamente 1.)
+- **Sólo un jugador con 1 dado puede cambiar la pinta.** El resto (2+ dados) sólo
+  puede **dudar** o **agrandar la apuesta** (subir la cantidad manteniendo la pinta);
+  tampoco puede calzar.
 
 ### 2. Ases no comodín en obligado
 En la ronda de obligado, **el As NO es comodín**: cuenta sólo como pinta 1.
 
 ### 3. La siciliana
 Si un jugador **duda de inmediato** la **primera apuesta de la ronda** (la del
-abridor), **el perdedor pierde 2 dados** en vez de 1. Aplica sea quien sea el
-perdedor (el apostador o el dudador).
+abridor):
 
-## Resumen de supuestos a confirmar (🟡)
+- **El perdedor pierde 2 dados** en vez de 1 (sea el apostador o el dudador).
+- En ese conteo **los ases NO valen como comodín**, sólo como 1.
 
-1. **Conversión de ases** al subir (⌈n/2⌉ para entrar; n·2+1 para salir). ¿Tu grupo
-   usa otra fórmula?
-2. **Calzo:** ¿se permite siempre? ¿recupera dado al acertar? ¿hay tope o condición
-   (p.ej. sólo cuando quedan pocos dados)?
-3. **Obligado:** ¿lo gatilla sólo la primera vez con 1 dado, o siempre? ¿El obligado
-   ve su propio dado?
-4. **Quién abre** la siguiente ronda (asumido: el perdedor).
-5. **Primer abridor** de la partida (asumido: el primer asiento; podría ser al azar).
+## Configuración
+
+Todo lo anterior vive en `ReglasCasa` (`src/engine/types.ts`) con sus defaults en
+`src/engine/config.ts`. Se puede crear una partida con reglas distintas vía
+`crearReglas({ ...overrides })`.
