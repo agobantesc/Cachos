@@ -5,7 +5,6 @@ import {
   iniciarRonda,
   aplicarAccion,
   jugadorDeTurnoId,
-  jugadorPorId,
   vistaJugador,
   type Accion,
   type Apuesta,
@@ -62,6 +61,9 @@ export interface Transporte {
   pasar(): Promise<void>;
   dudarPaso(): Promise<void>;
   siguienteRonda(sentido?: Sentido): Promise<void>;
+  /** Solitario: abandona la partida en curso y salta directo al resultado final
+   * (resuelve la mesa entre bots). En línea no aplica. */
+  terminarSolo(): Promise<void>;
   /** Abandona: corta temporizadores/suscripciones (para volver al menú). */
   detener(): void;
 }
@@ -132,6 +134,9 @@ export class TransporteLocal implements Transporte {
     this.emitir();
     this.programar();
   }
+  async terminarSolo() {
+    this.terminarPartidaSolo();
+  }
 
   private jugar(accion: Accion) {
     this.estado = aplicarAccion(this.estado, accion);
@@ -160,15 +165,21 @@ export class TransporteLocal implements Transporte {
       if (this.esBot(turno)) {
         this.temporizador = setTimeout(() => this.jugarBot(turno!), 850);
       }
-    } else if (e.fase === "FIN_RONDA" && jugadorPorId(e, this.humano)?.eliminado) {
-      // El humano quedó fuera: tras un vistazo a la ronda en que cayó, saltamos
-      // directo al resultado final. No se queda viendo jugar sola a la máquina.
-      this.temporizador = setTimeout(() => this.terminarPartidaSolo(), 1500);
     }
+    // Si el humano queda eliminado, NO se auto-avanza la mesa: la revelación le
+    // ofrece "Ver resultado final" (terminarSolo) para no verla jugar sola.
   }
 
   /** Resuelve la mesa hasta el final (sólo quedan bots) y muestra el resultado. */
   private terminarPartidaSolo() {
+    if (this.temporizador) {
+      clearTimeout(this.temporizador);
+      this.temporizador = null;
+    }
+    if (this.estado.fase === "FIN_JUEGO") {
+      this.emitir();
+      return;
+    }
     let guarda = 0;
     while (this.estado.fase !== "FIN_JUEGO" && guarda++ < 5000) {
       const e = this.estado;

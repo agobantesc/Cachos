@@ -143,6 +143,9 @@ export class TransporteSupabase implements Transporte {
   async siguienteRonda(sentido?: Sentido) {
     await this.invocar({ tipo: "siguienteRonda", salaId: this.salaId, ...(sentido ? { sentido } : {}) });
   }
+  async terminarSolo() {
+    /* sin efecto en línea: la mesa la controlan los jugadores reales */
+  }
 
   instantanea(): Instantanea {
     return {

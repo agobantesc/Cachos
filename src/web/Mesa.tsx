@@ -182,7 +182,7 @@ export function Mesa({
       <section className="mi-mano">
         <div className="mi-mano-titulo">Tu mano</div>
         {snap.miMano ? (
-          <ManoDados caras={snap.miMano} tam={56} />
+          <ManoDados caras={snap.miMano} tam={46} />
         ) : (
           <div className="a-ciegas">A ciegas · ronda cerrada</div>
         )}
@@ -232,6 +232,7 @@ function Revelacion({
       : `Se dudó ${res.cantidadDeclarada} ${PLURAL_PINTA[res.pinta]}: había ${res.cantidadReal}. ${nombre(res.perdedorId)} pierde ${res.dadosPerdidos} dado${res.dadosPerdidos > 1 ? "s" : ""}.`;
 
   const soyAbridor = snap.miId === publico.abridorRondaId;
+  const humanoFuera = snap.esSolo && (publico.jugadores.find((j) => j.id === snap.miId)?.eliminado ?? false);
   const iniciar = (sentido: Sentido) => transporte.siguienteRonda(sentido);
 
   return (
@@ -256,7 +257,14 @@ function Revelacion({
             </div>
           ))}
         </div>
-        {soyAbridor ? (
+        {humanoFuera ? (
+          <div className="siguiente">
+            <span>Quedaste fuera de la mesa.</span>
+            <button className="btn btn--apostar grande" onClick={() => transporte.terminarSolo()}>
+              Ver resultado final
+            </button>
+          </div>
+        ) : soyAbridor ? (
           <div className="siguiente">
             <span>Abres tú. ¿Hacia dónde?</span>
             <div className="botonera">
