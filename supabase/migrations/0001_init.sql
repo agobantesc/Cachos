@@ -52,24 +52,30 @@ alter table public.jugadores_sala enable row level security;
 alter table public.manos enable row level security;
 alter table public.secretos enable row level security;
 
+-- Membresía sin recursión de RLS: una política que consulta su propia tabla
+-- provoca "infinite recursion detected in policy". Lo evitamos con una función
+-- SECURITY DEFINER (corre como dueña de la tabla y salta RLS), el patrón que
+-- recomienda Supabase para chequeos de pertenencia.
+create or replace function public.es_miembro(_sala uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.jugadores_sala
+    where sala_id = _sala and jugador_id = auth.uid()
+  );
+$$;
+
 -- salas: sólo los miembros pueden leer su sala. (Unirse por código va por la
 -- Edge Function, así no se filtran las salas ajenas.)
 create policy "salas_select_miembros" on public.salas
-  for select to authenticated using (
-    exists (
-      select 1 from public.jugadores_sala m
-      where m.sala_id = salas.id and m.jugador_id = auth.uid()
-    )
-  );
+  for select to authenticated using (public.es_miembro(salas.id));
 
 -- jugadores_sala: leer la lista de jugadores de una sala donde soy miembro.
 create policy "jugadores_select_miembros" on public.jugadores_sala
-  for select to authenticated using (
-    exists (
-      select 1 from public.jugadores_sala m
-      where m.sala_id = jugadores_sala.sala_id and m.jugador_id = auth.uid()
-    )
-  );
+  for select to authenticated using (public.es_miembro(jugadores_sala.sala_id));
 
 -- manos: cada quien lee SOLO la suya.
 create policy "manos_select_propia" on public.manos
