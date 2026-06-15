@@ -42,25 +42,42 @@ interface ParamsNivel {
   /** Cuánto se descuenta ese crédito por cada dado de salto agresivo (sospecha
    * de farol): a mayor salto sobre lo esperado, menos crédito y más ganas de dudar. */
   descuentoFarol: number;
-  /** Prob. de farolear una subida (subir más de lo seguro) para ser impredecible. */
-  farolea: number;
   /** Crédito extra por cada OTRO jugador que apostó esa pinta en la ronda
    * (apoyo en el historial: una pinta muy declarada suele ser real). */
   lecturaHistorial: number;
+  /** Engaño: prob. de DISFRAZAR la subida para ocultar la fuerza de la mano
+   * —farolear con mano floja, o cambiar de pinta cuando va cargado para no
+   * telegrafiarlo— y de blofear bajo presión en vez de dudar a la desesperada.
+   * Escala con el nivel: los expertos son mucho más difíciles de leer. */
+  engana: number;
 }
 
+// La dificultad es una ESCALA COGNITIVA: cada nivel "ve" más de la mesa que el
+// anterior. Fácil sólo mira su propia mano; medio lee la señal de la apuesta;
+// avanzado suma la sospecha de farol y empieza a engañar; experto además lee el
+// historial de la ronda, oculta su estrategia y castiga los faroles del rival.
+//   • leer el tablero   -> todos (binomial sobre los dados desconocidos)
+//   • leer la señal      -> creditoApuesta (fácil ~0 ignora; sube con el nivel)
+//   • sospechar faroles  -> descuentoFarol  (0 -> 0.28)
+//   • leer el historial  -> lecturaHistorial (0 -> 0.5)
+//   • ENGAÑAR/ocultarse   -> engana          (0 -> 0.24)
+//   • precisión (menos azar) -> ruido         (0.16 -> 0.02)
 const PARAMS: Record<Nivel, ParamsNivel> = {
-  // Fácil: agresivo y errático (sube de más y se deja cazar); ignora la señal de
-  // la apuesta, así que duda mal. Ya no se suicida con la siciliana al abrir.
-  facil: { umbralApertura: 0.56, sesgoSubir: 0.18, ruido: 0.16, umbralCalzo: 0.42, pasaConValido: 0.5, bluffPaso: 0.04, dudaPaso: 0.07, creditoApuesta: 0.1, descuentoFarol: 0, farolea: 0.06, lecturaHistorial: 0 },
-  // Medio: equilibrado; lee algo la señal y sospecha un poco de los saltos grandes.
-  medio: { umbralApertura: 0.74, sesgoSubir: 0.09, ruido: 0.06, umbralCalzo: 0.3, pasaConValido: 0.8, bluffPaso: 0.04, dudaPaso: 0.08, creditoApuesta: 0.8, descuentoFarol: 0.12, farolea: 0.05, lecturaHistorial: 0.2 },
-  // Avanzado: EV fuerte —lee la señal, calza/pasa bien y farolea de a poco.
-  avanzado: { umbralApertura: 0.8, sesgoSubir: 0.05, ruido: 0.035, umbralCalzo: 0.23, pasaConValido: 0.95, bluffPaso: 0.05, dudaPaso: 0.09, creditoApuesta: 1.1, descuentoFarol: 0.18, farolea: 0.06, lecturaHistorial: 0.3 },
-  // Experto: el núcleo EV de avanzado + castigo a los errores del humano —lee el
-  // HISTORIAL de la ronda (apoyo por pinta), afila la sospecha de farol y el calzo
-  // y es algo más impredecible. Contra un humano que farolea, pega más fuerte.
-  experto: { umbralApertura: 0.8, sesgoSubir: 0.04, ruido: 0.02, umbralCalzo: 0.2, pasaConValido: 1, bluffPaso: 0.05, dudaPaso: 0.09, creditoApuesta: 1.15, descuentoFarol: 0.28, farolea: 0.07, lecturaHistorial: 0.5 },
+  // Fácil: juega a cartas vistas. Agresivo y errático (sube de más y se deja
+  // cazar); ignora la señal de la apuesta y NO engaña. No se suicida con la
+  // siciliana al abrir, pero es transparente y fácil de leer.
+  facil: { umbralApertura: 0.56, sesgoSubir: 0.18, ruido: 0.16, umbralCalzo: 0.42, pasaConValido: 0.5, bluffPaso: 0.03, dudaPaso: 0.07, creditoApuesta: 0.1, descuentoFarol: 0, lecturaHistorial: 0, engana: 0 },
+  // Medio: fundamentos sólidos. Acredita la señal con mesura y ya CASTIGA los
+  // saltos grandes (sospecha de farol), así que duda bien. Apenas engaña.
+  medio: { umbralApertura: 0.74, sesgoSubir: 0.09, ruido: 0.06, umbralCalzo: 0.3, pasaConValido: 0.8, bluffPaso: 0.04, dudaPaso: 0.08, creditoApuesta: 0.75, descuentoFarol: 0.16, lecturaHistorial: 0.18, engana: 0.04 },
+  // Avanzado: misma confianza base, pero CASTIGA MÁS la sobre-apuesta y lee algo
+  // el historial; calza/pasa bien y EMPIEZA a engañar —disimula con subidas
+  // igual de creíbles.
+  avanzado: { umbralApertura: 0.8, sesgoSubir: 0.05, ruido: 0.035, umbralCalzo: 0.23, pasaConValido: 0.95, bluffPaso: 0.06, dudaPaso: 0.09, creditoApuesta: 0.78, descuentoFarol: 0.27, lecturaHistorial: 0.28, engana: 0.07 },
+  // Experto: la sospecha de farol más AFILADA y la mejor lectura del HISTORIAL
+  // de la ronda —caza al que sube de más a cualquier exceso—, calzo fino, y
+  // ENGAÑO: oculta su estrategia mezclando subidas creíbles para no dejarse leer.
+  experto: { umbralApertura: 0.8, sesgoSubir: 0.04, ruido: 0.02, umbralCalzo: 0.2, pasaConValido: 1, bluffPaso: 0.07, dudaPaso: 0.09, creditoApuesta: 0.8, descuentoFarol: 0.4, lecturaHistorial: 0.38, engana: 0.11 },
 };
 
 const PINTAS: Pinta[] = [2, 3, 4, 5, 6, 1]; // ases al final
@@ -113,8 +130,10 @@ export function decidirBot(
   const actual = publico.apuestaActual;
   const obligadoBloqueaPinta = publico.esRondaObligado && misDados > 1;
 
-  // Mejor apuesta válida (apertura o subida) y su credibilidad.
-  const construirApuesta = (): { apuesta: Apuesta; prob: number } => {
+  // Mejor apuesta válida (apertura o subida), su credibilidad y las demás
+  // subidas plausibles (`cands`) para poder disfrazar la jugada.
+  type Subida = { apuesta: Apuesta; prob: number };
+  const construirApuesta = (): Subida & { cands: Subida[] } => {
     if (!actual) {
       // Apertura A PRUEBA DE SICILIANA: si la dudan de inmediato, los ases NO
       // cuentan como comodín. Calculamos la apertura segura bajo ese conteo
@@ -134,10 +153,11 @@ export function decidirBot(
       let c = 1;
       while (probSic(c + 1) >= P.umbralApertura) c++;
       const cantidad = Math.max(1, c);
-      return { apuesta: { cantidad, pinta: Q }, prob: probSic(cantidad) };
+      const apertura: Subida = { apuesta: { cantidad, pinta: Q }, prob: probSic(cantidad) };
+      return { ...apertura, cands: [apertura] };
     }
     const pintasPosibles: Pinta[] = obligadoBloqueaPinta ? [actual.pinta] : PINTAS;
-    const cands: { apuesta: Apuesta; prob: number }[] = [];
+    const cands: Subida[] = [];
     for (const Q of pintasPosibles) {
       for (let c = actual.cantidad; c <= actual.cantidad + 3; c++) {
         const apuesta: Apuesta = { cantidad: c, pinta: Q };
@@ -147,7 +167,8 @@ export function decidirBot(
       }
     }
     cands.sort((a, b) => b.prob - a.prob || a.apuesta.cantidad - b.apuesta.cantidad);
-    return cands[0] ?? { apuesta: { cantidad: actual.cantidad + 1, pinta: actual.pinta }, prob: 0 };
+    const top = cands[0] ?? { apuesta: { cantidad: actual.cantidad + 1, pinta: actual.pinta }, prob: 0 };
+    return { ...top, cands };
   };
 
   // 1) Responder a un paso pendiente: dudar el paso o subir (no se puede calzar/dudar).
@@ -233,10 +254,27 @@ export function decidirBot(
     }
   }
 
-  // Farol propio: a veces sube un punto más de lo seguro para no dejarse leer
-  // (más frecuente en niveles altos). Sigue siendo una apuesta válida.
-  if (mejor.tipo === "APOSTAR" && Math.random() < P.farolea) {
-    mejor = { tipo: "APOSTAR", apuesta: { ...mejor.apuesta, cantidad: mejor.apuesta.cantidad + 1 } };
+  // --- ENGAÑO: ocultar la fuerza de la mano al subir, sin regalar EV ---
+  // Un jugador legible siempre sube su pinta fuerte por lo mínimo seguro; el
+  // humano aprende a leerlo. Para no dejarse leer, con prob `engana` el bot
+  // disfraza la subida — pero SIEMPRE manteniéndola creíble (si lo dudan, sigue
+  // siendo defendible), no tira aire:
+  //   • mano cargada en la pinta elegida -> sube por OTRA pinta casi igual de
+  //     probable, para no telegrafiar dónde está fuerte;
+  //   • si no -> semi-farol: un punto más, sólo si la nueva apuesta aún es
+  //     razonablemente probable (≥45%).
+  // Resultado: impredecible para el humano, pero ~neutral contra quien calcula.
+  if (mejor.tipo === "APOSTAR" && Math.random() < P.engana) {
+    let apuesta = subida.apuesta;
+    if (propiosDe(apuesta.pinta) >= 2) {
+      const alt = subida.cands.find(
+        (c) => c.apuesta.pinta !== apuesta.pinta && c.prob >= subida.prob - 0.1,
+      );
+      if (alt) apuesta = alt.apuesta;
+    } else if (probAlMenos(apuesta.pinta, apuesta.cantidad + 1) >= 0.45) {
+      apuesta = { ...apuesta, cantidad: apuesta.cantidad + 1 };
+    }
+    mejor = { tipo: "APOSTAR", apuesta };
   }
 
   return mejor;

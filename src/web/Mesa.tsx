@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { EstadoPublico, EventoRonda, Pinta, ResolucionRonda, Sentido } from "../engine";
 import { Dado, ManoDados } from "./Dado";
+import { IconoDado, IconoSonido } from "./Iconos";
 import { BarraAcciones } from "./BarraAcciones";
 import { nombrarApuesta, PLURAL_PINTA } from "./util";
 import { Sonidos, sonidoActivado, alternarSonido } from "./sonido";
@@ -17,7 +18,7 @@ export function Mesa({
 }) {
   const p = snap.publico!;
   const nombre = (id: string | null) => p.jugadores.find((j) => j.id === id)?.nombre ?? "—";
-  const textoEvento = (e: EventoRonda) => (e.tipo === "PASO" ? "pasó 🤫" : nombrarApuesta(e.apuesta));
+  const textoEvento = (e: EventoRonda) => (e.tipo === "PASO" ? "pasó" : nombrarApuesta(e.apuesta));
   const ultimoEventoDe = (id: string): EventoRonda | undefined => {
     for (let i = p.historialRonda.length - 1; i >= 0; i--) {
       if (p.historialRonda[i]!.jugadorId === id) return p.historialRonda[i];
@@ -56,11 +57,13 @@ export function Mesa({
     };
     const ranking = [...p.jugadores].sort((a, b) => puestoDe(a.id) - puestoDe(b.id));
     const gane = p.ganadorId === snap.miId;
-    const medalla = (n: number) => (n === 1 ? "🥇" : n === 2 ? "🥈" : n === 3 ? "🥉" : `${n}º`);
 
     return (
       <div className="mesa fin">
-        <h1 className="fin-titulo">{gane ? "🏆 ¡Ganaste!" : `🏆 Ganó ${nombre(p.ganadorId)}`}</h1>
+        <div className="fin-sello">
+          <span className="fin-kicker">La Asociación de Cachos</span>
+          <h1 className="fin-titulo">{gane ? "Ganaste la mesa" : `Ganó ${nombre(p.ganadorId)}`}</h1>
+        </div>
         <ol className="resultados">
           {ranking.map((j) => {
             const puesto = puestoDe(j.id);
@@ -74,7 +77,7 @@ export function Mesa({
                   (soyYo ? " resultado--yo" : "")
                 }
               >
-                <span className="res-puesto">{medalla(puesto)}</span>
+                <span className="res-puesto">{puesto}.º</span>
                 <div className="res-info">
                   <div className="res-nombre">
                     {j.nombre}
@@ -88,9 +91,13 @@ export function Mesa({
                   </div>
                 </div>
                 <div className="res-stats">
-                  <span title="Dados perdidos">💀 {j.stats.dadosPerdidos}</span>
+                  <span className="res-stat" title="Dados perdidos">
+                    {j.stats.dadosPerdidos} <i>perdidos</i>
+                  </span>
                   {j.stats.calzosAcertados > 0 && (
-                    <span title="Calzos acertados">🎯 {j.stats.calzosAcertados}</span>
+                    <span className="res-stat" title="Calzos acertados">
+                      {j.stats.calzosAcertados} <i>calzos</i>
+                    </span>
                   )}
                 </div>
               </li>
@@ -117,7 +124,7 @@ export function Mesa({
           onClick={() => setSonando(alternarSonido())}
           aria-label={sonando ? "Silenciar" : "Activar sonido"}
         >
-          {sonando ? "🔊" : "🔇"}
+          <IconoSonido activo={sonando} />
         </button>
         <button className="salir-mesa" onClick={abandonar}>
           Salir
@@ -139,7 +146,7 @@ export function Mesa({
                   <span className="out">fuera</span>
                 ) : (
                   <>
-                    🎲 <b>{j.cantidadDados}</b>
+                    <IconoDado /> <b>{j.cantidadDados}</b>
                   </>
                 )}
               </div>
@@ -177,7 +184,7 @@ export function Mesa({
         {snap.miMano ? (
           <ManoDados caras={snap.miMano} tam={56} />
         ) : (
-          <div className="a-ciegas">🥤 A ciegas (ronda cerrada)</div>
+          <div className="a-ciegas">A ciegas · ronda cerrada</div>
         )}
       </section>
 
@@ -210,10 +217,10 @@ function Revelacion({
     const m = new Map<number, number>();
     caras.forEach((c) => m.set(c, (m.get(c) ?? 0) + 1));
     const g = [...m.values()].sort((a, b) => a - b);
-    if (g.length === 1) return "Cinco iguales ✓";
-    if (g.length === 5) return "Escalera: todos distintos ✓";
-    if (g.length === 2 && g[0] === 2) return "Full: tres y dos ✓";
-    return "No es mano de paso ✗";
+    if (g.length === 1) return "Cinco iguales: paso válido.";
+    if (g.length === 5) return "Escalera (todas distintas): paso válido.";
+    if (g.length === 2 && g[0] === 2) return "Full (tres y dos): paso válido.";
+    return "No formó mano de paso.";
   };
 
   const texto = esPaso
@@ -265,7 +272,7 @@ function Revelacion({
           <div className="siguiente">
             <span>Abre {nombre(publico.abridorRondaId)}.</span>
             <button className="btn btn--apostar grande" onClick={() => transporte.siguienteRonda()}>
-              Continuar ▶
+              Continuar
             </button>
           </div>
         ) : (

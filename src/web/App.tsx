@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Mesa } from "./Mesa";
+import { Emblema } from "./Iconos";
 import { TransporteLocal, type Transporte } from "./transporte";
 import { TransporteSupabase, supabaseConfigurado } from "./transporteSupabase";
 import { useInstantanea } from "./util";
@@ -13,10 +14,10 @@ const ETIQUETA_NIVEL: Record<Nivel, string> = {
   experto: "Experto",
 };
 const DESC_NIVEL: Record<Nivel, string> = {
-  facil: "Arriesgada y errática: fácil de cazar.",
-  medio: "Juega prudente y razonable.",
-  avanzado: "Muy fina: calza, pasa y farolea.",
-  experto: "Implacable: lee el historial, sospecha faroles y casi no falla.",
+  facil: "Juega a cartas vistas: arriesga de más y se deja cazar.",
+  medio: "Fundamentos sólidos. Lee las señales de la mesa y apuesta honesto.",
+  avanzado: "Calcula fino y empieza a engañar: farolea y disimula su mano.",
+  experto: "Lee el historial y tus manías. Oculta su estrategia y castiga tus faroles.",
 };
 
 export function App() {
@@ -92,12 +93,15 @@ function Inicio({ onListo }: { onListo: (t: Transporte) => void }) {
 
   return (
     <div className="pantalla home">
-      <div className="logo">🎲</div>
+      <div className="logo">
+        <Emblema />
+      </div>
       <h1 className="marca">
         La Asociación
         <span className="marca-fuerte">de Cachos</span>
       </h1>
       <p className="sub">El dudo de la casa, entre socios.</p>
+      <div className="filete" />
       <button className="btn btn--apostar grande" onClick={() => setVista("solo")}>
         Jugar solo (vs la máquina)
       </button>
@@ -105,7 +109,7 @@ function Inicio({ onListo }: { onListo: (t: Transporte) => void }) {
         Mesa en línea
       </button>
       <button className="btn-link" onClick={() => setVista("reglas")}>
-        📜 Reglas de la Asociación
+        Reglas de la Asociación
       </button>
     </div>
   );
@@ -229,7 +233,7 @@ function Reglas({ volver }: { volver: () => void }) {
       </section>
 
       <section className="regla-bloque destacado">
-        <h3>★ El paso</h3>
+        <h3>El paso</h3>
         <p>
           Solo con tus <b>5 dados</b> puedes pasar el turno sin apostar. El siguiente debe{" "}
           <b>dudar el paso</b> o <b>subir la apuesta</b> (no puede calzar ni dudar la apuesta previa
@@ -249,7 +253,7 @@ function Reglas({ volver }: { volver: () => void }) {
       </section>
 
       <section className="regla-bloque destacado">
-        <h3>★ La siciliana</h3>
+        <h3>La siciliana</h3>
         <p>
           Si dudas la <b>primera</b> apuesta de la ronda (la del que abrió) y esa apuesta pierde, el
           perdedor cae <b>2 dados</b> de una. En esa cuenta los <b>ases no son comodín</b>.{" "}
@@ -258,7 +262,7 @@ function Reglas({ volver }: { volver: () => void }) {
       </section>
 
       <section className="regla-bloque destacado">
-        <h3>★ El obligado</h3>
+        <h3>El obligado</h3>
         <p>
           La primera vez que un socio queda con <b>1 dado</b>, abre una ronda especial de obligado:
         </p>

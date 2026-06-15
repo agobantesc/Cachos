@@ -69,7 +69,7 @@ export function BarraAcciones({
     <div className="acciones">
       {hayPaso && (
         <div className="aviso-paso">
-          🤫 <b>{nombrePasador}</b> pasó. Dúdale el paso o sube la apuesta.
+          <b>{nombrePasador}</b> pasó. Dúdale el paso o sube la apuesta.
         </div>
       )}
 
@@ -160,7 +160,7 @@ export function BarraAcciones({
                 transporte.pasar();
               }}
             >
-              Pasar 🤫 <span className="btn-sub">(con tus 5 dados)</span>
+              Pasar <span className="btn-sub">(con tus 5 dados)</span>
             </button>
           )}
         </>
