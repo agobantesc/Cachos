@@ -119,7 +119,7 @@ const NOMBRES_BOT = ["El Tuerto", "La Sombra", "Doña Suerte", "El Croata", "Pat
 
 function ConfigSolo({ onListo, volver }: { onListo: (t: Transporte) => void; volver: () => void }) {
   const [nombre, setNombre] = useState("Miembro");
-  const [rivales, setRivales] = useState(2);
+  const [rivales, setRivales] = useState(3);
   const [nivel, setNivel] = useState<Nivel>("medio");
 
   const empezar = () => {
