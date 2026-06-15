@@ -4,6 +4,7 @@ const CLAVE = "cachos.sonido";
 
 let ctx: AudioContext | null = null;
 let activado = leerPreferencia();
+let desbloqueado = false;
 
 function leerPreferencia(): boolean {
   try {
@@ -27,28 +28,47 @@ function ac(): AudioContext | null {
   return ctx;
 }
 
-/**
- * Deja el audio listo para sonar. En móvil el AudioContext se "suspende" (o, en
- * Safari, queda "interrupted") al cerrar/reabrir la app y no revive solo: ahí
- * intentamos reanudarlo y, si quedó inservible, lo recreamos desde cero.
- */
-function asegurarAudio(): void {
-  const c = ac();
-  if (!c) return;
-  const estado = c.state as string;
-  if (estado === "running") return;
-  if (estado === "suspended") {
-    void c.resume();
-    return;
-  }
-  // "interrupted" / "closed" u otro: el contexto ya no sirve, se recrea.
+// Golpe de desbloqueo para iOS: reproducir un buffer mudo dentro del gesto del
+// usuario. En la PWA instalada (acceso directo), `resume()` por sí solo NO
+// habilita el audio; hace falta arrancar una fuente al menos una vez. Se repite
+// en cada toque hasta confirmar que el contexto quedó "running".
+function golpeSilencio(c: AudioContext): void {
   try {
-    void c.close();
+    const buffer = c.createBuffer(1, 1, 22050);
+    const src = c.createBufferSource();
+    src.buffer = buffer;
+    src.connect(c.destination);
+    src.start(0);
+    if (c.state === "running") desbloqueado = true;
   } catch {
     /* ignore */
   }
-  ctx = crearCtx();
-  if (ctx && ctx.state === "suspended") void ctx.resume();
+}
+
+/**
+ * Deja el audio listo para sonar. En móvil el AudioContext arranca "suspended"
+ * (o, en Safari/PWA, queda "interrupted") y no revive solo: lo reanudamos, lo
+ * recreamos si quedó inservible y le damos el golpe de desbloqueo de iOS.
+ */
+function asegurarAudio(): void {
+  let c = ac();
+  if (!c) return;
+  const estado = c.state as string;
+  if (estado === "suspended") {
+    void c.resume();
+  } else if (estado !== "running") {
+    // "interrupted" / "closed" u otro: el contexto ya no sirve, se recrea.
+    try {
+      void c.close();
+    } catch {
+      /* ignore */
+    }
+    ctx = crearCtx();
+    c = ctx;
+    desbloqueado = false;
+    if (c && c.state === "suspended") void c.resume();
+  }
+  if (c && !desbloqueado) golpeSilencio(c);
 }
 
 // Reactivar el audio al volver a primer plano y en cualquier toque del usuario.

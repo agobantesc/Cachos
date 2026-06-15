@@ -161,10 +161,33 @@ export class TransporteLocal implements Transporte {
         this.temporizador = setTimeout(() => this.jugarBot(turno!), 850);
       }
     } else if (e.fase === "FIN_RONDA" && jugadorPorId(e, this.humano)?.eliminado) {
-      // El humano ya está fuera: la mesa sigue sola hasta el final. Si el humano
-      // sigue en juego, la revelación espera a que pulse "Continuar".
-      this.temporizador = setTimeout(() => void this.siguienteRonda(), 1800);
+      // El humano quedó fuera: tras un vistazo a la ronda en que cayó, saltamos
+      // directo al resultado final. No se queda viendo jugar sola a la máquina.
+      this.temporizador = setTimeout(() => this.terminarPartidaSolo(), 1500);
     }
+  }
+
+  /** Resuelve la mesa hasta el final (sólo quedan bots) y muestra el resultado. */
+  private terminarPartidaSolo() {
+    let guarda = 0;
+    while (this.estado.fase !== "FIN_JUEGO" && guarda++ < 5000) {
+      const e = this.estado;
+      if (e.fase === "FIN_RONDA") {
+        this.estado = iniciarRonda(e);
+        continue;
+      }
+      const turno = jugadorDeTurnoId(e);
+      if (turno === null) break;
+      const vista = vistaJugador(e, turno);
+      const jugada = decidirBot(vista.publico, vista.miMano, turno, this.nivel);
+      if (!this.intentar(accionDeJugada(jugada, turno))) {
+        const pub = vista.publico;
+        if (pub.pasoPendienteJugadorId !== null) this.intentar({ tipo: "DUDAR_PASO", jugadorId: turno });
+        else if (pub.apuestaActual) this.intentar({ tipo: "DUDAR", jugadorId: turno });
+        else this.intentar({ tipo: "APOSTAR", jugadorId: turno, apuesta: { cantidad: 1, pinta: 2 } });
+      }
+    }
+    this.emitir();
   }
 
   private jugarBot(botId: string) {
