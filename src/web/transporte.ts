@@ -14,6 +14,7 @@ import {
   type Sentido,
 } from "../engine";
 import { decidirBot, type JugadaBot, type Nivel } from "./bots";
+import type { VistaTorneo } from "./torneo";
 
 function accionDeJugada(jugada: JugadaBot, jugadorId: string): Accion {
   switch (jugada.tipo) {
@@ -49,6 +50,8 @@ export interface Instantanea {
   esLocal: boolean;
   /** true si es modo solitario contra la máquina (perspectiva fija en el humano). */
   esSolo: boolean;
+  /** Estado del torneo si se juega en modo torneo; null/undefined si no. */
+  torneo?: VistaTorneo | null;
 }
 
 export interface Transporte {
@@ -64,6 +67,8 @@ export interface Transporte {
   /** Solitario: abandona la partida en curso y salta directo al resultado final
    * (resuelve la mesa entre bots). En línea no aplica. */
   terminarSolo(): Promise<void>;
+  /** Torneo: pasa de la pantalla "entre rondas" a sembrar la siguiente mesa. */
+  avanzarTorneo?(): Promise<void>;
   /** Abandona: corta temporizadores/suscripciones (para volver al menú). */
   detener(): void;
 }

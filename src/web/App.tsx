@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { Mesa } from "./Mesa";
+import { PantallaTorneo } from "./PantallaTorneo";
 import { Emblema } from "./Iconos";
 import { TransporteLocal, type Transporte } from "./transporte";
-import { TransporteSupabase, supabaseConfigurado } from "./transporteSupabase";
+import { TransporteTorneo } from "./transporteTorneo";
+import { PRESETS_TORNEO, presetPorClave, type PresetTorneo } from "./torneo";
+import { supabaseConfigurado, crearTransporteOnline } from "./online";
 import { useInstantanea } from "./util";
+import { leerPrefs, guardarPrefs } from "./prefs";
 import { desbloquearAudio } from "./sonido";
 import type { Nivel } from "./bots";
 
@@ -36,6 +40,11 @@ export function App() {
 
 function Juego({ transporte, salir }: { transporte: Transporte; salir: () => void }) {
   const snap = useInstantanea(transporte);
+  // En torneo, las transiciones (entre rondas / campeón / eliminado) reemplazan
+  // a la mesa; mientras se juega la mesa, manda la pantalla de juego normal.
+  if (snap.torneo && snap.torneo.faseTorneo !== "mesa") {
+    return <PantallaTorneo snap={snap} transporte={transporte} salir={salir} />;
+  }
   if (snap.faseApp === "juego") return <Mesa snap={snap} transporte={transporte} salir={salir} />;
   return <Lobby snap={snap} transporte={transporte} salir={salir} />;
 }
@@ -85,9 +94,10 @@ function Lobby({
 }
 
 function Inicio({ onListo }: { onListo: (t: Transporte) => void }) {
-  const [vista, setVista] = useState<"home" | "solo" | "online" | "reglas">("home");
+  const [vista, setVista] = useState<"home" | "solo" | "torneo" | "online" | "reglas">("home");
 
   if (vista === "solo") return <ConfigSolo onListo={onListo} volver={() => setVista("home")} />;
+  if (vista === "torneo") return <ConfigTorneo onListo={onListo} volver={() => setVista("home")} />;
   if (vista === "online") return <ConfigOnline onListo={onListo} volver={() => setVista("home")} />;
   if (vista === "reglas") return <Reglas volver={() => setVista("home")} />;
 
@@ -105,6 +115,10 @@ function Inicio({ onListo }: { onListo: (t: Transporte) => void }) {
       <button className="btn btn--apostar grande" onClick={() => setVista("solo")}>
         Jugar solo (vs la máquina)
       </button>
+      <button className="btn btn--torneo grande" onClick={() => setVista("torneo")}>
+        Torneo
+        <span className="btn-sub">Gánate la copa contra la banca</span>
+      </button>
       <button className="btn btn--dudar grande" onClick={() => setVista("online")}>
         Mesa en línea
       </button>
@@ -118,13 +132,16 @@ function Inicio({ onListo }: { onListo: (t: Transporte) => void }) {
 const NOMBRES_BOT = ["El Tuerto", "La Sombra", "Doña Suerte", "El Croata", "Patas Negras"];
 
 function ConfigSolo({ onListo, volver }: { onListo: (t: Transporte) => void; volver: () => void }) {
-  const [nombre, setNombre] = useState("Miembro");
-  const [rivales, setRivales] = useState(3);
-  const [nivel, setNivel] = useState<Nivel>("medio");
+  const prefs = leerPrefs();
+  const [nombre, setNombre] = useState(prefs.nombre ?? "Miembro");
+  const [rivales, setRivales] = useState(prefs.rivales ?? 3);
+  const [nivel, setNivel] = useState<Nivel>(prefs.nivel ?? "medio");
 
   const empezar = () => {
     desbloquearAudio(); // habilita el audio dentro del gesto del usuario
-    const yo = { id: "humano", nombre: nombre.trim() || "Miembro" };
+    const limpio = nombre.trim() || "Miembro";
+    guardarPrefs({ nombre: limpio, rivales, nivel });
+    const yo = { id: "humano", nombre: limpio };
     const bots = NOMBRES_BOT.slice(0, rivales).map((n, i) => ({ id: `bot${i}`, nombre: n }));
     onListo(new TransporteLocal([yo, ...bots], { humanoId: yo.id, nivel }));
   };
@@ -154,6 +171,71 @@ function ConfigSolo({ onListo, volver }: { onListo: (t: Transporte) => void; vol
 
       <button className="btn btn--apostar grande" onClick={empezar}>
         Sentarse a la mesa
+      </button>
+    </div>
+  );
+}
+
+function ConfigTorneo({ onListo, volver }: { onListo: (t: Transporte) => void; volver: () => void }) {
+  const prefs = leerPrefs();
+  const [nombre, setNombre] = useState(prefs.nombre ?? "Miembro");
+  const [preset, setPreset] = useState<PresetTorneo>(presetPorClave(prefs.preset ?? "asociacion"));
+  const [nivel, setNivel] = useState<Nivel>(prefs.nivel ?? "medio");
+  const [rampa, setRampa] = useState(prefs.rampa ?? true);
+
+  const empezar = () => {
+    desbloquearAudio();
+    const limpio = nombre.trim() || "Miembro";
+    guardarPrefs({ nombre: limpio, nivel, preset: preset.clave, rampa });
+    onListo(new TransporteTorneo({ humanoNombre: limpio, preset, nivelBase: nivel, rampa }));
+  };
+
+  return (
+    <div className="pantalla config">
+      <Cabecera titulo="Torneo" volver={volver} />
+      <p className="ayuda">
+        Una sola mesa por ronda: gánala y avanzas; pierde y quedas fuera. Sube hasta la final.
+      </p>
+      <input value={nombre} placeholder="Tu nombre" onChange={(e) => setNombre(e.target.value)} />
+
+      <div className="campo-label">Tamaño del torneo</div>
+      <div className="presets">
+        {PRESETS_TORNEO.map((p) => (
+          <button
+            key={p.clave}
+            className={"preset-card" + (preset.clave === p.clave ? " sel" : "")}
+            onClick={() => setPreset(p)}
+          >
+            <span className="preset-nombre">{p.nombre}</span>
+            <span className="preset-gancho">{p.gancho}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="campo-label">Dificultad de partida</div>
+      <div className="segmento">
+        {(Object.keys(ETIQUETA_NIVEL) as Nivel[]).map((n) => (
+          <button key={n} className={"seg-btn" + (nivel === n ? " sel" : "")} onClick={() => setNivel(n)}>
+            {ETIQUETA_NIVEL[n]}
+          </button>
+        ))}
+      </div>
+
+      <button
+        className={"toggle-fila" + (rampa ? " on" : "")}
+        onClick={() => setRampa((r) => !r)}
+        role="switch"
+        aria-checked={rampa}
+      >
+        <span className="toggle-txt">
+          Dificultad creciente
+          <span className="toggle-sub">los rivales se afilan ronda a ronda hasta la final</span>
+        </span>
+        <span className="toggle-sw" aria-hidden="true" />
+      </button>
+
+      <button className="btn btn--apostar grande" onClick={empezar}>
+        Entrar al torneo
       </button>
     </div>
   );
@@ -299,11 +381,11 @@ function ConfigOnline({ onListo, volver }: { onListo: (t: Transporte) => void; v
     );
   }
 
-  const correr = async (accion: (t: TransporteSupabase) => Promise<void>) => {
+  const correr = async (accion: (t: Awaited<ReturnType<typeof crearTransporteOnline>>) => Promise<void>) => {
     setError(null);
     setCargando(true);
     try {
-      const t = await TransporteSupabase.crear();
+      const t = await crearTransporteOnline(); // carga la librería online bajo demanda
       await accion(t);
       onListo(t);
     } catch (e) {

@@ -311,6 +311,84 @@ input:focus { border-color: var(--oro); box-shadow: 0 0 0 2px rgba(200, 162, 74,
 .res-stat { font-family: var(--display); }
 .res-stat i { font-family: inherit; font-style: normal; font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--tenue); }
 
+/* ---------- Torneo ---------- */
+.btn--torneo {
+  background: linear-gradient(180deg, var(--humo-2), var(--humo));
+  color: var(--hueso); border: 1px solid var(--oro);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(200, 162, 74, 0.15);
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.btn--torneo .btn-sub { font-weight: 400; font-size: 12px; color: var(--tenue); letter-spacing: 0.3px; }
+
+/* Selector de preset y toggle (config del torneo) */
+.presets { display: flex; flex-direction: column; gap: 8px; }
+.preset-card {
+  display: flex; flex-direction: column; gap: 2px; text-align: left;
+  background: var(--humo); border: 1px solid var(--linea); border-radius: 12px; padding: 11px 14px; color: var(--texto);
+}
+.preset-card.sel {
+  border-color: var(--oro);
+  background: linear-gradient(180deg, rgba(200, 162, 74, 0.1), var(--humo));
+}
+.preset-nombre { font-weight: 700; font-family: var(--display); letter-spacing: 0.5px; color: var(--hueso); }
+.preset-card.sel .preset-nombre { color: var(--oro-claro); }
+.preset-gancho { font-size: 12px; color: var(--tenue); }
+
+.toggle-fila {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;
+  background: var(--humo); border: 1px solid var(--linea); border-radius: 12px; padding: 11px 14px; color: var(--texto); text-align: left;
+}
+.toggle-txt { display: flex; flex-direction: column; gap: 2px; }
+.toggle-sub { font-size: 12px; color: var(--tenue); }
+.toggle-sw {
+  flex: 0 0 auto; width: 44px; height: 26px; border-radius: 999px;
+  background: var(--humo-2); border: 1px solid var(--linea); position: relative; transition: background 0.15s ease;
+}
+.toggle-sw::after {
+  content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--tenue); transition: transform 0.15s ease, background 0.15s ease;
+}
+.toggle-fila.on .toggle-sw { background: var(--oro); border-color: var(--oro); }
+.toggle-fila.on .toggle-sw::after { transform: translateX(18px); background: #15110a; }
+
+/* HUD del torneo sobre la mesa */
+.torneo-hud {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-size: 12px; color: var(--tenue); letter-spacing: 0.3px;
+  background: linear-gradient(180deg, rgba(200, 162, 74, 0.1), rgba(200, 162, 74, 0.03));
+  border: 1px solid var(--linea); border-radius: 999px; padding: 5px 12px;
+}
+.torneo-hud-etq { color: var(--oro); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.torneo-hud-sep { opacity: 0.5; }
+
+/* Pantallas de transición del torneo */
+.torneo-pantalla { align-items: center; text-align: center; gap: 12px; padding-top: 6vh; }
+.torneo-pantalla .grande, .torneo-pantalla .btn-link { width: 100%; max-width: 360px; }
+.torneo-kicker { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--oro); }
+.torneo-titulo { font-family: var(--display); font-size: 30px; color: var(--hueso); margin: 0; letter-spacing: 0.5px; }
+.torneo-fin.es-campeon .torneo-titulo { color: var(--oro); text-shadow: 0 2px 18px rgba(200, 162, 74, 0.35); }
+.torneo-sub { color: var(--texto); max-width: 22em; margin: 0; line-height: 1.5; }
+.torneo-emblema { filter: drop-shadow(0 14px 30px rgba(0, 0, 0, 0.6)); margin-bottom: 2px; }
+.torneo-acomp { font-size: 12px; color: var(--tenue); max-width: 24em; margin: 0; }
+
+.torneo-camino { list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; padding: 8px 0; margin: 0; }
+.camino-paso { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--tenue); }
+.camino-punto { width: 9px; height: 9px; border-radius: 50%; border: 1px solid var(--linea); background: transparent; }
+.camino--ganada .camino-punto { background: var(--oro); border-color: var(--oro); }
+.camino--ganada .camino-etq { color: var(--texto); }
+.camino--actual .camino-punto { background: var(--oro-claro); border-color: var(--oro-claro); box-shadow: 0 0 8px rgba(200, 162, 74, 0.6); }
+.camino--actual .camino-etq { color: var(--oro-claro); font-weight: 700; }
+.camino--perdida .camino-punto { background: var(--sangre); border-color: var(--sangre-viva); }
+.camino--perdida .camino-etq { color: var(--sangre-viva); }
+
+.torneo-info { display: flex; gap: 10px; justify-content: center; margin: 2px 0; }
+.torneo-dato {
+  display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 74px;
+  background: var(--humo); border: 1px solid var(--linea); border-radius: 12px; padding: 8px 12px;
+}
+.torneo-dato-n { font-family: var(--display); font-size: 20px; color: var(--oro); text-transform: capitalize; }
+.torneo-dato-l { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--tenue); }
+
 /* Sello de versión: discreto, fijo en una esquina. Sirve para confirmar que el
    navegador cargó la última versión (y no una cacheada por el service worker). */
 .build {

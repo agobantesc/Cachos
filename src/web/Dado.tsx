@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { Pinta } from "../engine";
 
 // Posición (en un viewBox 0..100) de cada punto posible en la grilla 3x3.
@@ -23,7 +24,7 @@ const PIPS: Record<Pinta, number[]> = {
  * No depende de CSS ni de tamaños en porcentaje —se ve igual en todo navegador
  * (iOS Safari incluido), que era justo donde los puntos desaparecían.
  */
-export function Dado({ cara, tam = 44 }: { cara: Pinta; tam?: number }) {
+export const Dado = memo(function Dado({ cara, tam = 44 }: { cara: Pinta; tam?: number }) {
   const esAs = cara === 1;
   const fondo = esAs ? "#fbf3d6" : "#e9e3d2";
   const borde = esAs ? "#c8a24a" : "rgba(0,0,0,0.12)";
@@ -43,7 +44,7 @@ export function Dado({ cara, tam = 44 }: { cara: Pinta; tam?: number }) {
       ))}
     </svg>
   );
-}
+});
 
 /** Dado boca abajo: para mostrar el vaso de otro jugador (sin revelar la cara). */
 export function DadoOculto({ tam = 28 }: { tam?: number }) {
