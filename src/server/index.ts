@@ -15,10 +15,16 @@ import {
   iniciarRonda,
   aplicarAccion,
   vistaJugador,
+  jugadorDeTurnoId,
   type Accion,
   type EstadoJuego,
   type Sentido,
 } from "../engine/index.js";
+import { decidirBot, type JugadaBot } from "../web/bots.js";
+
+/** Tras este tiempo sin que un jugador desconectado vuelva, un bot juega por él
+ *  para que la partida no se cuelgue esperando su turno. */
+const GRACIA_AUSENTE_MS = Number(process.env.GRACIA_AUSENTE_MS ?? 12000);
 
 const PUERTO = Number(process.env.PORT ?? 8787);
 const ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sin O/0/I/1
@@ -35,6 +41,8 @@ interface Sala {
   estado: EstadoJuego | null; // null mientras está en el lobby
   conns: Map<string, Set<WebSocket>>; // jugadorId -> sockets abiertos
   ultimaActividad: number;
+  /** Timer para que un bot juegue por un jugador ausente. */
+  timerBot: ReturnType<typeof setTimeout> | null;
 }
 interface InfoConn {
   codigo: string;
@@ -86,6 +94,77 @@ function difundir(sala: Sala): void {
     const snap = snapshot(sala, jid);
     for (const ws of sockets) enviar(ws, snap);
   }
+  programarAusente(sala);
+}
+
+function conectado(sala: Sala, jugadorId: string): boolean {
+  const set = sala.conns.get(jugadorId);
+  return !!set && set.size > 0;
+}
+
+function accionDeBot(j: JugadaBot, jugadorId: string): Accion {
+  switch (j.tipo) {
+    case "APOSTAR":
+      return { tipo: "APOSTAR", jugadorId, apuesta: j.apuesta };
+    case "CALZAR":
+      return { tipo: "CALZAR", jugadorId };
+    case "PASAR":
+      return { tipo: "PASAR", jugadorId };
+    case "DUDAR_PASO":
+      return { tipo: "DUDAR_PASO", jugadorId };
+    case "DUDAR":
+      return { tipo: "DUDAR", jugadorId };
+  }
+}
+
+/** Si quien tiene el turno (o el abridor en FIN_RONDA) está desconectado, agenda
+ *  que un bot juegue por él tras una gracia, para que la mesa no se cuelgue. */
+function programarAusente(sala: Sala): void {
+  if (sala.timerBot) {
+    clearTimeout(sala.timerBot);
+    sala.timerBot = null;
+  }
+  const e = sala.estado;
+  if (!e) return;
+  if (e.fase === "EN_RONDA") {
+    const turno = jugadorDeTurnoId(e);
+    if (turno && !conectado(sala, turno)) {
+      sala.timerBot = setTimeout(() => jugarPorAusente(sala, turno), GRACIA_AUSENTE_MS);
+    }
+  } else if (e.fase === "FIN_RONDA") {
+    const ab = e.abridorRondaId;
+    if (ab && !conectado(sala, ab)) {
+      sala.timerBot = setTimeout(() => avanzarPorAusente(sala), GRACIA_AUSENTE_MS);
+    }
+  }
+}
+
+function jugarPorAusente(sala: Sala, jugadorId: string): void {
+  sala.timerBot = null;
+  const e = sala.estado;
+  if (!e || e.fase !== "EN_RONDA") return;
+  if (jugadorDeTurnoId(e) !== jugadorId || conectado(sala, jugadorId)) return; // volvió o cambió el turno
+  const v = vistaJugador(e, jugadorId);
+  const jugada = decidirBot(v.publico, v.miMano, jugadorId, "medio");
+  try {
+    sala.estado = aplicarAccion(e, accionDeBot(jugada, jugadorId));
+  } catch {
+    try {
+      sala.estado = aplicarAccion(e, { tipo: "DUDAR", jugadorId });
+    } catch {
+      /* sin jugada legal: se deja como está */
+    }
+  }
+  difundir(sala);
+}
+
+function avanzarPorAusente(sala: Sala): void {
+  sala.timerBot = null;
+  const e = sala.estado;
+  if (!e || e.fase !== "FIN_RONDA") return;
+  if (!e.abridorRondaId || conectado(sala, e.abridorRondaId)) return;
+  sala.estado = iniciarRonda(e);
+  difundir(sala);
 }
 
 function adjuntar(ws: WebSocket, sala: Sala, jugadorId: string): void {
@@ -118,6 +197,7 @@ function manejar(ws: WebSocket, msg: { tipo?: string; [k: string]: unknown }): v
         estado: null,
         conns: new Map(),
         ultimaActividad: Date.now(),
+        timerBot: null,
       };
       salas.set(codigo, sala);
       adjuntar(ws, sala, jugadorId);
@@ -190,7 +270,31 @@ const http = createServer((_req, res) => {
 
 const wss = new WebSocketServer({ server: http });
 
+// Keepalive: detectar y cerrar sockets muertos (Render/proxies cortan WS
+// inactivos a ~55s). Si no, quedan conexiones zombi y turnos colgados.
+type WsVivo = WebSocket & { isAlive?: boolean };
+const PING = setInterval(() => {
+  for (const ws of wss.clients) {
+    const v = ws as WsVivo;
+    if (v.isAlive === false) {
+      ws.terminate();
+      continue;
+    }
+    v.isAlive = false;
+    try {
+      ws.ping();
+    } catch {
+      /* ignore */
+    }
+  }
+}, 30000);
+wss.on("close", () => clearInterval(PING));
+
 wss.on("connection", (ws) => {
+  (ws as WsVivo).isAlive = true;
+  ws.on("pong", () => {
+    (ws as WsVivo).isAlive = true;
+  });
   ws.on("message", (data) => {
     let msg: { tipo?: string; [k: string]: unknown };
     try {
@@ -214,8 +318,14 @@ wss.on("connection", (ws) => {
     const set = sala.conns.get(info.jugadorId);
     set?.delete(ws);
     if (set && set.size === 0) sala.conns.delete(info.jugadorId);
-    // Lobby abandonado (sin partida iniciada y sin nadie conectado): se borra.
-    if (!sala.estado && sala.conns.size === 0) salas.delete(info.codigo);
+    if (!sala.estado && sala.conns.size === 0) {
+      // Lobby abandonado: se borra.
+      if (sala.timerBot) clearTimeout(sala.timerBot);
+      salas.delete(info.codigo);
+    } else if (sala.estado) {
+      // Partida en curso: si era su turno, un bot lo cubrirá tras la gracia.
+      programarAusente(sala);
+    }
   });
 });
 

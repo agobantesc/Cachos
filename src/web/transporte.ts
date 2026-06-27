@@ -52,6 +52,8 @@ export interface Instantanea {
   esSolo: boolean;
   /** Estado del torneo si se juega en modo torneo; null/undefined si no. */
   torneo?: VistaTorneo | null;
+  /** Estado de la conexión en línea (para mostrar "Reconectando…"). */
+  conexion?: "ok" | "reconectando";
 }
 
 export interface Transporte {

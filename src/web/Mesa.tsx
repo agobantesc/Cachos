@@ -41,8 +41,9 @@ export function Mesa({
       if (p.ultimaResolucion.perdedorId === snap.miId) Sonidos.perder();
       else Sonidos.ganar();
     } else if (p.fase === "FIN_JUEGO") {
+      // Si ganó, suena la fanfarria; si perdió, ya sonó "perder" al ser
+      // eliminado, así que no se repite.
       if (p.ganadorId === snap.miId) Sonidos.ganar();
-      else Sonidos.perder();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p.fase, p.numeroRonda]);
@@ -203,7 +204,9 @@ export function Mesa({
         )}
       </section>
 
-      {p.fase === "EN_RONDA" && <BarraAcciones publico={p} miId={snap.miId} transporte={transporte} />}
+      {p.fase === "EN_RONDA" && (
+        <BarraAcciones publico={p} miId={snap.miId} miMano={snap.miMano} transporte={transporte} />
+      )}
 
       {p.fase === "FIN_RONDA" && p.ultimaResolucion && (
         <Revelacion res={p.ultimaResolucion} publico={p} snap={snap} transporte={transporte} />
@@ -233,7 +236,7 @@ function Revelacion({
     caras.forEach((c) => m.set(c, (m.get(c) ?? 0) + 1));
     const g = [...m.values()].sort((a, b) => a - b);
     if (g.length === 1) return "Cinco iguales: paso válido.";
-    if (g.length === 5) return "Escalera (todas distintas): paso válido.";
+    if (g.length === 5) return "Cinco caras distintas: paso válido.";
     if (g.length === 2 && g[0] === 2) return "Full (tres y dos): paso válido.";
     return "No formó mano de paso.";
   };

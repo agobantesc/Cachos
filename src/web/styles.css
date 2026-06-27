@@ -364,7 +364,12 @@ input:focus { border-color: var(--oro); box-shadow: 0 0 0 2px rgba(200, 162, 74,
 .tc-sub { font-size: 12.5px; color: var(--tenue); }
 .tc-flecha { flex: 0 0 auto; color: var(--oro); font-size: 24px; line-height: 1; opacity: 0.65; }
 @media (prefers-reduced-motion: reduce) {
-  .torneo-card::after { animation: none; display: none; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .torneo-card::after { display: none; }
 }
 
 /* Selector de preset y toggle (config del torneo) */
@@ -519,6 +524,49 @@ input:focus { border-color: var(--oro); box-shadow: 0 0 0 2px rgba(200, 162, 74,
 .ec-arrow:disabled { opacity: 0.3; }
 .ec-valor { min-width: 86px; text-align: center; font-size: 12.5px; color: var(--hueso); }
 .ec-swatch { width: 28px; height: 22px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.25); }
+
+/* ---------- Accesibilidad, feedback táctil y robustez ---------- */
+/* Foco visible para navegación por teclado (antes sólo lo tenían los inputs). */
+:where(button, [role="switch"], .torneo-card, .preset-card, a):focus-visible {
+  outline: 2px solid var(--oro-claro);
+  outline-offset: 2px;
+}
+button { touch-action: manipulation; }
+.btn { min-height: 46px; }
+.btn:disabled { cursor: not-allowed; }
+
+/* Realimentación al tocar en los controles que no la tenían. */
+.seg-btn:active, .pinta-btn:active, .preset-card:active, .toggle-fila:active,
+.btn-link:active, .salir-mesa:active, .volver:active, .ec-arrow:active, .ec-cerrar:active {
+  transform: translateY(1px);
+}
+
+/* Tamaños táctiles mínimos (WCAG 2.5.5 / HIG iOS). */
+.mute, .salir-mesa, .volver, .ec-cerrar { min-width: 40px; min-height: 40px; }
+.mesa-top .mute { margin-left: 2px; }
+
+/* Spinner de carga (cold-start del online). */
+@keyframes girar { to { transform: rotate(360deg); } }
+.spinner {
+  display: inline-block; width: 15px; height: 15px; vertical-align: -2px; margin-right: 7px;
+  border: 2px solid rgba(200, 162, 74, 0.3); border-top-color: var(--oro); border-radius: 50%;
+  animation: girar 0.7s linear infinite;
+}
+
+/* Puntos pulsantes para "esperando" (señalan que la app sigue viva). */
+@keyframes pulso-punto { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
+.puntos-vivos { display: inline-flex; gap: 3px; margin-left: 6px; }
+.puntos-vivos i { width: 4px; height: 4px; border-radius: 50%; background: var(--oro); animation: pulso-punto 1.2s ease-in-out infinite; }
+.puntos-vivos i:nth-child(2) { animation-delay: 0.2s; }
+.puntos-vivos i:nth-child(3) { animation-delay: 0.4s; }
+
+/* Banner de reconexión en línea. */
+.banner-reconexion {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 60; text-align: center;
+  padding: 7px 10px; font-size: 13px; font-weight: 700; color: #15110a;
+  background: linear-gradient(180deg, var(--oro-claro), var(--oro));
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
 
 /* Sello de versión: discreto, fijo en una esquina. Sirve para confirmar que el
    navegador cargó la última versión (y no una cacheada por el service worker). */

@@ -78,8 +78,9 @@ if (typeof window !== "undefined") {
   const reactivar = () => {
     if (activado) asegurarAudio();
   };
+  // Sólo pointerdown (touchstart + pointerdown se disparan ambos en un mismo
+  // toque y pueden recrear el contexto a medias en iOS).
   window.addEventListener("pointerdown", reactivar, { passive: true });
-  window.addEventListener("touchstart", reactivar, { passive: true });
   if (typeof document !== "undefined") {
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") reactivar();

@@ -12,5 +12,5 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src/server", "src/engine"]
+  "include": ["src/server", "src/engine", "src/web/bots.ts"]
 }

@@ -1,16 +1,34 @@
 import { useMemo, useState } from "react";
-import { validarApuesta, type Apuesta, type EstadoPublico, type Pinta } from "../engine";
+import { contarPinta, validarApuesta, type Apuesta, type EstadoPublico, type Pinta } from "../engine";
 import { nombrarApuesta, PINTAS, SINGULAR_PINTA } from "./util";
 import { Sonidos } from "./sonido";
 import type { Transporte } from "./transporte";
 
+/** Apertura sugerida: la pinta que más tienes (con su cantidad), para no abrir
+ *  con "1 tonto" —la apuesta más débil, que invita a la siciliana—. */
+function aperturaSugerida(mano: Pinta[] | null, asesComodin: boolean): Apuesta {
+  if (!mano || mano.length === 0) return { cantidad: 1, pinta: 5 };
+  let mejor: Pinta = 5;
+  let mejorN = 0;
+  for (const p of PINTAS) {
+    const n = contarPinta(mano, p, asesComodin);
+    if (n > mejorN) {
+      mejorN = n;
+      mejor = p;
+    }
+  }
+  return { cantidad: Math.max(1, mejorN), pinta: mejor };
+}
+
 export function BarraAcciones({
   publico,
   miId,
+  miMano,
   transporte,
 }: {
   publico: EstadoPublico;
   miId: string;
+  miMano: Pinta[] | null;
   transporte: Transporte;
 }) {
   const esMiTurno = publico.fase === "EN_RONDA" && publico.turnoJugadorId === miId;
@@ -24,7 +42,7 @@ export function BarraAcciones({
 
   const inicial: Apuesta = publico.apuestaActual
     ? { cantidad: publico.apuestaActual.cantidad + 1, pinta: publico.apuestaActual.pinta }
-    : { cantidad: 1, pinta: 2 };
+    : aperturaSugerida(miMano, publico.asesComodin);
   const [propuesta, setPropuesta] = useState<Apuesta>(inicial);
 
   // Si cambia la apuesta vigente, re-sembramos la propuesta.
@@ -45,19 +63,28 @@ export function BarraAcciones({
   const puedeDudar = publico.apuestaActual !== null;
   const puedeCalzar = publico.calzoDisponible && !(publico.esRondaObligado && misDados > 1);
 
-  // Paso: con los 5 dados se puede pasar; si hay un paso pendiente, solo cabe
-  // dudar el paso o subir la apuesta.
+  // Paso: con los 5 dados se puede pasar; pero NO como abridor (debes abrir con
+  // una apuesta). Si hay un paso pendiente, sólo cabe dudar el paso o subir.
   const hayPaso = publico.pasoPendienteJugadorId !== null;
   const nombrePasador =
     publico.jugadores.find((j) => j.id === publico.pasoPendienteJugadorId)?.nombre ?? "Alguien";
   const yaPase = publico.historialRonda.some((ev) => ev.tipo === "PASO" && ev.jugadorId === miId);
   const puedoPasar =
-    !hayPaso && !yaPase && !publico.esRondaObligado && misDados === publico.dadosIniciales;
+    !hayPaso &&
+    !yaPase &&
+    !publico.esRondaObligado &&
+    publico.apuestaActual !== null &&
+    misDados === publico.dadosIniciales;
 
   if (!esMiTurno) {
     return (
-      <div className="acciones acciones--espera">
+      <div className="acciones acciones--espera" aria-live="polite">
         Esperando a <b>{publico.jugadores.find((j) => j.id === publico.turnoJugadorId)?.nombre ?? "…"}</b>
+        <span className="puntos-vivos" aria-hidden="true">
+          <i></i>
+          <i></i>
+          <i></i>
+        </span>
       </div>
     );
   }
@@ -65,27 +92,41 @@ export function BarraAcciones({
   const setCantidad = (d: number) => setPropuesta((p) => ({ ...p, cantidad: Math.max(1, p.cantidad + d) }));
   const setPinta = (pinta: Pinta) => setPropuesta((p) => ({ ...p, pinta }));
 
+  const botonApostar = (
+    <button
+      className="btn btn--apostar grande"
+      disabled={!apuestaOk}
+      onClick={() => {
+        Sonidos.apostar();
+        void transporte.apostar(propuesta);
+      }}
+    >
+      Apostar {nombrarApuesta(propuesta)}
+    </button>
+  );
+
   return (
     <div className="acciones">
       {hayPaso && (
-        <div className="aviso-paso">
+        <div className="aviso-paso" role="status">
           <b>{nombrePasador}</b> pasó. Dúdale el paso o sube la apuesta.
         </div>
       )}
 
       <div className="constructor">
-        <div className="stepper">
-          <button onClick={() => setCantidad(-1)} aria-label="menos">−</button>
-          <span className="cantidad">{propuesta.cantidad}</span>
-          <button onClick={() => setCantidad(1)} aria-label="más">+</button>
+        <div className="stepper" role="group" aria-label="Cantidad de dados">
+          <button onClick={() => setCantidad(-1)} aria-label="Menos cantidad">−</button>
+          <span className="cantidad" aria-live="polite">{propuesta.cantidad}</span>
+          <button onClick={() => setCantidad(1)} aria-label="Más cantidad">+</button>
         </div>
-        <div className="pintas">
+        <div className="pintas" role="group" aria-label="Pinta">
           {PINTAS.map((p) => {
             const bloq = pintaBloqueada !== null && p !== pintaBloqueada;
             return (
               <button
                 key={p}
                 disabled={bloq}
+                aria-pressed={propuesta.pinta === p}
                 className={"pinta-btn" + (propuesta.pinta === p ? " sel" : "") + (p === 1 ? " as" : "")}
                 onClick={() => setPinta(p)}
               >
@@ -97,46 +138,28 @@ export function BarraAcciones({
       </div>
 
       {hayPaso ? (
-        <div className="botonera">
+        <>
+          {botonApostar}
           <button
-            className="btn btn--apostar"
-            disabled={!apuestaOk}
-            onClick={() => {
-              Sonidos.apostar();
-              transporte.apostar(propuesta);
-            }}
-          >
-            Apostar {nombrarApuesta(propuesta)}
-          </button>
-          <button
-            className="btn btn--dudar"
+            className="btn btn--dudar grande"
             onClick={() => {
               Sonidos.dudar();
-              transporte.dudarPaso();
+              void transporte.dudarPaso();
             }}
           >
             Dudar el paso
           </button>
-        </div>
+        </>
       ) : (
         <>
+          {botonApostar}
           <div className="botonera">
-            <button
-              className="btn btn--apostar"
-              disabled={!apuestaOk}
-              onClick={() => {
-                Sonidos.apostar();
-                transporte.apostar(propuesta);
-              }}
-            >
-              Apostar {nombrarApuesta(propuesta)}
-            </button>
             <button
               className="btn btn--dudar"
               disabled={!puedeDudar}
               onClick={() => {
                 Sonidos.dudar();
-                transporte.dudar();
+                void transporte.dudar();
               }}
             >
               Dudo
@@ -146,7 +169,7 @@ export function BarraAcciones({
               disabled={!puedeCalzar}
               onClick={() => {
                 Sonidos.calzar();
-                transporte.calzar();
+                void transporte.calzar();
               }}
             >
               Calzo
@@ -157,7 +180,7 @@ export function BarraAcciones({
               className="btn btn--pasar"
               onClick={() => {
                 Sonidos.pasar();
-                transporte.pasar();
+                void transporte.pasar();
               }}
             >
               Pasar <span className="btn-sub">(con tus 5 dados)</span>
@@ -167,7 +190,9 @@ export function BarraAcciones({
       )}
 
       {!apuestaOk && (
-        <div className="hint">{rompeObligado ? "Obligado: con 2+ dados no puedes cambiar la pinta." : validez.motivo}</div>
+        <div className="hint" role="alert">
+          {rompeObligado ? "Obligado: con 2+ dados no puedes cambiar la pinta." : validez.motivo}
+        </div>
       )}
     </div>
   );

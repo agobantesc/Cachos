@@ -49,11 +49,24 @@ function Juego({ transporte, salir }: { transporte: Transporte; salir: () => voi
   const snap = useInstantanea(transporte);
   // En torneo, las transiciones (entre rondas / campeón / eliminado) reemplazan
   // a la mesa; mientras se juega la mesa, manda la pantalla de juego normal.
+  let contenido;
   if (snap.torneo && snap.torneo.faseTorneo !== "mesa") {
-    return <PantallaTorneo snap={snap} transporte={transporte} salir={salir} />;
+    contenido = <PantallaTorneo snap={snap} transporte={transporte} salir={salir} />;
+  } else if (snap.faseApp === "juego") {
+    contenido = <Mesa snap={snap} transporte={transporte} salir={salir} />;
+  } else {
+    contenido = <Lobby snap={snap} transporte={transporte} salir={salir} />;
   }
-  if (snap.faseApp === "juego") return <Mesa snap={snap} transporte={transporte} salir={salir} />;
-  return <Lobby snap={snap} transporte={transporte} salir={salir} />;
+  return (
+    <>
+      {snap.conexion === "reconectando" && (
+        <div className="banner-reconexion" role="status">
+          Reconectando con el servidor…
+        </div>
+      )}
+      {contenido}
+    </>
+  );
 }
 
 function Lobby({
@@ -108,9 +121,16 @@ function Lobby({
           {snap.jugadoresLobby.length < 2 ? "Esperando jugadores…" : "Iniciar partida"}
         </button>
       ) : (
-        <p className="ayuda">Esperando que el anfitrión inicie…</p>
+        <p className="ayuda" aria-live="polite">
+          Esperando que el anfitrión inicie
+          <span className="puntos-vivos" aria-hidden="true">
+            <i></i>
+            <i></i>
+            <i></i>
+          </span>
+        </p>
       )}
-      <button className="btn btn--dudar" onClick={salir}>
+      <button className="btn-link" onClick={salir}>
         Salir del salón
       </button>
     </div>
@@ -433,12 +453,14 @@ function ConfigOnline({
   const correr = async (accion: (t: Awaited<ReturnType<typeof crearTransporteOnline>>) => Promise<void>) => {
     setError(null);
     setCargando(true);
+    let t: Awaited<ReturnType<typeof crearTransporteOnline>> | null = null;
     try {
-      const t = await crearTransporteOnline(); // carga la librería online bajo demanda
+      t = await crearTransporteOnline(); // carga la librería online bajo demanda
       await accion(t);
       guardarPrefs({ nombre: nombre.trim() });
       onListo(t);
     } catch (e) {
+      t?.detener(); // cierra el socket para no dejar conexiones colgando
       setError(e instanceof Error ? e.message : "No se pudo conectar. Reintenta.");
       setCargando(false);
     }
@@ -452,12 +474,20 @@ function ConfigOnline({
           Te invitaron a la sala <b>{codigo}</b>. Escribe tu nombre y entra.
         </p>
       )}
-      <input value={nombre} placeholder="Tu nombre" onChange={(e) => setNombre(e.target.value)} />
+      <input
+        value={nombre}
+        placeholder="Tu nombre"
+        aria-label="Tu nombre"
+        autoComplete="nickname"
+        maxLength={24}
+        onChange={(e) => setNombre(e.target.value)}
+      />
       {!invitado && (
         <>
           <button
             className="btn btn--apostar grande"
             disabled={!nombre.trim() || cargando}
+            aria-busy={cargando}
             onClick={() => correr((t) => t.crearSala(nombre.trim()))}
           >
             {cargando ? "Conectando…" : "Crear sala"}
@@ -465,18 +495,34 @@ function ConfigOnline({
           <div className="separador">o únete con una contraseña</div>
         </>
       )}
-      <input value={codigo} placeholder="CONTRASEÑA" onChange={(e) => setCodigo(e.target.value.toUpperCase())} />
+      <input
+        value={codigo}
+        placeholder="CONTRASEÑA"
+        aria-label="Contraseña de la sala"
+        autoCapitalize="characters"
+        autoComplete="off"
+        maxLength={6}
+        onChange={(e) => setCodigo(e.target.value.toUpperCase())}
+      />
       <button
         className={(invitado ? "btn btn--apostar" : "btn btn--calzar") + " grande"}
         disabled={!nombre.trim() || codigo.length < 4 || cargando}
+        aria-busy={cargando}
         onClick={() => correr((t) => t.unirse(codigo.trim(), nombre.trim()))}
       >
         {cargando ? "Conectando…" : "Unirse"}
       </button>
       {cargando && (
-        <p className="ayuda">Conectando con el servidor. Si estaba dormido, puede tardar unos segundos…</p>
+        <p className="ayuda" aria-live="polite">
+          <span className="spinner" aria-hidden="true" />
+          Conectando con el servidor. Si estaba dormido, puede tardar unos segundos…
+        </p>
       )}
-      {error && <div className="hint">{error}</div>}
+      {error && (
+        <div className="hint" role="alert">
+          {error}
+        </div>
+      )}
     </div>
   );
 }
