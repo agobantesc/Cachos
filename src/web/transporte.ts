@@ -73,6 +73,12 @@ export interface Transporte {
   detener(): void;
 }
 
+/** Transporte en línea: además crea/se une a una sala por código. */
+export interface TransporteOnline extends Transporte {
+  crearSala(nombre: string): Promise<void>;
+  unirse(codigo: string, nombre: string): Promise<void>;
+}
+
 /**
  * Transporte local (hot-seat): el motor corre en el navegador y la pantalla
  * adopta la perspectiva del jugador de turno. Ideal para probar y para jugar

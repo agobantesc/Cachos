@@ -1,0 +1,14 @@
+# Blueprint de Render para el árbitro del Cacho.
+# En Render: New + → Blueprint → eliges este repo → Apply. Listo, sin terminal.
+services:
+  - type: web
+    name: cachos-arbitro
+    runtime: node
+    plan: free
+    region: oregon
+    healthCheckPath: /
+    buildCommand: npm install --include=dev && npm run build:server
+    startCommand: npm run start:server
+    envVars:
+      - key: NODE_VERSION
+        value: "20"

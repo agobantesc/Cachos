@@ -3,13 +3,13 @@
 // un proyecto Supabase configurado vía VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY.)
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Apuesta, EstadoPublico, Pinta, Sentido } from "../engine";
-import type { Instantanea, JugadorLobby, Transporte } from "./transporte";
+import type { Instantanea, JugadorLobby, TransporteOnline } from "./transporte";
 
 export function supabaseConfigurado(): boolean {
   return Boolean(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
 }
 
-export class TransporteSupabase implements Transporte {
+export class TransporteSupabase implements TransporteOnline {
   private sb: SupabaseClient;
   private subs = new Set<() => void>();
   private salaId: string | null = null;

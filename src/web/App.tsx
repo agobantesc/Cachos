@@ -7,7 +7,7 @@ import { fijarCaraJugador, CARA_DEFECTO } from "./Avatar";
 import { TransporteLocal, type Transporte } from "./transporte";
 import { TransporteTorneo } from "./transporteTorneo";
 import { PRESETS_TORNEO, presetPorClave, type PresetTorneo } from "./torneo";
-import { supabaseConfigurado, crearTransporteOnline } from "./online";
+import { onlineConfigurado, crearTransporteOnline } from "./online";
 import { useInstantanea } from "./util";
 import { leerPrefs, guardarPrefs } from "./prefs";
 import { desbloquearAudio } from "./sonido";
@@ -382,13 +382,13 @@ function ConfigOnline({ onListo, volver }: { onListo: (t: Transporte) => void; v
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
 
-  if (!supabaseConfigurado()) {
+  if (!onlineConfigurado()) {
     return (
       <div className="pantalla config">
         <Cabecera titulo="Mesa en línea" volver={volver} />
         <p className="ayuda">
-          Falta configurar el backend. Define <code>VITE_SUPABASE_URL</code> y{" "}
-          <code>VITE_SUPABASE_ANON_KEY</code> (ver <code>supabase/README.md</code>) y vuelve a cargar.
+          Falta encender el servidor del juego. Define <code>VITE_BACKEND_URL</code> con la dirección
+          de tu árbitro en Render (ver <code>RENDER.md</code>) y vuelve a cargar.
         </p>
       </div>
     );

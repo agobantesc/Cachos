@@ -8,3 +8,4 @@ coverage/
 
 # Previsualización estática generada (correr `npm run preview:html`)
 preview/
+dist-server/
