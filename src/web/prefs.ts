@@ -1,6 +1,7 @@
 // Preferencias del jugador, persistidas en localStorage: para que la app
 // recuerde tu nombre, dificultad y el último torneo elegido entre sesiones.
 import type { Nivel } from "./bots";
+import type { Cara } from "./Avatar";
 
 const CLAVE = "cachos.prefs";
 
@@ -10,6 +11,8 @@ export interface Prefs {
   rivales?: number;
   preset?: string;
   rampa?: boolean;
+  /** Rostro personalizado del jugador. */
+  cara?: Cara;
 }
 
 export function leerPrefs(): Prefs {

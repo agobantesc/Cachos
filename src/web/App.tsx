@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Mesa } from "./Mesa";
 import { PantallaTorneo } from "./PantallaTorneo";
+import { CampoJugador } from "./Personaje";
 import { Emblema, IconoCopa } from "./Iconos";
+import { fijarCaraJugador } from "./Avatar";
 import { TransporteLocal, type Transporte } from "./transporte";
 import { TransporteTorneo } from "./transporteTorneo";
 import { PRESETS_TORNEO, presetPorClave, type PresetTorneo } from "./torneo";
@@ -10,6 +12,9 @@ import { useInstantanea } from "./util";
 import { leerPrefs, guardarPrefs } from "./prefs";
 import { desbloquearAudio } from "./sonido";
 import type { Nivel } from "./bots";
+
+// Carga el rostro guardado del jugador para que aparezca en toda la app.
+fijarCaraJugador(leerPrefs().cara ?? null);
 
 const ETIQUETA_NIVEL: Record<Nivel, string> = {
   facil: "Fácil",
@@ -157,7 +162,7 @@ function ConfigSolo({ onListo, volver }: { onListo: (t: Transporte) => void; vol
     <div className="pantalla config">
       <Cabecera titulo="Jugar solo" volver={volver} />
       <p className="ayuda">Tú contra la banca. Elige rivales y dificultad.</p>
-      <input value={nombre} placeholder="Tu nombre" onChange={(e) => setNombre(e.target.value)} />
+      <CampoJugador nombre={nombre} setNombre={setNombre} />
 
       <div className="campo-label">Rivales de la máquina</div>
       <div className="stepper">
@@ -203,7 +208,7 @@ function ConfigTorneo({ onListo, volver }: { onListo: (t: Transporte) => void; v
       <p className="ayuda">
         Una sola mesa por ronda: gánala y avanzas; pierde y quedas fuera. Sube hasta la final.
       </p>
-      <input value={nombre} placeholder="Tu nombre" onChange={(e) => setNombre(e.target.value)} />
+      <CampoJugador nombre={nombre} setNombre={setNombre} />
 
       <div className="campo-label">Tamaño del torneo</div>
       <div className="presets">

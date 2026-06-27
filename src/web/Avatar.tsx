@@ -22,12 +22,12 @@ function prng(seed: number): () => number {
 }
 
 // --- Paletas temáticas -----------------------------------------------------
-const PIEL = ["#d8b48f", "#caa07a", "#b07f55", "#9c6b46", "#8a5a3b", "#e0c4a4"];
-const PELO = ["#17150f", "#2b2620", "#4a3a28", "#6e5a40", "#9a8a74", "#cfc7b6"];
+export const PIEL = ["#d8b48f", "#caa07a", "#b07f55", "#9c6b46", "#8a5a3b", "#e0c4a4"];
+export const PELO = ["#17150f", "#2b2620", "#4a3a28", "#6e5a40", "#9a8a74", "#cfc7b6"];
 const FIELTRO = "#24222b"; // sombreros/gorras/capucha
 const ORO = "#c8a24a";
 
-type Cara = {
+export type Cara = {
   piel: string;
   pelo: string;
   top: "corto" | "raya" | "calvo" | "gorra" | "fedora" | "capucha" | "largo" | "mono";
@@ -44,7 +44,42 @@ function pick<T>(r: () => number, arr: readonly T[]): T {
   return arr[Math.floor(r() * arr.length)]!;
 }
 
-function caraDe(id: string, nombre: string): Cara {
+// Opciones editables (para el editor de personaje).
+export const TOPS_M = ["corto", "raya", "calvo", "gorra", "fedora", "capucha"] as const;
+export const TOPS_F = ["largo", "mono", "corto", "capucha"] as const;
+export const CEJAS = ["normal", "sinistra", "alta"] as const;
+export const OJOS = ["normal", "entrecerrado", "grande"] as const;
+export const BOCAS = ["neutra", "torcida", "seria", "mueca"] as const;
+export const VELLOS = ["nada", "bigote", "barba", "perilla", "candado"] as const;
+export const EXTRAS = ["nada", "cicatriz", "monoculo", "cigarro"] as const;
+
+/** Una cara totalmente aleatoria (para el botón "Al azar" del editor). */
+export function caraAleatoria(): Cara {
+  const r = Math.random;
+  const femenina = r() < 0.42;
+  return {
+    piel: pick(r, PIEL),
+    pelo: pick(r, PELO),
+    top: pick(r, femenina ? TOPS_F : TOPS_M),
+    cejas: pick(r, CEJAS),
+    ojos: pick(r, OJOS),
+    parche: r() < 0.12,
+    boca: pick(r, BOCAS),
+    vello: femenina ? "nada" : pick(r, VELLOS),
+    extra: pick(r, ["nada", "nada", ...EXTRAS]),
+    femenina,
+  };
+}
+
+// Registro del rostro elegido por el jugador humano: cuando se pide el avatar de
+// "humano" se usa este, así la cara personalizada aparece en toda la app sin
+// tener que pasarla por cada lugar.
+let _caraJugador: Cara | null = null;
+export function fijarCaraJugador(c: Cara | null): void {
+  _caraJugador = c;
+}
+
+export function caraDe(id: string, nombre: string): Cara {
   const r = prng(hash(id));
   const n = nombre.toLowerCase();
   // "La …" / "Doña …" / "vieja"/"dama"/"suerte" ⇒ rostro femenino.
@@ -109,13 +144,16 @@ export const Avatar = memo(function Avatar({
   nombre,
   tam = 40,
   anillo = false,
+  cara,
 }: {
   id: string;
   nombre: string;
   tam?: number;
   anillo?: boolean;
+  /** Cara explícita (para el editor); si no, se deriva del id/nombre. */
+  cara?: Cara;
 }) {
-  const c = caraDe(id, nombre);
+  const c = cara ?? (id === "humano" && _caraJugador ? _caraJugador : caraDe(id, nombre));
   const pielSombra = "rgba(0,0,0,0.18)";
 
   return (
