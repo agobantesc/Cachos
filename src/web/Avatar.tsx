@@ -53,6 +53,20 @@ export const BOCAS = ["neutra", "torcida", "seria", "mueca"] as const;
 export const VELLOS = ["nada", "bigote", "barba", "perilla", "candado"] as const;
 export const EXTRAS = ["nada", "cicatriz", "monoculo", "cigarro"] as const;
 
+/** Cara estándar (limpia) del jugador antes de personalizar: sin barba ni cigarro. */
+export const CARA_DEFECTO: Cara = {
+  piel: PIEL[1]!,
+  pelo: PELO[2]!,
+  top: "corto",
+  cejas: "normal",
+  ojos: "normal",
+  parche: false,
+  boca: "neutra",
+  vello: "nada",
+  extra: "nada",
+  femenina: false,
+};
+
 /** Una cara totalmente aleatoria (para el botón "Al azar" del editor). */
 export function caraAleatoria(): Cara {
   const r = Math.random;
@@ -165,8 +179,10 @@ export const Avatar = memo(function Avatar({
       role="img"
       aria-label={`rostro de ${nombre}`}
     >
-      <circle cx="32" cy="32" r="31" fill="#201d27" />
-      <circle cx="32" cy="32" r="31" fill="none" stroke={anillo ? ORO : "rgba(200,162,74,0.28)"} strokeWidth={anillo ? 2.4 : 1.2} />
+      {/* Disco más claro que el fondo para que el pelo (incluso oscuro) se vea. */}
+      <circle cx="32" cy="32" r="31" fill="#3a3744" />
+      <ellipse cx="32" cy="23" rx="29" ry="19" fill="#ffffff" opacity="0.05" />
+      <circle cx="32" cy="32" r="31" fill="none" stroke={anillo ? ORO : "rgba(200,162,74,0.35)"} strokeWidth={anillo ? 2.4 : 1.2} />
 
       {/* hombros / cuello */}
       <path d="M14 64 q2 -13 18 -13 q16 0 18 13 z" fill="#15131a" />

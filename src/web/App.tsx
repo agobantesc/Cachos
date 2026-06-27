@@ -3,7 +3,7 @@ import { Mesa } from "./Mesa";
 import { PantallaTorneo } from "./PantallaTorneo";
 import { CampoJugador } from "./Personaje";
 import { Emblema, IconoCopa } from "./Iconos";
-import { fijarCaraJugador } from "./Avatar";
+import { fijarCaraJugador, CARA_DEFECTO } from "./Avatar";
 import { TransporteLocal, type Transporte } from "./transporte";
 import { TransporteTorneo } from "./transporteTorneo";
 import { PRESETS_TORNEO, presetPorClave, type PresetTorneo } from "./torneo";
@@ -13,8 +13,9 @@ import { leerPrefs, guardarPrefs } from "./prefs";
 import { desbloquearAudio } from "./sonido";
 import type { Nivel } from "./bots";
 
-// Carga el rostro guardado del jugador para que aparezca en toda la app.
-fijarCaraJugador(leerPrefs().cara ?? null);
+// Carga el rostro guardado del jugador (o la cara estándar limpia) para que
+// aparezca en toda la app.
+fijarCaraJugador(leerPrefs().cara ?? CARA_DEFECTO);
 
 const ETIQUETA_NIVEL: Record<Nivel, string> = {
   facil: "Fácil",

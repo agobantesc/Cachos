@@ -4,7 +4,7 @@ import { useState } from "react";
 import {
   Avatar,
   caraAleatoria,
-  caraDe,
+  CARA_DEFECTO,
   fijarCaraJugador,
   PIEL,
   PELO,
@@ -132,7 +132,7 @@ export function CampoJugador({ nombre, setNombre }: { nombre: string; setNombre:
       </div>
       {editando && (
         <EditorCara
-          caraInicial={cara ?? caraDe("humano", nombre)}
+          caraInicial={cara ?? CARA_DEFECTO}
           onCerrar={() => setEditando(false)}
           onGuardar={(c) => {
             setCara(c);
