@@ -87,8 +87,35 @@ export interface PlanRonda {
   etiqueta: string;
 }
 
-/** Fase visible del torneo (la mesa en curso o una transición). */
-export type FaseTorneo = "mesa" | "entre-rondas" | "campeon" | "eliminado";
+/** Fase visible del torneo (presentación del cuadro, mesa en curso o transición). */
+export type FaseTorneo = "presentacion" | "mesa" | "entre-rondas" | "campeon" | "eliminado";
+
+// --- Mapa de duelos (el cuadro que se va llenando) -------------------------
+export type EstadoParticipanteMapa = "gano" | "perdio" | "pendiente" | "incognito";
+
+export interface MapaParticipante {
+  id: string;
+  nombre: string;
+  esHumano: boolean;
+  estado: EstadoParticipanteMapa;
+}
+export interface MapaMesa {
+  participantes: MapaParticipante[];
+  esLaDelHumano: boolean;
+  resuelta: boolean;
+  /** Nombre del ganador si la mesa ya se resolvió. */
+  ganador: string | null;
+}
+export interface MapaRonda {
+  etiqueta: string;
+  nivel: Nivel;
+  estado: "pasada" | "actual" | "futura";
+  mesas: MapaMesa[];
+}
+export interface MapaTorneo {
+  rondas: MapaRonda[];
+  rondaActual: number;
+}
 
 /** Lo que la UI necesita para pintar el HUD y las pantallas del torneo. */
 export interface VistaTorneo {
@@ -113,6 +140,8 @@ export interface VistaTorneo {
   campeonNombre: string | null;
   /** Otros que avanzaron junto al humano (sabor para "entre-rondas"). */
   acompanantes: string[];
+  /** El cuadro completo (se va llenando ronda a ronda). null durante la mesa. */
+  mapa: MapaTorneo | null;
 }
 
 export interface EstadoTorneo {
@@ -129,6 +158,8 @@ export interface EstadoTorneo {
   mesaHumanoIdx: number;
   /** Clasificados que entran a la ronda actual (en orden). */
   clasificados: ParticipanteTorneo[];
+  /** Mesas ya resueltas de rondas pasadas, por índice de ronda (para el cuadro). */
+  historialMesas: MesaTorneo[][];
   campeonId: string | null;
   /** Ronda (0-based) en que cayó el humano, o null si sigue/ganó. */
   rondaEliminado: number | null;
@@ -139,12 +170,17 @@ export interface EstadoTorneo {
 // ---------------------------------------------------------------------------
 
 const ICONICOS = ["El Tuerto", "La Sombra", "Doña Suerte", "El Croata", "Patas Negras"];
-const ART = ["El", "La", "Don", "Doña", "El Viejo", "La Vieja", "Ño"];
-const APODO = [
-  "Tuerto", "Sombra", "Ñato", "Zorro", "Lobo", "Cuervo", "Mudo", "Rengo", "Pelao", "Flaco",
+const ART_M = ["El", "Don", "El Viejo", "Ño"];
+const ART_F = ["La", "Doña", "La Vieja"];
+const APODO_M = [
+  "Tuerto", "Ñato", "Zorro", "Lobo", "Cuervo", "Mudo", "Rengo", "Pelao", "Flaco",
   "Chino", "Turco", "Mono", "Tano", "Loco", "Brujo", "Diablo", "Santo", "Conde", "Galán",
-  "Charqui", "Pillo", "Cacho", "Comodín", "As de Oro", "Mala Cara", "Buena Estrella", "Manos Frías",
-  "Rey", "Cabro", "Roto", "Maestro", "Compadre", "Vampiro", "Gato", "Tiburón",
+  "Charqui", "Pillo", "Cacho", "Comodín", "Rey", "Cabro", "Roto", "Maestro", "Compadre",
+  "Vampiro", "Gato", "Tiburón", "Manco", "Calvo", "Barbas",
+];
+const APODO_F = [
+  "Sombra", "Bruja", "Loca", "Gata", "Reina", "Dama", "Fiera", "Viuda", "Pálida", "Roja",
+  "Santa", "Zorra", "Maga", "Tuerta", "Muda", "Renga", "Flaca", "Condesa", "Galana", "Mala Cara",
 ];
 
 function barajar<T>(arr: T[]): T[] {
@@ -156,10 +192,12 @@ function barajar<T>(arr: T[]): T[] {
   return a;
 }
 
-/** Devuelve `n` nombres únicos y atmosféricos para los bots. */
+/** Devuelve `n` nombres únicos y atmosféricos para los bots (con género coherente
+ *  con el rostro: "La/Doña …" femeninos, "El/Don/Ño …" masculinos). */
 export function generaNombres(n: number): string[] {
   const combos: string[] = [];
-  for (const art of ART) for (const apo of APODO) combos.push(`${art} ${apo}`);
+  for (const art of ART_M) for (const apo of APODO_M) combos.push(`${art} ${apo}`);
+  for (const art of ART_F) for (const apo of APODO_F) combos.push(`${art} ${apo}`);
   const pool = [...ICONICOS, ...barajar(combos)];
   const vistos = new Set<string>();
   const out: string[] = [];
@@ -334,6 +372,7 @@ export function crearTorneo(opts: OpcionesTorneo): EstadoTorneo {
     mesas,
     mesaHumanoIdx,
     clasificados,
+    historialMesas: [],
     campeonId: null,
     rondaEliminado: null,
   };
@@ -387,6 +426,8 @@ export function resolverRonda(
 
 /** Avanza el estado a la siguiente ronda sembrando al humano en la mesa 0. */
 export function prepararSiguienteRonda(t: EstadoTorneo, clasificados: ParticipanteTorneo[]): void {
+  // La ronda que dejamos ya quedó resuelta: la guardamos para el cuadro.
+  t.historialMesas[t.ronda] = t.mesas;
   t.ronda += 1;
   t.clasificados = clasificados;
   const { mesas, mesaHumanoIdx } = armarMesas(clasificados, t.plan[t.ronda]!.mesas);
@@ -411,6 +452,49 @@ export function coronarSinHumano(t: EstadoTorneo, clasificados: ParticipanteTorn
     r++;
   }
   return vivos[0]?.id ?? clasificados[0]!.id;
+}
+
+function mapaMesaDe(m: MesaTorneo): MapaMesa {
+  const resuelta = m.ganadorId !== null;
+  const participantes: MapaParticipante[] = m.participantes.map((p) => ({
+    id: p.id,
+    nombre: p.nombre,
+    esHumano: p.esHumano,
+    estado: !resuelta ? "pendiente" : p.id === m.ganadorId ? "gano" : "perdio",
+  }));
+  return {
+    participantes,
+    esLaDelHumano: m.esLaDelHumano,
+    resuelta,
+    ganador: resuelta ? m.participantes.find((p) => p.id === m.ganadorId)?.nombre ?? null : null,
+  };
+}
+
+/** Arma el cuadro completo: rondas pasadas (con ganadores), la actual y las
+ *  futuras como incógnitas. Se va "llenando" a medida que el humano avanza. */
+export function construirMapa(t: EstadoTorneo): MapaTorneo {
+  const rondas: MapaRonda[] = t.plan.map((p, i) => {
+    if (i < t.ronda) {
+      return { etiqueta: p.etiqueta, nivel: p.nivel, estado: "pasada", mesas: (t.historialMesas[i] ?? t.mesas).map(mapaMesaDe) };
+    }
+    if (i === t.ronda) {
+      return { etiqueta: p.etiqueta, nivel: p.nivel, estado: "actual", mesas: t.mesas.map(mapaMesaDe) };
+    }
+    const porMesa = Math.ceil(p.jugadores / p.mesas);
+    const mesas: MapaMesa[] = Array.from({ length: p.mesas }, () => ({
+      participantes: Array.from({ length: porMesa }, (_, k) => ({
+        id: `incog-${i}-${k}`,
+        nombre: "?",
+        esHumano: false,
+        estado: "incognito" as const,
+      })),
+      esLaDelHumano: false,
+      resuelta: false,
+      ganador: null,
+    }));
+    return { etiqueta: p.etiqueta, nivel: p.nivel, estado: "futura" as const, mesas };
+  });
+  return { rondas, rondaActual: t.ronda };
 }
 
 /** Construye la VistaTorneo (lo que lee la UI) para una fase dada. */
@@ -450,5 +534,6 @@ export function vistaTorneo(t: EstadoTorneo, fase: FaseTorneo, ganadores?: Parti
     humanoAvanzo: fase === "campeon" || (fase === "entre-rondas"),
     campeonNombre: t.campeonId ? nombreDe(t, t.campeonId) : null,
     acompanantes,
+    mapa: fase === "mesa" ? null : construirMapa(t),
   };
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { EstadoPublico, EventoRonda, Pinta, ResolucionRonda, Sentido } from "../engine";
 import { Dado, ManoDados } from "./Dado";
+import { Avatar } from "./Avatar";
 import { IconoDado, IconoSonido } from "./Iconos";
 import { BarraAcciones } from "./BarraAcciones";
 import { nombrarApuesta, PLURAL_PINTA } from "./util";
@@ -149,6 +150,9 @@ export function Mesa({
           const ev = ultimoEventoDe(id);
           return (
             <div key={id} className={"vaso" + (esTurno ? " vaso--turno" : "") + (j.eliminado ? " vaso--out" : "")}>
+              <div className="vaso-cara">
+                <Avatar id={id} nombre={j.nombre} tam={30} anillo={id === snap.miId} />
+              </div>
               <div className="vaso-nombre">
                 {j.nombre} {id === snap.miId && <span className="yo">(tú)</span>}
               </div>

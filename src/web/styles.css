@@ -427,6 +427,50 @@ input:focus { border-color: var(--oro); box-shadow: 0 0 0 2px rgba(200, 162, 74,
 .torneo-dato-n { font-family: var(--display); font-size: 20px; color: var(--oro); text-transform: capitalize; }
 .torneo-dato-l { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--tenue); }
 
+.torneo-acciones { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; max-width: 360px; margin-top: 6px; }
+.torneo-acciones .grande, .torneo-acciones .btn-link { width: 100%; }
+
+/* Rostros (avatares) */
+.avatar { display: block; border-radius: 50%; }
+.vaso-cara { display: flex; justify-content: center; margin-bottom: 3px; }
+.vaso-cara .avatar { filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.45)); }
+.vaso--out .avatar { filter: grayscale(0.7); opacity: 0.7; }
+
+/* Tu mesa (lineup de rostros) */
+.tu-mesa { width: 100%; max-width: 360px; background: var(--humo); border: 1px solid var(--linea); border-radius: 14px; padding: 12px 10px; }
+.tu-mesa-tit { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--oro); text-align: center; margin-bottom: 9px; }
+.tu-mesa-jug { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.tu-mesa-j { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 62px; }
+.tu-mesa-n { font-size: 11px; color: var(--texto); text-align: center; max-width: 62px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tu-mesa-n.yo { color: var(--oro); font-weight: 700; }
+
+/* Cuadro de duelos */
+.mapa-duelos { width: 100%; max-width: 430px; display: flex; flex-direction: column; gap: 2px; }
+.md-ronda { display: flex; flex-direction: column; gap: 6px; }
+.md-ronda-cab { display: flex; align-items: baseline; justify-content: space-between; padding: 0 4px; }
+.md-ronda-etq { font-family: var(--display); font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: var(--oro); }
+.md-ronda--futura .md-ronda-etq { color: var(--tenue); }
+.md-ronda-meta { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--tenue); }
+.md-mesas { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 2px 0 4px; }
+.md-chip {
+  display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 56px; padding: 6px 7px;
+  background: var(--humo); border: 1px solid var(--linea); border-radius: 11px;
+}
+.md-chip--humano { border-color: var(--oro); background: linear-gradient(180deg, rgba(200, 162, 74, 0.1), var(--humo)); }
+.md-chip--incog { opacity: 0.45; }
+.md-caras { display: grid; gap: 3px; }
+.md-caras.n1 { grid-template-columns: auto; }
+.md-caras.n2, .md-caras.n3, .md-caras.n4 { grid-template-columns: repeat(2, auto); }
+.md-cara { display: inline-flex; border-radius: 50%; }
+.md-cara.md-gano { box-shadow: 0 0 0 2px var(--oro), 0 0 8px rgba(200, 162, 74, 0.45); }
+.md-cara.md-perdio { opacity: 0.3; filter: grayscale(0.55); }
+.md-incface { display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: #201d27; border: 1px dashed var(--linea); }
+.md-chip-pie { font-size: 10px; text-align: center; max-width: 86px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.md-tu { color: var(--oro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+.md-gan { color: var(--hueso); }
+.md-vs { color: var(--tenue); }
+.md-conector { width: 1px; height: 12px; align-self: center; margin: 0 auto; background: linear-gradient(var(--oro), transparent); opacity: 0.45; }
+
 /* Sello de versión: discreto, fijo en una esquina. Sirve para confirmar que el
    navegador cargó la última versión (y no una cacheada por el service worker). */
 .build {

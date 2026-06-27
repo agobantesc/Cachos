@@ -26,7 +26,7 @@ import {
 
 export class TransporteTorneo implements Transporte {
   private estado: EstadoTorneo;
-  private fase: FaseTorneo = "mesa";
+  private fase: FaseTorneo = "presentacion";
   private inner: TransporteLocal | null = null;
   private innerUnsub: (() => void) | null = null;
   private subs = new Set<() => void>();
@@ -35,8 +35,9 @@ export class TransporteTorneo implements Transporte {
   private ganadoresPendientes: ParticipanteTorneo[] = [];
 
   constructor(opts: OpcionesTorneo) {
+    // Arranca en la PRESENTACIÓN del cuadro; la primera mesa se siembra cuando
+    // el jugador pulsa "Comenzar" (avanzarTorneo).
     this.estado = crearTorneo(opts);
-    this.iniciarMesaHumano();
   }
 
   // --- Suscripción / ciclo de vida ------------------------------------------
@@ -104,8 +105,12 @@ export class TransporteTorneo implements Transporte {
     this.emitir();
   }
 
-  /** Botón "Siguiente ronda" de la pantalla de transición. */
+  /** "Comenzar" (presentación) o "Siguiente ronda" (entre-rondas). */
   async avanzarTorneo() {
+    if (this.fase === "presentacion") {
+      this.iniciarMesaHumano();
+      return;
+    }
     if (this.fase !== "entre-rondas") return;
     prepararSiguienteRonda(this.estado, this.ganadoresPendientes);
     this.ganadoresPendientes = [];
