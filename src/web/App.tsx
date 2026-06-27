@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Mesa } from "./Mesa";
 import { PantallaTorneo } from "./PantallaTorneo";
 import { CampoJugador } from "./Personaje";
-import { Emblema, IconoCopa } from "./Iconos";
+import { Emblema, IconoCopa, IconoWhatsApp } from "./Iconos";
 import { fijarCaraJugador, CARA_DEFECTO } from "./Avatar";
+import { invitarWhatsApp, copiarInvitacion, salaDesdeURL, limpiarURLSala } from "./invitacion";
 import { TransporteLocal, type Transporte } from "./transporte";
 import { TransporteTorneo } from "./transporteTorneo";
 import { PRESETS_TORNEO, presetPorClave, type PresetTorneo } from "./torneo";
@@ -65,15 +66,32 @@ function Lobby({
   salir: () => void;
 }) {
   const soyAnfitrion = snap.anfitrionId === snap.miId;
+  const codigo = snap.codigo ?? "";
+  const [copiado, setCopiado] = useState(false);
+  const copiar = async () => {
+    if (await copiarInvitacion(codigo)) {
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 2000);
+    }
+  };
   return (
     <div className="pantalla lobby">
       <h1>Salón privado</h1>
-      {snap.codigo && (
-        <div className="codigo-sala">
-          Contraseña: <strong>{snap.codigo}</strong>
-          <div className="ayuda">Pásala solo a los socios de confianza.</div>
-        </div>
+      {codigo && (
+        <>
+          <div className="codigo-sala">
+            <span className="cs-label">Contraseña de la sala</span>
+            <strong>{codigo}</strong>
+          </div>
+          <button className="btn btn--wa grande" onClick={() => invitarWhatsApp(codigo)}>
+            <IconoWhatsApp /> Invitar por WhatsApp
+          </button>
+          <button className="btn-link" onClick={copiar}>
+            {copiado ? "¡Invitación copiada!" : "Copiar la invitación"}
+          </button>
+        </>
       )}
+      <div className="campo-label">En la mesa</div>
       <ul className="lista-jugadores">
         {snap.jugadoresLobby.map((j) => (
           <li key={j.id}>
@@ -87,7 +105,7 @@ function Lobby({
           disabled={snap.jugadoresLobby.length < 2}
           onClick={() => transporte.iniciar()}
         >
-          Iniciar partida
+          {snap.jugadoresLobby.length < 2 ? "Esperando jugadores…" : "Iniciar partida"}
         </button>
       ) : (
         <p className="ayuda">Esperando que el anfitrión inicie…</p>
@@ -100,11 +118,15 @@ function Lobby({
 }
 
 function Inicio({ onListo }: { onListo: (t: Transporte) => void }) {
-  const [vista, setVista] = useState<"home" | "solo" | "torneo" | "online" | "reglas">("home");
+  // Si llegan por un enlace de invitación (?sala=CODIGO) entran directo a la
+  // mesa en línea con la contraseña ya puesta.
+  const [salaURL] = useState(() => salaDesdeURL());
+  const [vista, setVista] = useState<"home" | "solo" | "torneo" | "online" | "reglas">(salaURL ? "online" : "home");
 
   if (vista === "solo") return <ConfigSolo onListo={onListo} volver={() => setVista("home")} />;
   if (vista === "torneo") return <ConfigTorneo onListo={onListo} volver={() => setVista("home")} />;
-  if (vista === "online") return <ConfigOnline onListo={onListo} volver={() => setVista("home")} />;
+  if (vista === "online")
+    return <ConfigOnline onListo={onListo} volver={() => setVista("home")} codigoInicial={salaURL ?? ""} />;
   if (vista === "reglas") return <Reglas volver={() => setVista("home")} />;
 
   return (
@@ -376,11 +398,25 @@ function Reglas({ volver }: { volver: () => void }) {
   );
 }
 
-function ConfigOnline({ onListo, volver }: { onListo: (t: Transporte) => void; volver: () => void }) {
-  const [nombre, setNombre] = useState("");
-  const [codigo, setCodigo] = useState("");
+function ConfigOnline({
+  onListo,
+  volver,
+  codigoInicial = "",
+}: {
+  onListo: (t: Transporte) => void;
+  volver: () => void;
+  codigoInicial?: string;
+}) {
+  const [nombre, setNombre] = useState(leerPrefs().nombre ?? "");
+  const [codigo, setCodigo] = useState(codigoInicial.toUpperCase());
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
+  const invitado = codigoInicial.trim().length >= 4;
+
+  // Limpia el ?sala= de la URL una vez leído (para que un refresh no reabra esto).
+  useEffect(() => {
+    if (codigoInicial) limpiarURLSala();
+  }, [codigoInicial]);
 
   if (!onlineConfigurado()) {
     return (
@@ -400,9 +436,10 @@ function ConfigOnline({ onListo, volver }: { onListo: (t: Transporte) => void; v
     try {
       const t = await crearTransporteOnline(); // carga la librería online bajo demanda
       await accion(t);
+      guardarPrefs({ nombre: nombre.trim() });
       onListo(t);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Error");
+      setError(e instanceof Error ? e.message : "No se pudo conectar. Reintenta.");
       setCargando(false);
     }
   };
@@ -410,23 +447,35 @@ function ConfigOnline({ onListo, volver }: { onListo: (t: Transporte) => void; v
   return (
     <div className="pantalla config">
       <Cabecera titulo="Mesa en línea" volver={volver} />
+      {invitado && (
+        <p className="ayuda">
+          Te invitaron a la sala <b>{codigo}</b>. Escribe tu nombre y entra.
+        </p>
+      )}
       <input value={nombre} placeholder="Tu nombre" onChange={(e) => setNombre(e.target.value)} />
-      <button
-        className="btn btn--apostar grande"
-        disabled={!nombre.trim() || cargando}
-        onClick={() => correr((t) => t.crearSala(nombre.trim()))}
-      >
-        Crear sala
-      </button>
-      <div className="separador">o únete con una contraseña</div>
+      {!invitado && (
+        <>
+          <button
+            className="btn btn--apostar grande"
+            disabled={!nombre.trim() || cargando}
+            onClick={() => correr((t) => t.crearSala(nombre.trim()))}
+          >
+            {cargando ? "Conectando…" : "Crear sala"}
+          </button>
+          <div className="separador">o únete con una contraseña</div>
+        </>
+      )}
       <input value={codigo} placeholder="CONTRASEÑA" onChange={(e) => setCodigo(e.target.value.toUpperCase())} />
       <button
-        className="btn btn--calzar grande"
+        className={(invitado ? "btn btn--apostar" : "btn btn--calzar") + " grande"}
         disabled={!nombre.trim() || codigo.length < 4 || cargando}
         onClick={() => correr((t) => t.unirse(codigo.trim(), nombre.trim()))}
       >
-        Unirse
+        {cargando ? "Conectando…" : "Unirse"}
       </button>
+      {cargando && (
+        <p className="ayuda">Conectando con el servidor. Si estaba dormido, puede tardar unos segundos…</p>
+      )}
       {error && <div className="hint">{error}</div>}
     </div>
   );

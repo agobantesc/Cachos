@@ -58,6 +58,16 @@ export function IconoCopa({ tam = 26 }: { tam?: number }) {
   );
 }
 
+/** Glifo de WhatsApp (burbuja con teléfono), para el botón de invitar. */
+export function IconoWhatsApp({ tam = 20 }: { tam?: number }) {
+  return (
+    <svg className="ico" width={tam} height={tam} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12 2a10 10 0 0 0-8.6 15.05L2 22l5.1-1.34A10 10 0 1 0 12 2zm0 2a8 8 0 0 1 0 16 8 8 0 0 1-4.08-1.12l-.3-.18-2.6.68.7-2.53-.2-.32A8 8 0 0 1 12 4z" />
+      <path d="M8.5 7.2c-.2 0-.5 0-.7.4-.3.4-1 1-1 2.4s1 2.8 1.2 3c.2.2 2 3.1 4.9 4.2 2.4 1 2.9.8 3.4.7.5 0 1.6-.6 1.8-1.3.2-.6.2-1.2.16-1.3-.07-.1-.26-.18-.55-.32-.3-.15-1.65-.82-1.9-.9-.26-.1-.45-.15-.63.14-.18.3-.7.9-.86 1.08-.16.18-.32.2-.6.07-.3-.15-1.2-.45-2.3-1.42-.84-.75-1.4-1.67-1.57-1.96-.16-.3 0-.45.13-.6.13-.13.3-.34.44-.5.15-.18.2-.3.3-.5.1-.2.05-.36-.02-.5-.08-.16-.63-1.56-.88-2.13-.2-.46-.4-.4-.55-.4z" />
+    </svg>
+  );
+}
+
 /** Bocina con/sin ondas, para el control de sonido. */
 export function IconoSonido({ activo, tam = 19 }: { activo: boolean; tam?: number }) {
   return (
