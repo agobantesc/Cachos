@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Mesa } from "./Mesa";
 import { PantallaTorneo } from "./PantallaTorneo";
-import { Emblema } from "./Iconos";
+import { Emblema, IconoCopa } from "./Iconos";
 import { TransporteLocal, type Transporte } from "./transporte";
 import { TransporteTorneo } from "./transporteTorneo";
 import { PRESETS_TORNEO, presetPorClave, type PresetTorneo } from "./torneo";
@@ -115,9 +115,16 @@ function Inicio({ onListo }: { onListo: (t: Transporte) => void }) {
       <button className="btn btn--apostar grande" onClick={() => setVista("solo")}>
         Jugar solo (vs la máquina)
       </button>
-      <button className="btn btn--torneo grande" onClick={() => setVista("torneo")}>
-        Torneo
-        <span className="btn-sub">Gánate la copa contra la banca</span>
+      <button className="torneo-card" onClick={() => setVista("torneo")} aria-label="Torneo">
+        <span className="tc-emblema" aria-hidden="true">
+          <IconoCopa tam={28} />
+        </span>
+        <span className="tc-texto">
+          <span className="tc-kicker">La copa de la casa</span>
+          <span className="tc-titulo">Torneo</span>
+          <span className="tc-sub">Súbete al bracket y gánale a la banca</span>
+        </span>
+        <span className="tc-flecha" aria-hidden="true">›</span>
       </button>
       <button className="btn btn--dudar grande" onClick={() => setVista("online")}>
         Mesa en línea

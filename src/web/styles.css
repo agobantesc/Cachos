@@ -312,13 +312,51 @@ input:focus { border-color: var(--oro); box-shadow: 0 0 0 2px rgba(200, 162, 74,
 .res-stat i { font-family: inherit; font-style: normal; font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--tenue); }
 
 /* ---------- Torneo ---------- */
-.btn--torneo {
-  background: linear-gradient(180deg, var(--humo-2), var(--humo));
+/* Tarjeta destacada del modo torneo: placa enmarcada con copa de oro y brillo. */
+.torneo-card {
+  position: relative; overflow: hidden; isolation: isolate;
+  display: flex; align-items: center; gap: 14px; text-align: left;
+  width: 100%; max-width: 360px; padding: 15px 16px; border-radius: 16px;
   color: var(--hueso); border: 1px solid var(--oro);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(200, 162, 74, 0.15);
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background:
+    radial-gradient(150px 90px at 16% 22%, rgba(200, 162, 74, 0.22), transparent 70%),
+    linear-gradient(180deg, #26222c, #15131a);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(230, 200, 120, 0.18);
+  transition: transform 0.05s ease, box-shadow 0.15s ease;
 }
-.btn--torneo .btn-sub { font-weight: 400; font-size: 12px; color: var(--tenue); letter-spacing: 0.3px; }
+.torneo-card::before {
+  content: ""; position: absolute; inset: 5px; border-radius: 11px;
+  border: 1px solid rgba(200, 162, 74, 0.3); pointer-events: none; z-index: 1;
+}
+.torneo-card::after {
+  content: ""; position: absolute; top: 0; left: 0; width: 42%; height: 100%; z-index: 0;
+  background: linear-gradient(100deg, transparent, rgba(255, 240, 205, 0.16), transparent);
+  transform: translateX(-180%) skewX(-18deg);
+  animation: tc-sheen 5.5s ease-in-out infinite;
+}
+@keyframes tc-sheen {
+  0% { transform: translateX(-180%) skewX(-18deg); }
+  22%, 100% { transform: translateX(330%) skewX(-18deg); }
+}
+.torneo-card:active { transform: translateY(1px); }
+.torneo-card > * { position: relative; z-index: 2; }
+.tc-emblema {
+  flex: 0 0 auto; width: 50px; height: 50px; display: grid; place-items: center; border-radius: 50%;
+  color: #15110a;
+  background: radial-gradient(circle at 50% 32%, var(--oro-claro), var(--oro) 78%);
+  box-shadow: 0 4px 12px rgba(200, 162, 74, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.tc-texto { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+.tc-kicker { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--oro); }
+.tc-titulo {
+  font-family: var(--display); font-size: 26px; font-weight: 700; letter-spacing: 1px;
+  line-height: 1.04; color: var(--oro-claro); text-shadow: 0 2px 14px rgba(200, 162, 74, 0.25);
+}
+.tc-sub { font-size: 12.5px; color: var(--tenue); }
+.tc-flecha { flex: 0 0 auto; color: var(--oro); font-size: 24px; line-height: 1; opacity: 0.65; }
+@media (prefers-reduced-motion: reduce) {
+  .torneo-card::after { animation: none; display: none; }
+}
 
 /* Selector de preset y toggle (config del torneo) */
 .presets { display: flex; flex-direction: column; gap: 8px; }
