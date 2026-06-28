@@ -16,10 +16,20 @@ function BarraStats({ t }: { t: VistaHistoria }) {
   return (
     <div className="hist-stats">
       <Plata n={t.plata} />
-      <span className="hist-atr">Aguante {t.atributos.aguante}</span>
       <span className="hist-atr">Ojo {t.atributos.ojo}</span>
+      <span className="hist-atr">Colmillo {t.atributos.colmillo}</span>
       <span className="hist-atr">Suerte {t.atributos.suerte}</span>
     </div>
+  );
+}
+
+function MesaInfo({ t }: { t: VistaHistoria }) {
+  if (t.mesa <= 2) return <p className="hist-mesa">Mano a mano.</p>;
+  return (
+    <p className="hist-mesa">
+      Mesa de {t.mesa}
+      {t.acompanantes.length > 0 && <> · también juegan: {t.acompanantes.join(", ")}</>}
+    </p>
   );
 }
 
@@ -33,7 +43,6 @@ function FichaRival({ t, tam = 96 }: { t: VistaHistoria; tam?: number }) {
         <span className="rival-nivel">
           {r.esBoss ? "JEFE · " : ""}
           {ETIQUETA_NIVEL[r.nivel] ?? r.nivel}
-          {r.dadosExtra > 0 ? ` · ${5 + r.dadosExtra} cachos` : ""}
         </span>
       </div>
     </div>
@@ -54,26 +63,27 @@ export function PantallaHistoria({
 
   // --- INTRO: el lugar y el rival ---
   if (t.faseHistoria === "intro") {
-    const esPrimero = t.escenario.idx === 0 && t.progresoRival.idx === 0;
     return (
       <div className="pantalla historia-pantalla">
+        {t.narrativa.prologo && <p className="hist-prologo">{t.narrativa.prologo}</p>}
         <span className="hist-kicker">
           {t.escenario.lugar} · Cap. {t.escenario.idx + 1}/{t.escenario.total}
         </span>
         <h1 className="hist-titulo">{t.escenario.nombre}</h1>
-        {(esPrimero || t.progresoRival.idx === 0) && <p className="hist-ambiente">{t.escenario.ambiente}</p>}
+        {t.narrativa.intro && <p className="hist-ambiente">{t.narrativa.intro}</p>}
         <FichaRival t={t} />
+        <MesaInfo t={t} />
         {r.esBoss && r.habilidad && (
           <div className="boss-habilidad">
-            <span className="bh-tit">Habilidad</span>
-            {r.habilidad}
+            <span className="bh-tit">Habilidad · {r.habilidad.nombre}</span>
+            {r.habilidad.desc}
           </div>
         )}
         <p className="hist-dialogo">“{r.dialogo}”</p>
         <BarraStats t={t} />
         <div className="hist-acciones">
           <button className="btn btn--apostar grande" onClick={() => transporte.historiaEmpezar?.()}>
-            Sentarse a la mesa
+            {t.mesa <= 2 ? "Sentarse al duelo" : "Sentarse a la mesa"}
           </button>
           <button className="btn-link" onClick={salir}>
             Guardar y salir
@@ -88,12 +98,13 @@ export function PantallaHistoria({
     return (
       <div className={"pantalla historia-pantalla" + (r.esBoss ? " hist-boss-caido" : "")}>
         <span className="hist-kicker">{t.escenario.nombre}</span>
-        <h1 className="hist-titulo hist-gano">{r.esBoss ? "Caíste, jefe" : "Le ganaste a " + r.nombre}</h1>
+        <h1 className="hist-titulo hist-gano">{r.esBoss ? "Cayó el jefe" : "Le ganaste a " + r.nombre}</h1>
         <FichaRival t={t} tam={84} />
         <p className="hist-dialogo">“{r.dialogo}”</p>
         <div className="hist-premio">
-          Te llevas <Plata n={r.plata} />
+          Te llevas <Plata n={r.plata ?? 0} />
         </div>
+        {t.narrativa.epilogo && <p className="hist-ambiente">{t.narrativa.epilogo}</p>}
         <BarraStats t={t} />
         <div className="hist-acciones">
           <button className="btn btn--apostar grande" onClick={() => transporte.historiaContinuar?.()}>
@@ -109,7 +120,7 @@ export function PantallaHistoria({
     return (
       <div className="pantalla historia-pantalla">
         <span className="hist-kicker">{t.escenario.nombre}</span>
-        <h1 className="hist-titulo hist-perdio">{r.nombre} te limpió</h1>
+        <h1 className="hist-titulo hist-perdio">Te limpiaron</h1>
         <FichaRival t={t} tam={84} />
         <p className="hist-dialogo">“{r.dialogo}”</p>
         <BarraStats t={t} />

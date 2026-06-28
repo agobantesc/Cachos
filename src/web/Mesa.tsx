@@ -227,6 +227,7 @@ export function Mesa({
           miId={snap.miId}
           miMano={snap.miMano}
           ojo={snap.historia?.ojo ?? 0}
+          colmillo={snap.historia?.colmillo ?? 0}
           transporte={transporte}
         />
       )}

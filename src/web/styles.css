@@ -597,6 +597,14 @@ button { touch-action: manipulation; }
 .hist-premio, .hist-plata-grande { font-size: 16px; color: var(--texto); }
 .hist-continuar { font-size: 13px; color: var(--tenue); }
 .hist-final .hist-titulo { font-size: 32px; }
+.hist-mesa { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--tenue); margin: 0; }
+.hist-prologo {
+  font-style: italic; color: var(--texto); line-height: 1.6; max-width: 26em; margin: 0 0 6px;
+  padding: 12px 14px; border-left: 2px solid var(--sangre-viva);
+  background: linear-gradient(180deg, rgba(143, 45, 36, 0.1), transparent);
+  border-radius: 0 12px 12px 0;
+}
+.colmillo-pista { color: #e8a99a; background: rgba(143, 45, 36, 0.1); border-color: rgba(178, 58, 46, 0.4); }
 
 .rival-ficha { display: flex; align-items: center; gap: 12px; background: var(--humo); border: 1px solid var(--linea); border-radius: 14px; padding: 10px 14px; }
 .rival-ficha--boss { border-color: var(--sangre-viva); background: linear-gradient(180deg, rgba(143, 45, 36, 0.12), var(--humo)); }

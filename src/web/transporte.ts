@@ -11,6 +11,7 @@ import {
   type EstadoJuego,
   type EstadoPublico,
   type Pinta,
+  type ReglasCasa,
   type Sentido,
 } from "../engine";
 import { decidirBot, type JugadaBot, type Nivel } from "./bots";
@@ -106,29 +107,33 @@ export class TransporteLocal implements Transporte {
   /** En modo solitario, el id del jugador humano (perspectiva fija). null = hot-seat. */
   private readonly humano: string | null;
   private readonly nivel: Nivel;
+  /** Nivel por jugador (modo historia: un boss duro junto a relleno más blando). */
+  private readonly nivelPorJugador: Record<string, Nivel>;
   private temporizador: ReturnType<typeof setTimeout> | null = null;
   private detenido = false;
 
   constructor(
     jugadores: JugadorLobby[],
-    opciones: { humanoId?: string; nivel?: Nivel; dadosIniciales?: Record<string, number> } = {},
+    opciones: {
+      humanoId?: string;
+      nivel?: Nivel;
+      nivelPorJugador?: Record<string, Nivel>;
+      reglas?: ReglasCasa;
+    } = {},
   ) {
-    this.estado = crearJuego(jugadores);
+    this.estado = crearJuego(jugadores, opciones.reglas);
     this.humano = opciones.humanoId ?? null;
     this.nivel = opciones.nivel ?? "medio";
-    // Cachos iniciales por jugador (modo historia: ventaja del boss / aguante).
-    if (opciones.dadosIniciales) {
-      for (const j of this.estado.jugadores) {
-        const n = opciones.dadosIniciales[j.id];
-        if (n && n > 0) j.dados = new Array<Pinta>(n).fill(1);
-      }
-      this.estado.dadosInicialesTotales = this.estado.jugadores.reduce((s, j) => s + j.dados.length, 0);
-    }
+    this.nivelPorJugador = opciones.nivelPorJugador ?? {};
     if (this.humano !== null) {
       // Modo solitario: arranca de inmediato y deja a los bots jugar.
       this.estado = iniciarRonda(this.estado);
       this.programar();
     }
+  }
+
+  private nivelDe(botId: string): Nivel {
+    return this.nivelPorJugador[botId] ?? this.nivel;
   }
 
   /** Modo historia: re-tira la mano de un jugador (poder "Suerte"). */
@@ -138,6 +143,36 @@ export class TransporteLocal implements Transporte {
     if (!j || j.eliminado || j.dados.length === 0) return false;
     j.dados = j.dados.map(() => (1 + Math.floor(Math.random() * 6)) as Pinta);
     this.emitir();
+    return true;
+  }
+
+  /** Modo historia: "dado cargado" — re-tira la mano buscando la más concentrada
+   *  (un mismo número repetido), para que el boss tramposo juegue con ventaja. */
+  cargarMano(jugadorId: string): boolean {
+    if (this.estado.fase !== "EN_RONDA") return false;
+    const j = this.estado.jugadores.find((x) => x.id === jugadorId);
+    if (!j || j.eliminado || j.dados.length === 0) return false;
+    const concentracion = (caras: Pinta[]) => {
+      const cuenta = new Map<number, number>();
+      let mejor = 0;
+      for (const c of caras) {
+        const n = (cuenta.get(c) ?? 0) + 1;
+        cuenta.set(c, n);
+        if (n > mejor) mejor = n;
+      }
+      return mejor;
+    };
+    let mejor = j.dados;
+    let mejorScore = concentracion(mejor);
+    for (let k = 0; k < 8; k++) {
+      const tirada = j.dados.map(() => (1 + Math.floor(Math.random() * 6)) as Pinta);
+      const s = concentracion(tirada);
+      if (s > mejorScore) {
+        mejor = tirada;
+        mejorScore = s;
+      }
+    }
+    j.dados = mejor;
     return true;
   }
 
@@ -238,7 +273,7 @@ export class TransporteLocal implements Transporte {
       const turno = jugadorDeTurnoId(e);
       if (turno === null) break;
       const vista = vistaJugador(e, turno);
-      const jugada = decidirBot(vista.publico, vista.miMano, turno, this.nivel);
+      const jugada = decidirBot(vista.publico, vista.miMano, turno, this.nivelDe(turno));
       if (!this.intentar(accionDeJugada(jugada, turno))) {
         const pub = vista.publico;
         if (pub.pasoPendienteJugadorId !== null) this.intentar({ tipo: "DUDAR_PASO", jugadorId: turno });
@@ -252,7 +287,7 @@ export class TransporteLocal implements Transporte {
   private jugarBot(botId: string) {
     if (jugadorDeTurnoId(this.estado) !== botId) return; // el estado cambió
     const vista = vistaJugador(this.estado, botId);
-    const jugada = decidirBot(vista.publico, vista.miMano, botId, this.nivel);
+    const jugada = decidirBot(vista.publico, vista.miMano, botId, this.nivelDe(botId));
 
     if (!this.intentar(accionDeJugada(jugada, botId))) {
       // Salvaguarda con una acción siempre legal, para no quedar en bucle.
