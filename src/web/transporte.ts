@@ -15,6 +15,7 @@ import {
 } from "../engine";
 import { decidirBot, type JugadaBot, type Nivel } from "./bots";
 import type { VistaTorneo } from "./torneo";
+import type { VistaHistoria } from "./historia";
 
 function accionDeJugada(jugada: JugadaBot, jugadorId: string): Accion {
   switch (jugada.tipo) {
@@ -54,6 +55,8 @@ export interface Instantanea {
   torneo?: VistaTorneo | null;
   /** Estado de la conexión en línea (para mostrar "Reconectando…"). */
   conexion?: "ok" | "reconectando";
+  /** Estado del modo historia, si se juega la campaña; null/undefined si no. */
+  historia?: VistaHistoria | null;
 }
 
 export interface Transporte {
@@ -71,6 +74,17 @@ export interface Transporte {
   terminarSolo(): Promise<void>;
   /** Torneo: pasa de la pantalla "entre rondas" a sembrar la siguiente mesa. */
   avanzarTorneo?(): Promise<void>;
+  // --- Modo historia ---
+  /** Empieza la partida contra el rival actual (desde la intro). */
+  historiaEmpezar?(): void;
+  /** Avanza tras ganar (a la tienda, al siguiente rival o al final). */
+  historiaContinuar?(): void;
+  /** Reintenta la partida perdida contra el mismo rival. */
+  historiaReintentar?(): void;
+  /** Compra una mejora de atributo en la tienda. */
+  historiaMejorar?(clave: string): void;
+  /** Usa el poder "Suerte": re-tira tu mano. */
+  historiaSuerte?(): void;
   /** Abandona: corta temporizadores/suscripciones (para volver al menú). */
   detener(): void;
 }
@@ -95,15 +109,36 @@ export class TransporteLocal implements Transporte {
   private temporizador: ReturnType<typeof setTimeout> | null = null;
   private detenido = false;
 
-  constructor(jugadores: JugadorLobby[], opciones: { humanoId?: string; nivel?: Nivel } = {}) {
+  constructor(
+    jugadores: JugadorLobby[],
+    opciones: { humanoId?: string; nivel?: Nivel; dadosIniciales?: Record<string, number> } = {},
+  ) {
     this.estado = crearJuego(jugadores);
     this.humano = opciones.humanoId ?? null;
     this.nivel = opciones.nivel ?? "medio";
+    // Cachos iniciales por jugador (modo historia: ventaja del boss / aguante).
+    if (opciones.dadosIniciales) {
+      for (const j of this.estado.jugadores) {
+        const n = opciones.dadosIniciales[j.id];
+        if (n && n > 0) j.dados = new Array<Pinta>(n).fill(1);
+      }
+      this.estado.dadosInicialesTotales = this.estado.jugadores.reduce((s, j) => s + j.dados.length, 0);
+    }
     if (this.humano !== null) {
       // Modo solitario: arranca de inmediato y deja a los bots jugar.
       this.estado = iniciarRonda(this.estado);
       this.programar();
     }
+  }
+
+  /** Modo historia: re-tira la mano de un jugador (poder "Suerte"). */
+  rerollarMano(jugadorId: string): boolean {
+    if (this.estado.fase !== "EN_RONDA") return false;
+    const j = this.estado.jugadores.find((x) => x.id === jugadorId);
+    if (!j || j.eliminado || j.dados.length === 0) return false;
+    j.dados = j.dados.map(() => (1 + Math.floor(Math.random() * 6)) as Pinta);
+    this.emitir();
+    return true;
   }
 
   suscribir(cb: () => void): () => void {

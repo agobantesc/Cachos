@@ -2,6 +2,7 @@
 // recuerde tu nombre, dificultad y el último torneo elegido entre sesiones.
 import type { Nivel } from "./bots";
 import type { Cara } from "./Avatar";
+import type { EstadoHistoria } from "./historia";
 
 const CLAVE = "cachos.prefs";
 
@@ -13,6 +14,8 @@ export interface Prefs {
   rampa?: boolean;
   /** Rostro personalizado del jugador. */
   cara?: Cara;
+  /** Avance del modo historia (campaña en curso). */
+  historia?: EstadoHistoria;
 }
 
 export function leerPrefs(): Prefs {

@@ -568,6 +568,84 @@ button { touch-action: manipulation; }
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
 }
 
+/* ---------- Modo Historia (el bajo mundo) ---------- */
+.historia-card {
+  border-color: var(--sangre-viva);
+  background:
+    radial-gradient(150px 90px at 16% 22%, rgba(143, 45, 36, 0.3), transparent 70%),
+    linear-gradient(180deg, #241318, #140d10);
+}
+.historia-card::before { border-color: rgba(178, 58, 46, 0.32); }
+.historia-card::after { background: linear-gradient(100deg, transparent, rgba(255, 120, 90, 0.13), transparent); }
+.hc-emblema {
+  background: radial-gradient(circle at 50% 32%, #b23a2e, #6e1f18 78%);
+  color: #f1dacd; box-shadow: 0 4px 12px rgba(143, 45, 36, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.historia-card .tc-kicker { color: var(--sangre-viva); }
+.historia-card .tc-titulo { color: #e8c8bc; text-shadow: 0 2px 14px rgba(178, 58, 46, 0.3); }
+.historia-card .tc-flecha { color: var(--sangre-viva); }
+
+.historia-pantalla { align-items: center; text-align: center; gap: 12px; padding-top: 5vh; }
+.historia-pantalla .grande, .historia-pantalla .btn-link { width: 100%; max-width: 360px; }
+.hist-kicker { font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--sangre-viva); }
+.hist-titulo { font-family: var(--display); font-size: 28px; color: var(--hueso); margin: 0; letter-spacing: 0.5px; }
+.hist-gano { color: var(--oro); text-shadow: 0 2px 18px rgba(200, 162, 74, 0.3); }
+.hist-perdio { color: var(--sangre-viva); }
+.hist-ambiente { color: var(--tenue); font-style: italic; max-width: 25em; margin: 0; line-height: 1.55; }
+.hist-dialogo { color: var(--texto); max-width: 25em; margin: 2px 0; line-height: 1.5; }
+.hist-acciones { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; max-width: 360px; margin-top: 6px; }
+.hist-premio, .hist-plata-grande { font-size: 16px; color: var(--texto); }
+.hist-continuar { font-size: 13px; color: var(--tenue); }
+.hist-final .hist-titulo { font-size: 32px; }
+
+.rival-ficha { display: flex; align-items: center; gap: 12px; background: var(--humo); border: 1px solid var(--linea); border-radius: 14px; padding: 10px 14px; }
+.rival-ficha--boss { border-color: var(--sangre-viva); background: linear-gradient(180deg, rgba(143, 45, 36, 0.12), var(--humo)); }
+.rival-ficha .avatar { filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5)); }
+.rival-info { display: flex; flex-direction: column; gap: 2px; text-align: left; }
+.rival-nombre { font-family: var(--display); font-size: 19px; color: var(--hueso); letter-spacing: 0.5px; }
+.rival-ficha--boss .rival-nombre { color: #e8c8bc; }
+.rival-nivel { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--tenue); }
+.boss-habilidad {
+  background: rgba(143, 45, 36, 0.14); border: 1px dashed rgba(178, 58, 46, 0.5); border-radius: 12px;
+  padding: 8px 12px; font-size: 13px; color: var(--texto); max-width: 26em; line-height: 1.45;
+}
+.bh-tit { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: var(--sangre-viva); margin-bottom: 2px; }
+
+.hist-stats { display: flex; flex-wrap: wrap; gap: 8px 12px; justify-content: center; align-items: center; }
+.plata { font-family: var(--display); color: var(--oro); font-weight: 700; }
+.hist-atr { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--tenue); background: var(--humo); border: 1px solid var(--linea); border-radius: 999px; padding: 3px 9px; }
+
+.tienda-mejoras { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 380px; }
+.mejora { background: var(--humo); border: 1px solid var(--linea); border-radius: 14px; padding: 12px 14px; text-align: left; }
+.mejora-cab { display: flex; align-items: center; justify-content: space-between; }
+.mejora-nombre { font-family: var(--display); font-size: 16px; color: var(--hueso); letter-spacing: 0.5px; }
+.mejora-nivel { display: inline-flex; gap: 4px; }
+.mejora-nivel .pip { width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--linea); display: inline-block; }
+.mejora-nivel .pip.on { background: var(--oro); border-color: var(--oro); }
+.mejora-desc { font-size: 13px; color: var(--tenue); margin: 6px 0 10px; line-height: 1.4; }
+.mejora-btn { width: 100%; }
+.mejora-tope { text-align: center; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--oro); padding: 8px; }
+.mejora--tope { opacity: 0.85; }
+
+.historia-hud {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  background: linear-gradient(180deg, rgba(143, 45, 36, 0.16), rgba(143, 45, 36, 0.04));
+  border: 1px solid rgba(178, 58, 46, 0.4); border-radius: 999px; padding: 5px 8px 5px 14px;
+}
+.hh-rival { font-size: 13px; font-weight: 700; color: var(--hueso); display: inline-flex; align-items: center; gap: 7px; }
+.hh-boss { font-size: 9px; letter-spacing: 1px; background: var(--sangre); color: #fff; padding: 2px 6px; border-radius: 999px; }
+.hh-suerte {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; color: #15110a;
+  background: linear-gradient(180deg, var(--oro-claro), var(--oro)); border: none; border-radius: 999px; padding: 5px 11px;
+}
+.hh-suerte .ico { color: #15110a; }
+.hh-suerte:active { transform: translateY(1px); }
+
+.ojo-pista {
+  text-align: center; font-size: 12px; color: var(--oro-claro);
+  background: rgba(200, 162, 74, 0.08); border: 1px dashed var(--linea); border-radius: 10px; padding: 5px 8px;
+}
+
 /* Sello de versión: discreto, fijo en una esquina. Sirve para confirmar que el
    navegador cargó la última versión (y no una cacheada por el service worker). */
 .build {

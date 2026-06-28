@@ -126,6 +126,23 @@ export function Mesa({
           </span>
         </div>
       )}
+      {snap.historia && snap.historia.faseHistoria === "mesa" && (
+        <div className="historia-hud">
+          <span className="hh-rival">
+            {snap.historia.rival.esBoss && <span className="hh-boss">JEFE</span>}
+            {snap.historia.rival.nombre}
+          </span>
+          {snap.historia.suerteDisponible > 0 && p.fase === "EN_RONDA" && (
+            <button
+              className="hh-suerte"
+              onClick={() => transporte.historiaSuerte?.()}
+              title="Re-tira tu mano"
+            >
+              <IconoDado /> Suerte ({snap.historia.suerteDisponible})
+            </button>
+          )}
+        </div>
+      )}
       <header className="mesa-top">
         <span className="ronda">Ronda {p.numeroRonda}</span>
         {p.esRondaObligado && <span className="badge badge--obligado">OBLIGADO</span>}
@@ -205,7 +222,13 @@ export function Mesa({
       </section>
 
       {p.fase === "EN_RONDA" && (
-        <BarraAcciones publico={p} miId={snap.miId} miMano={snap.miMano} transporte={transporte} />
+        <BarraAcciones
+          publico={p}
+          miId={snap.miId}
+          miMano={snap.miMano}
+          ojo={snap.historia?.ojo ?? 0}
+          transporte={transporte}
+        />
       )}
 
       {p.fase === "FIN_RONDA" && p.ultimaResolucion && (

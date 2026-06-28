@@ -58,6 +58,23 @@ export function IconoCopa({ tam = 26 }: { tam?: number }) {
   );
 }
 
+/** Calavera, para el modo historia (bajo mundo). */
+export function IconoCalavera({ tam = 28 }: { tam?: number }) {
+  return (
+    <svg className="ico" width={tam} height={tam} viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M12 2C7.6 2 4 5.4 4 9.6c0 2.3 1 4.2 2.6 5.5.3.2.4.5.4.9V18c0 .8.7 1.5 1.5 1.5h.4v1c0 .3.2.5.5.5h1c.3 0 .5-.2.5-.5v-1h2v1c0 .3.2.5.5.5h1c.3 0 .5-.2.5-.5v-1h.4c.8 0 1.5-.7 1.5-1.5v-2c0-.4.1-.7.4-.9C19 13.8 20 11.9 20 9.6 20 5.4 16.4 2 12 2z"
+      />
+      <g fill="#15110a">
+        <circle cx="9" cy="10.5" r="2.1" />
+        <circle cx="15" cy="10.5" r="2.1" />
+        <path d="M12 13.2l1 2.2h-2z" />
+      </g>
+    </svg>
+  );
+}
+
 /** Glifo de WhatsApp (burbuja con teléfono), para el botón de invitar. */
 export function IconoWhatsApp({ tam = 20 }: { tam?: number }) {
   return (

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { contarPinta, validarApuesta, type Apuesta, type EstadoPublico, type Pinta } from "../engine";
-import { nombrarApuesta, PINTAS, SINGULAR_PINTA } from "./util";
+import { nombrarApuesta, PINTAS, PLURAL_PINTA, SINGULAR_PINTA } from "./util";
 import { Sonidos } from "./sonido";
 import type { Transporte } from "./transporte";
 
@@ -24,11 +24,14 @@ export function BarraAcciones({
   publico,
   miId,
   miMano,
+  ojo = 0,
   transporte,
 }: {
   publico: EstadoPublico;
   miId: string;
   miMano: Pinta[] | null;
+  /** Modo historia: nivel del atributo "Ojo del tahúr" (0 = sin pista). */
+  ojo?: number;
   transporte: Transporte;
 }) {
   const esMiTurno = publico.fase === "EN_RONDA" && publico.turnoJugadorId === miId;
@@ -92,6 +95,16 @@ export function BarraAcciones({
   const setCantidad = (d: number) => setPropuesta((p) => ({ ...p, cantidad: Math.max(1, p.cantidad + d) }));
   const setPinta = (pinta: Pinta) => setPropuesta((p) => ({ ...p, pinta }));
 
+  // "Ojo del tahúr" (modo historia): cuántos dados de la pinta elegida se esperan.
+  let pistaOjo: string | null = null;
+  if (ojo > 0 && miMano) {
+    const propios = contarPinta(miMano, propuesta.pinta, publico.asesComodin);
+    const desconocidos = Math.max(0, publico.totalDadosEnMesa - miMano.length);
+    const prob = publico.asesComodin && propuesta.pinta !== 1 ? 1 / 3 : 1 / 6;
+    const esperado = propios + desconocidos * prob;
+    pistaOjo = `≈ ${esperado.toFixed(1)} ${PLURAL_PINTA[propuesta.pinta]} en la mesa`;
+  }
+
   const botonApostar = (
     <button
       className="btn btn--apostar grande"
@@ -136,6 +149,8 @@ export function BarraAcciones({
           })}
         </div>
       </div>
+
+      {pistaOjo && <div className="ojo-pista" aria-live="polite">Ojo del tahúr · {pistaOjo}</div>}
 
       {hayPaso ? (
         <>

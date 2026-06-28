@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { Mesa } from "./Mesa";
 import { PantallaTorneo } from "./PantallaTorneo";
+import { PantallaHistoria } from "./PantallaHistoria";
 import { CampoJugador } from "./Personaje";
-import { Emblema, IconoCopa, IconoWhatsApp } from "./Iconos";
-import { fijarCaraJugador, CARA_DEFECTO } from "./Avatar";
+import { Emblema, IconoCopa, IconoCalavera, IconoWhatsApp } from "./Iconos";
+import { Avatar, fijarCaraJugador, CARA_DEFECTO } from "./Avatar";
 import { invitarWhatsApp, copiarInvitacion, salaDesdeURL, limpiarURLSala } from "./invitacion";
 import { TransporteLocal, type Transporte } from "./transporte";
 import { TransporteTorneo } from "./transporteTorneo";
+import { TransporteHistoria } from "./transporteHistoria";
+import { historiaNueva, escenarioActual } from "./historia";
 import { PRESETS_TORNEO, presetPorClave, type PresetTorneo } from "./torneo";
 import { onlineConfigurado, crearTransporteOnline } from "./online";
 import { useInstantanea } from "./util";
@@ -50,7 +53,9 @@ function Juego({ transporte, salir }: { transporte: Transporte; salir: () => voi
   // En torneo, las transiciones (entre rondas / campeón / eliminado) reemplazan
   // a la mesa; mientras se juega la mesa, manda la pantalla de juego normal.
   let contenido;
-  if (snap.torneo && snap.torneo.faseTorneo !== "mesa") {
+  if (snap.historia && snap.historia.faseHistoria !== "mesa") {
+    contenido = <PantallaHistoria snap={snap} transporte={transporte} salir={salir} />;
+  } else if (snap.torneo && snap.torneo.faseTorneo !== "mesa") {
     contenido = <PantallaTorneo snap={snap} transporte={transporte} salir={salir} />;
   } else if (snap.faseApp === "juego") {
     contenido = <Mesa snap={snap} transporte={transporte} salir={salir} />;
@@ -141,10 +146,13 @@ function Inicio({ onListo }: { onListo: (t: Transporte) => void }) {
   // Si llegan por un enlace de invitación (?sala=CODIGO) entran directo a la
   // mesa en línea con la contraseña ya puesta.
   const [salaURL] = useState(() => salaDesdeURL());
-  const [vista, setVista] = useState<"home" | "solo" | "torneo" | "online" | "reglas">(salaURL ? "online" : "home");
+  const [vista, setVista] = useState<"home" | "solo" | "torneo" | "historia" | "online" | "reglas">(
+    salaURL ? "online" : "home",
+  );
 
   if (vista === "solo") return <ConfigSolo onListo={onListo} volver={() => setVista("home")} />;
   if (vista === "torneo") return <ConfigTorneo onListo={onListo} volver={() => setVista("home")} />;
+  if (vista === "historia") return <ConfigHistoria onListo={onListo} volver={() => setVista("home")} />;
   if (vista === "online")
     return <ConfigOnline onListo={onListo} volver={() => setVista("home")} codigoInicial={salaURL ?? ""} />;
   if (vista === "reglas") return <Reglas volver={() => setVista("home")} />;
@@ -171,6 +179,17 @@ function Inicio({ onListo }: { onListo: (t: Transporte) => void }) {
           <span className="tc-kicker">La copa de la casa</span>
           <span className="tc-titulo">Torneo</span>
           <span className="tc-sub">Súbete al bracket y gánale a la banca</span>
+        </span>
+        <span className="tc-flecha" aria-hidden="true">›</span>
+      </button>
+      <button className="torneo-card historia-card" onClick={() => setVista("historia")} aria-label="Modo Historia">
+        <span className="tc-emblema hc-emblema" aria-hidden="true">
+          <IconoCalavera tam={28} />
+        </span>
+        <span className="tc-texto">
+          <span className="tc-kicker">Modo historia</span>
+          <span className="tc-titulo">El Bajo Mundo</span>
+          <span className="tc-sub">Del muelle a la cumbre. Sólo para los que aguantan</span>
         </span>
         <span className="tc-flecha" aria-hidden="true">›</span>
       </button>
@@ -292,6 +311,46 @@ function ConfigTorneo({ onListo, volver }: { onListo: (t: Transporte) => void; v
       <button className="btn btn--apostar grande" onClick={empezar}>
         Entrar al torneo
       </button>
+    </div>
+  );
+}
+
+function ConfigHistoria({ onListo, volver }: { onListo: (t: Transporte) => void; volver: () => void }) {
+  const prefs = leerPrefs();
+  const guardada = prefs.historia && !prefs.historia.completado ? prefs.historia : null;
+  const [nombre, setNombre] = useState(prefs.nombre ?? guardada?.nombre ?? "Forastero");
+
+  const comenzar = (estado: ReturnType<typeof historiaNueva>) => {
+    desbloquearAudio();
+    guardarPrefs({ nombre: nombre.trim() || "Forastero" });
+    onListo(new TransporteHistoria(estado));
+  };
+
+  return (
+    <div className="pantalla config">
+      <Cabecera titulo="Modo Historia" volver={volver} />
+      <p className="ayuda">
+        El bajo mundo del cacho chileno. Parte en las pocilgas del puerto y húndete hasta la cumbre,
+        contra peces cada vez más gordos. Gana plata, sube tus atributos… y sobrevive.
+      </p>
+      <CampoJugador nombre={nombre} setNombre={setNombre} />
+      {guardada ? (
+        <>
+          <div className="hist-continuar">
+            Vas por <b>{escenarioActual(guardada).nombre}</b> · ${guardada.plata.toLocaleString("es-CL")}
+          </div>
+          <button className="btn btn--apostar grande" onClick={() => comenzar(guardada)}>
+            Continuar tu historia
+          </button>
+          <button className="btn-link" onClick={() => comenzar(historiaNueva(nombre))}>
+            Empezar de cero
+          </button>
+        </>
+      ) : (
+        <button className="btn btn--apostar grande" onClick={() => comenzar(historiaNueva(nombre))}>
+          Comenzar la aventura
+        </button>
+      )}
     </div>
   );
 }
