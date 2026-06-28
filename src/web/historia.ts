@@ -118,7 +118,7 @@ export const ITEMS: ItemMeta[] = [
     id: "soplon",
     nombre: "El dato del soplón",
     corto: "Soplón",
-    desc: "Un pajarito te canta las probabilidades (Ojo y Colmillo) por toda la partida.",
+    desc: "Un pajarito te canta las probabilidades (Ojo y Colmillo) por todo este encuentro.",
     costo: 90,
     max: 5,
   },
@@ -385,6 +385,9 @@ function inventarioLimpio(inv: Partial<Inventario> | undefined): Inventario {
 // Estado de la campaña (persistible)
 // ---------------------------------------------------------------------------
 
+/** Versión del formato de la campaña. v2 insertó La Maestranza en el índice 2. */
+export const HISTORIA_VERSION = 2;
+
 export interface EstadoHistoria {
   nombre: string;
   atributos: AtributosJugador;
@@ -397,6 +400,8 @@ export interface EstadoHistoria {
   prologoVisto?: boolean;
   /** Claves de dilemas ya resueltos (para no repetirlos). */
   dilemasResueltos: string[];
+  /** Versión del formato (para migrar índices de escenario al crecer la campaña). */
+  version?: number;
 }
 
 export function historiaNueva(nombre: string): EstadoHistoria {
@@ -410,16 +415,29 @@ export function historiaNueva(nombre: string): EstadoHistoria {
     completado: false,
     prologoVisto: false,
     dilemasResueltos: [],
+    version: HISTORIA_VERSION,
   };
 }
 
 /** Sanea un estado cargado (migración de partidas viejas). */
 export function normalizar(h: EstadoHistoria): EstadoHistoria {
+  // Migración v1 → v2: La Maestranza se insertó en el índice 2, así que los
+  // escenarios que estaban en 2,3,4 (Trastienda, Subterráneo, Cumbre) corrieron
+  // a 3,4,5. Sin esto, una partida vieja en curso quedaría reubicada en el
+  // capítulo equivocado. dilemasResueltos usa claves de texto, así que no se ven
+  // afectados por el corrimiento.
+  const ver = h.version ?? 1;
+  let escenarioIdx = h.escenarioIdx;
+  if (ver < 2 && escenarioIdx >= 2) escenarioIdx += 1;
+  escenarioIdx = Math.max(0, Math.min(escenarioIdx, CAMPANA.length - 1));
+
   return {
     ...h,
+    escenarioIdx,
     atributos: atributosLimpios(h.atributos),
     inventario: inventarioLimpio(h.inventario),
     dilemasResueltos: Array.isArray(h.dilemasResueltos) ? h.dilemasResueltos : [],
+    version: HISTORIA_VERSION,
   };
 }
 

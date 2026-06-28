@@ -29,6 +29,7 @@ import {
   type FaseHistoria,
   type VistaHistoria,
   type ClaveAtributo,
+  type ItemId,
   type MejoraVista,
   type ItemTiendaVista,
   type ItemManoVista,
@@ -46,6 +47,9 @@ export class TransporteHistoria implements Transporte {
   private dadoCargadoId: string | null = null;
   /** "El dato del soplón": pistas activas por esta partida. */
   private soplonActivo = false;
+  /** Items gastados en el encuentro EN CURSO. No se descuentan del inventario
+   *  hasta GANAR: si pierdes y reintentas (o recargas a mitad), los recuperas. */
+  private itemsGastados: Record<ItemId, number> = { cargado: 0, marcado: 0, soplon: 0 };
   /** Opción de dilema ya elegida (para mostrar el desenlace antes de seguir). */
   private dilemaElegido: OpcionDilema | null = null;
 
@@ -83,6 +87,7 @@ export class TransporteHistoria implements Transporte {
     this.dadoCargadoId = mesa.dadoCargadoId;
     this.suerteUsos = this.h.atributos.suerte;
     this.soplonActivo = false;
+    this.itemsGastados = { cargado: 0, marcado: 0, soplon: 0 };
     this.dilemaElegido = null;
     this.inner = new TransporteLocal(mesa.jugadores, {
       humanoId: HUMANO_ID,
@@ -105,10 +110,16 @@ export class TransporteHistoria implements Transporte {
     const pub = this.inner.instantanea().publico;
     if (this.fase === "mesa" && pub && pub.fase === "FIN_JUEGO") {
       if (pub.ganadorId === HUMANO_ID) {
+        // Sólo al ganar se descuentan de verdad los items usados.
+        for (const id of ["cargado", "marcado", "soplon"] as ItemId[]) {
+          this.h.inventario[id] = Math.max(0, this.h.inventario[id] - this.itemsGastados[id]);
+        }
+        this.itemsGastados = { cargado: 0, marcado: 0, soplon: 0 };
         this.h.plata += rivalActual(this.h).plata;
         this.guardar();
         this.fase = "victoria";
       } else {
+        // Al perder, los items usados se recuperan (no se confirmó la baja).
         this.fase = "derrota";
       }
     }
@@ -197,7 +208,9 @@ export class TransporteHistoria implements Transporte {
   historiaUsarItem(id: string) {
     if (this.fase !== "mesa") return;
     const meta = ITEMS.find((x) => x.id === id);
-    if (!meta || this.h.inventario[meta.id] <= 0) return;
+    if (!meta) return;
+    // Disponibles = en inventario menos los ya gastados en este encuentro.
+    if (this.h.inventario[meta.id] - this.itemsGastados[meta.id] <= 0) return;
     let usado = false;
     if (meta.id === "cargado") {
       usado = !!this.inner?.cargarMano(HUMANO_ID);
@@ -208,8 +221,8 @@ export class TransporteHistoria implements Transporte {
       usado = true;
     }
     if (!usado) return;
-    this.h.inventario[meta.id] -= 1;
-    this.guardar();
+    // Se "gasta" de forma transitoria; sólo se confirma al ganar (ver onInner).
+    this.itemsGastados[meta.id] += 1;
     this.emitir();
   }
   historiaSuerte() {
@@ -282,13 +295,13 @@ export class TransporteHistoria implements Transporte {
           })
         : [];
 
-    const itemsEnMano: ItemManoVista[] = ITEMS.filter((it) => this.h.inventario[it.id] > 0).map((it) => ({
+    const itemsEnMano: ItemManoVista[] = ITEMS.map((it) => ({
       id: it.id,
       nombre: it.nombre,
       corto: it.corto,
       desc: it.desc,
-      cantidad: this.h.inventario[it.id],
-    }));
+      cantidad: this.h.inventario[it.id] - this.itemsGastados[it.id],
+    })).filter((it) => it.cantidad > 0);
 
     // En la fase de dilema mostramos el del escenario directamente: ya pudo
     // quedar marcado como resuelto al elegir, pero seguimos mostrando su desenlace.

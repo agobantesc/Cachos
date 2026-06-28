@@ -50,16 +50,24 @@ export function Mesa({
 
   // Aviso de turno: campanilla cuando te toca a TI, y un golpecito suave cuando
   // juega un rival. Así no te pierdes tu turno —el dolor de jugar acompañado—.
+  // Se dispara también al abrir una ronda nueva (aunque seas el mismo que jugó
+  // último), comparando además el número de ronda: si no, abrir la ronda que
+  // acabas de cerrar no sonaría.
   const turnoPrev = useRef<string | null>(p.turnoJugadorId);
+  const rondaPrev = useRef<number>(p.numeroRonda);
   useEffect(() => {
-    const turno = p.turnoJugadorId;
-    if (p.fase === "EN_RONDA" && turno !== turnoPrev.current) {
-      if (turno === snap.miId) Sonidos.tuTurno();
-      else if (turnoPrev.current !== null) Sonidos.tic();
+    if (p.fase === "EN_RONDA") {
+      const turno = p.turnoJugadorId;
+      const nuevaRonda = p.numeroRonda !== rondaPrev.current;
+      if (turno !== turnoPrev.current || nuevaRonda) {
+        if (turno === snap.miId) Sonidos.tuTurno();
+        else if (!nuevaRonda && turnoPrev.current !== null) Sonidos.tic();
+      }
+      turnoPrev.current = turno;
     }
-    turnoPrev.current = turno;
+    rondaPrev.current = p.numeroRonda;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [p.turnoJugadorId, p.fase]);
+  }, [p.turnoJugadorId, p.fase, p.numeroRonda]);
 
   const miTurno = p.fase === "EN_RONDA" && p.turnoJugadorId === snap.miId;
 
