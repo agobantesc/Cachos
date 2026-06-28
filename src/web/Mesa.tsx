@@ -130,7 +130,7 @@ export function Mesa({
         <span className="ronda">Ronda {p.numeroRonda}</span>
         {p.esRondaObligado && <span className="badge badge--obligado">OBLIGADO</span>}
         {p.esRondaCerrada && <span className="badge badge--cerrada">CERRADA · a ciegas</span>}
-        <span className="badge">{p.sentido === 1 ? "← izquierda" : "derecha →"}</span>
+        <span className="badge">{p.sentido === 1 ? "derecha →" : "← izquierda"}</span>
         <span className="dados-mesa">{p.totalDadosEnMesa} dados</span>
         <button
           className="mute"
@@ -286,10 +286,10 @@ function Revelacion({
           <div className="siguiente">
             <span>Abres tú. ¿Hacia dónde?</span>
             <div className="botonera">
-              <button className="btn btn--apostar" onClick={() => iniciar(1)}>
-                Jugar ← izquierda
-              </button>
               <button className="btn btn--apostar" onClick={() => iniciar(-1)}>
+                ← izquierda
+              </button>
+              <button className="btn btn--apostar" onClick={() => iniciar(1)}>
                 derecha →
               </button>
             </div>

@@ -103,8 +103,8 @@ function validarApuesta(actual, nueva, asesComodin = true) {
 }
 
 // src/engine/game.ts
-var IZQUIERDA = 1;
-var DERECHA = -1;
+var DERECHA = 1;
+var IZQUIERDA = -1;
 var ErrorDeJuego = class extends Error {
 };
 function jugadorPorId(estado, id) {
@@ -190,7 +190,7 @@ function crearJuego(jugadores, reglas = REGLAS_POR_DEFECTO) {
     reglas,
     jugadores: jugadoresEstado,
     ordenAsientos: jugadores.map((j) => j.id),
-    sentido: IZQUIERDA,
+    sentido: DERECHA,
     dadosInicialesTotales: jugadores.length * reglas.dadosIniciales,
     indiceTurno: 0,
     abridorRondaId: null,

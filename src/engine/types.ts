@@ -36,8 +36,9 @@ export type EventoRonda =
 
 /**
  * Sentido del juego alrededor de la mesa. El abridor de cada ronda lo elige.
- *  - 1  = hacia la IZQUIERDA (avanza al siguiente asiento de `ordenAsientos`).
- *  - -1 = hacia la DERECHA (avanza al asiento anterior de `ordenAsientos`).
+ *  - 1  = hacia la DERECHA (avanza al SIGUIENTE asiento de `ordenAsientos`, el
+ *         vaso de la derecha en pantalla).
+ *  - -1 = hacia la IZQUIERDA (avanza al asiento ANTERIOR, el vaso de la izquierda).
  */
 export type Sentido = 1 | -1;
 

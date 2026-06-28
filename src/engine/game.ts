@@ -17,9 +17,11 @@ export interface JugadorInicial {
   nombre: string;
 }
 
-/** Sentidos con nombre, según el mapeo de `Sentido` en types.ts. */
-export const IZQUIERDA: Sentido = 1;
-export const DERECHA: Sentido = -1;
+// El turno avanza al SIGUIENTE asiento de `ordenAsientos` (+1), que en pantalla
+// es el vaso de la DERECHA; el asiento anterior (-1) es el de la IZQUIERDA. Así
+// "derecha" mueve el turno hacia la derecha, como se ve en la mesa.
+export const DERECHA: Sentido = 1;
+export const IZQUIERDA: Sentido = -1;
 
 /** Error de regla: la acción no es legal en el estado actual. */
 export class ErrorDeJuego extends Error {}
@@ -174,7 +176,7 @@ export function crearJuego(
     reglas,
     jugadores: jugadoresEstado,
     ordenAsientos: jugadores.map((j) => j.id),
-    sentido: IZQUIERDA,
+    sentido: DERECHA,
     dadosInicialesTotales: jugadores.length * reglas.dadosIniciales,
     indiceTurno: 0,
     abridorRondaId: null,

@@ -12,6 +12,7 @@ import {
   totalDadosEnMesa,
   ErrorDeJuego,
   DERECHA,
+  IZQUIERDA,
 } from "../game.js";
 import { crearReglas } from "../config.js";
 import type { EstadoJuego, Pinta } from "../types.js";
@@ -50,16 +51,23 @@ describe("primer abridor al azar y sentido", () => {
     expect(e1.abridorRondaId).toBe("B");
   });
 
-  it("el abridor elige el sentido; hacia la derecha el turno va al asiento anterior", () => {
+  it("hacia la derecha el turno va al asiento siguiente (derecha en pantalla)", () => {
     let e = iniciarRonda(nuevaPartida(["A", "B", "C"]), { rng: rng0, sentido: DERECHA });
     expect(e.abridorRondaId).toBe("A");
     e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "A", apuesta: { cantidad: 1, pinta: 5 } });
-    expect(jugadorDeTurnoId(e)).toBe("C"); // a la derecha de A
+    expect(jugadorDeTurnoId(e)).toBe("B"); // a la derecha de A en la mesa
+  });
+
+  it("hacia la izquierda el turno va al asiento anterior (izquierda en pantalla)", () => {
+    let e = iniciarRonda(nuevaPartida(["A", "B", "C"]), { rng: rng0, sentido: IZQUIERDA });
+    expect(e.abridorRondaId).toBe("A");
+    e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "A", apuesta: { cantidad: 1, pinta: 5 } });
+    expect(jugadorDeTurnoId(e)).toBe("C"); // a la izquierda de A en la mesa
   });
 });
 
 describe("flujo básico de ronda", () => {
-  it("el turno avanza al apostar (sentido izquierda por defecto)", () => {
+  it("el turno avanza al apostar (sentido derecha por defecto)", () => {
     const e = iniciarRonda(nuevaPartida(), { rng: rng0 });
     expect(jugadorDeTurnoId(e)).toBe("A");
     const e2 = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "A", apuesta: { cantidad: 2, pinta: 5 } });
@@ -321,7 +329,7 @@ describe("apertura de la siguiente ronda", () => {
     jugadorPorId(e, "B")!.eliminado = true;
     e.abridorRondaId = "B"; // como si B (eliminado) debiera abrir
     const e2 = iniciarRonda(e, { rng: rng0 });
-    expect(e2.abridorRondaId).toBe("A"); // a la derecha de B (índice anterior)
+    expect(e2.abridorRondaId).toBe("C"); // a la derecha de B (siguiente asiento, derecha en pantalla)
   });
 
   it("el perdedor de la ronda abre la siguiente", () => {
