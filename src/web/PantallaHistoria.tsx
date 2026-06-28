@@ -77,7 +77,7 @@ export function PantallaHistoria({
   const t = snap.historia!;
   const r = t.rival;
 
-  // --- INTRO: el lugar y el rival ---
+  // --- INTRO: el lugar (al entrar al barrio) ---
   if (t.faseHistoria === "intro") {
     return (
       <div className="pantalla historia-pantalla">
@@ -87,6 +87,26 @@ export function PantallaHistoria({
         </span>
         <h1 className="hist-titulo">{t.escenario.nombre}</h1>
         {t.narrativa.intro && <p className="hist-ambiente">{t.narrativa.intro}</p>}
+        <BarraStats t={t} />
+        <Bolsa t={t} />
+        <div className="hist-acciones">
+          <button className="btn btn--apostar grande" onClick={() => transporte.historiaEmpezar?.()}>
+            Entrar al barrio
+          </button>
+          <button className="btn-link" onClick={salir}>
+            Guardar y salir
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // --- RETO: la ficha del rival, antes de sentarse ---
+  if (t.faseHistoria === "reto") {
+    return (
+      <div className="pantalla historia-pantalla">
+        <span className="hist-kicker">{t.escenario.nombre}</span>
+        <h1 className="hist-titulo">{r.esBoss ? "La mesa del jefe" : "Te sientas con…"}</h1>
         <FichaRival t={t} />
         <MesaInfo t={t} />
         {r.esBoss && r.habilidad && (
@@ -99,11 +119,11 @@ export function PantallaHistoria({
         <BarraStats t={t} />
         <Bolsa t={t} />
         <div className="hist-acciones">
-          <button className="btn btn--apostar grande" onClick={() => transporte.historiaEmpezar?.()}>
+          <button className="btn btn--apostar grande" onClick={() => transporte.historiaSentarse?.()}>
             {t.mesa <= 2 ? "Sentarse al duelo" : "Sentarse a la mesa"}
           </button>
-          <button className="btn-link" onClick={salir}>
-            Guardar y salir
+          <button className="btn-link" onClick={() => transporte.historiaContinuar?.()}>
+            Volver al barrio
           </button>
         </div>
       </div>
@@ -125,7 +145,7 @@ export function PantallaHistoria({
         <BarraStats t={t} />
         <div className="hist-acciones">
           <button className="btn btn--apostar grande" onClick={() => transporte.historiaContinuar?.()}>
-            Seguir bajando al fondo
+            {r.esBoss ? "Seguir bajando al fondo" : "Volver al barrio"}
           </button>
         </div>
       </div>
@@ -145,8 +165,8 @@ export function PantallaHistoria({
           <button className="btn btn--apostar grande" onClick={() => transporte.historiaReintentar?.()}>
             Otra mano (revancha)
           </button>
-          <button className="btn-link" onClick={salir}>
-            Guardar y salir
+          <button className="btn-link" onClick={() => transporte.historiaContinuar?.()}>
+            Volver al barrio
           </button>
         </div>
       </div>
@@ -167,7 +187,7 @@ export function PantallaHistoria({
             <BarraStats t={t} />
             <div className="hist-acciones">
               <button className="btn btn--apostar grande" onClick={() => transporte.historiaContinuar?.()}>
-                A la mesa
+                Volver al barrio
               </button>
             </div>
           </>
@@ -188,10 +208,10 @@ export function PantallaHistoria({
   if (t.faseHistoria === "tienda") {
     return (
       <div className="pantalla historia-pantalla">
-        <span className="hist-kicker">La Trastienda</span>
+        <span className="hist-kicker">{t.escenario.nombre}</span>
         <h1 className="hist-titulo">El fiador</h1>
         <p className="hist-ambiente">
-          “Sobreviviste otra cuadra, forastero. Con plata se compra de todo aquí… hasta una vida más larga.”
+          “Pasa, forastero. Con plata se compra de todo aquí… hasta una vida más larga.”
         </p>
         <div className="hist-plata-grande">
           Tienes <Plata n={t.plata} />
@@ -249,7 +269,7 @@ export function PantallaHistoria({
         </div>
         <div className="hist-acciones">
           <button className="btn btn--apostar grande" onClick={() => transporte.historiaContinuar?.()}>
-            Seguir el camino
+            Volver al barrio
           </button>
         </div>
       </div>

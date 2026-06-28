@@ -385,8 +385,10 @@ function inventarioLimpio(inv: Partial<Inventario> | undefined): Inventario {
 // Estado de la campaña (persistible)
 // ---------------------------------------------------------------------------
 
-/** Versión del formato de la campaña. v2 insertó La Maestranza en el índice 2. */
-export const HISTORIA_VERSION = 2;
+/** Versión del formato de la campaña.
+ *  v2: se insertó La Maestranza en el índice 2.
+ *  v3: exploración tipo mapa — se guarda qué rivales fueron derrotados. */
+export const HISTORIA_VERSION = 3;
 
 export interface EstadoHistoria {
   nombre: string;
@@ -400,6 +402,10 @@ export interface EstadoHistoria {
   prologoVisto?: boolean;
   /** Claves de dilemas ya resueltos (para no repetirlos). */
   dilemasResueltos: string[];
+  /** Ids de rivales ya derrotados (exploración: el orden lo decide el mapa). */
+  derrotados: string[];
+  /** Premios de mapa ya reclamados (por id de entidad). */
+  premiosReclamados: string[];
   /** Versión del formato (para migrar índices de escenario al crecer la campaña). */
   version?: number;
 }
@@ -415,6 +421,8 @@ export function historiaNueva(nombre: string): EstadoHistoria {
     completado: false,
     prologoVisto: false,
     dilemasResueltos: [],
+    derrotados: [],
+    premiosReclamados: [],
     version: HISTORIA_VERSION,
   };
 }
@@ -431,12 +439,24 @@ export function normalizar(h: EstadoHistoria): EstadoHistoria {
   if (ver < 2 && escenarioIdx >= 2) escenarioIdx += 1;
   escenarioIdx = Math.max(0, Math.min(escenarioIdx, CAMPANA.length - 1));
 
+  // Migración v2 → v3: el avance lineal (rivalIdx) pasa a "rivales derrotados".
+  // Marcamos como vencidos a los rivales del escenario actual anteriores al
+  // puntero, para que en el mapa aparezcan ya derrotados.
+  let derrotados = Array.isArray(h.derrotados) ? h.derrotados : [];
+  if (!Array.isArray(h.derrotados)) {
+    const esc = CAMPANA[escenarioIdx]!;
+    const tope = Math.max(0, Math.min(h.rivalIdx ?? 0, esc.rivales.length));
+    derrotados = esc.rivales.slice(0, tope).map((r) => r.id);
+  }
+
   return {
     ...h,
     escenarioIdx,
     atributos: atributosLimpios(h.atributos),
     inventario: inventarioLimpio(h.inventario),
     dilemasResueltos: Array.isArray(h.dilemasResueltos) ? h.dilemasResueltos : [],
+    derrotados,
+    premiosReclamados: Array.isArray(h.premiosReclamados) ? h.premiosReclamados : [],
     version: HISTORIA_VERSION,
   };
 }
@@ -447,14 +467,6 @@ export function escenarioActual(h: EstadoHistoria): Escenario {
 export function rivalActual(h: EstadoHistoria): RivalHistoria {
   const esc = escenarioActual(h);
   return esc.rivales[Math.min(h.rivalIdx, esc.rivales.length - 1)]!;
-}
-
-/** El dilema del escenario actual, si toca (primer rival y aún sin resolver). */
-export function dilemaActual(h: EstadoHistoria): Dilema | null {
-  const esc = escenarioActual(h);
-  if (h.rivalIdx !== 0 || !esc.dilema) return null;
-  if (h.dilemasResueltos.includes(esc.dilema.clave)) return null;
-  return esc.dilema;
 }
 
 export function avanzar(h: EstadoHistoria): { tienda: boolean; final: boolean } {
@@ -511,7 +523,25 @@ export function armarMesa(h: EstadoHistoria): {
 // Vista para la UI
 // ---------------------------------------------------------------------------
 
-export type FaseHistoria = "intro" | "dilema" | "mesa" | "victoria" | "derrota" | "tienda" | "final";
+export type FaseHistoria =
+  | "intro" // narrativa al entrar a un escenario
+  | "explorar" // el mapa (vista cenital) del barrio
+  | "reto" // ficha del rival antes de sentarse a la mesa
+  | "dilema"
+  | "mesa"
+  | "victoria"
+  | "derrota"
+  | "tienda"
+  | "final";
+
+/** Ids de los rivales NO-boss de un escenario (los parroquianos). */
+export function rivalesNoBoss(esc: Escenario): string[] {
+  return esc.rivales.filter((r) => !r.esBoss).map((r) => r.id);
+}
+/** El boss del escenario (el último rival). */
+export function bossDe(esc: Escenario): RivalHistoria {
+  return esc.rivales[esc.rivales.length - 1]!;
+}
 
 export interface MejoraVista {
   clave: ClaveAtributo;
@@ -583,4 +613,37 @@ export interface VistaHistoria {
   itemsEnMano: ItemManoVista[];
   /** Decisión de calle, si toca. */
   dilema: DilemaVista | null;
+  /** Mapa del barrio (vista cenital), si estás explorando. */
+  explorar: ExplorarVista | null;
+}
+
+// --- Vista del mapa (exploración cenital tipo "Game Boy") -------------------
+
+export interface EntidadVista {
+  id: string;
+  tipo: "rival" | "tienda" | "dilema" | "puerta" | "letrero" | "premio";
+  x: number;
+  y: number;
+  /** Para rivales: a quién enfrentas. */
+  rivalId?: string;
+  rivalNombre?: string;
+  esBoss?: boolean;
+  /** Estado visual del token. */
+  estado: "activo" | "derrotado" | "bloqueado" | "abierto" | "reclamado";
+  /** Texto corto bajo el token. */
+  etiqueta?: string;
+}
+
+export interface ExplorarVista {
+  titulo: string;
+  /** Objetivo del barrio (qué hay que hacer para avanzar). */
+  pista: string;
+  ancho: number;
+  alto: number;
+  /** Grid de muros/piso ('#' y '.'). */
+  filas: string[];
+  jugador: { x: number; y: number; nombre: string };
+  entidades: EntidadVista[];
+  /** Aviso transitorio (requisito de una puerta, premio, etc.). */
+  mensaje: string | null;
 }

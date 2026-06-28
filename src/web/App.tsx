@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Mesa } from "./Mesa";
 import { PantallaTorneo } from "./PantallaTorneo";
 import { PantallaHistoria } from "./PantallaHistoria";
+import { MapaHistoria } from "./MapaHistoria";
 import { CampoJugador } from "./Personaje";
 import { Emblema, IconoCopa, IconoCalavera, IconoWhatsApp, IconoDado, IconoPersonas } from "./Iconos";
 import { Avatar, fijarCaraJugador, CARA_DEFECTO } from "./Avatar";
@@ -53,7 +54,9 @@ function Juego({ transporte, salir }: { transporte: Transporte; salir: () => voi
   // En torneo, las transiciones (entre rondas / campeón / eliminado) reemplazan
   // a la mesa; mientras se juega la mesa, manda la pantalla de juego normal.
   let contenido;
-  if (snap.historia && snap.historia.faseHistoria !== "mesa") {
+  if (snap.historia && snap.historia.faseHistoria === "explorar") {
+    contenido = <MapaHistoria snap={snap} transporte={transporte} salir={salir} />;
+  } else if (snap.historia && snap.historia.faseHistoria !== "mesa") {
     contenido = <PantallaHistoria snap={snap} transporte={transporte} salir={salir} />;
   } else if (snap.torneo && snap.torneo.faseTorneo !== "mesa") {
     contenido = <PantallaTorneo snap={snap} transporte={transporte} salir={salir} />;

@@ -1,21 +1,20 @@
 // Transporte del MODO HISTORIA. Cumple la interfaz Transporte. Orquesta la
-// campaña sobre el motor:
-//   - cada combate se juega en una MESA del tamaño del encuentro (1v1, chica o
-//     grande), con TransporteLocal: el rival marcado a su nivel y el relleno más
-//     blando, con las reglas de la habilidad del boss;
-//   - gana el combate quien queda último con cachos (campeón de la mesa);
+// campaña sobre el motor, ahora con EXPLORACIÓN tipo "Game Boy":
+//   - al entrar a un escenario, el jugador camina por el BARRIO (vista cenital):
+//     enfrenta a los parroquianos en el orden que quiera, pasa por la tienda,
+//     toma decisiones (dilemas) y, cuando cumple la condición, se le abre la
+//     PUERTA al jefe;
+//   - cada combate se juega en una MESA del tamaño del encuentro, con
+//     TransporteLocal y las reglas de la habilidad del boss;
 //   - bosses "dado cargado" recargan su mano cada ronda (trampa);
-//   - al llegar a un escenario puede salir un DILEMA (decisión de calle);
-//   - entre escenarios abre la TIENDA para subir atributos y comprar items;
-//   - en la mesa puede usar ITEMS (cargar tu mano, marcar al rival, soplón) y el
-//     poder "Suerte" (re-tira tu mano).
+//   - al caer el jefe, epílogo y siguiente barrio;
+//   - en la mesa puede usar ITEMS y el poder "Suerte".
 import { TransporteLocal, type Instantanea, type Transporte } from "./transporte";
 import { guardarPrefs } from "./prefs";
 import {
   rivalActual,
   escenarioActual,
-  dilemaActual,
-  avanzar,
+  rivalesNoBoss,
   armarMesa,
   costoMejora,
   normalizar,
@@ -28,6 +27,9 @@ import {
   type EstadoHistoria,
   type FaseHistoria,
   type VistaHistoria,
+  type ExplorarVista,
+  type EntidadVista,
+  type Escenario,
   type ClaveAtributo,
   type ItemId,
   type MejoraVista,
@@ -35,6 +37,15 @@ import {
   type ItemManoVista,
   type OpcionDilema,
 } from "./historia";
+import { mapaDeEscenario, esPared, entidadEn, type MapaEscenario, type EntidadMapa, type CondicionMapa } from "./mapa";
+
+type Direccion = "arriba" | "abajo" | "izquierda" | "derecha";
+const DIRS: Record<Direccion, [number, number]> = {
+  arriba: [0, -1],
+  abajo: [0, 1],
+  izquierda: [-1, 0],
+  derecha: [1, 0],
+};
 
 export class TransporteHistoria implements Transporte {
   private h: EstadoHistoria;
@@ -52,6 +63,12 @@ export class TransporteHistoria implements Transporte {
   private itemsGastados: Record<ItemId, number> = { cargado: 0, marcado: 0, soplon: 0 };
   /** Opción de dilema ya elegida (para mostrar el desenlace antes de seguir). */
   private dilemaElegido: OpcionDilema | null = null;
+
+  // --- Exploración (mapa del barrio) ---
+  private mapa: MapaEscenario | null = null;
+  private jx = 0;
+  private jy = 0;
+  private mensaje: string | null = null;
 
   constructor(estado: EstadoHistoria) {
     this.h = normalizar(estado);
@@ -88,7 +105,6 @@ export class TransporteHistoria implements Transporte {
     this.suerteUsos = this.h.atributos.suerte;
     this.soplonActivo = false;
     this.itemsGastados = { cargado: 0, marcado: 0, soplon: 0 };
-    this.dilemaElegido = null;
     this.inner = new TransporteLocal(mesa.jugadores, {
       humanoId: HUMANO_ID,
       nivelPorJugador: mesa.nivelPorJugador,
@@ -115,7 +131,9 @@ export class TransporteHistoria implements Transporte {
           this.h.inventario[id] = Math.max(0, this.h.inventario[id] - this.itemsGastados[id]);
         }
         this.itemsGastados = { cargado: 0, marcado: 0, soplon: 0 };
-        this.h.plata += rivalActual(this.h).plata;
+        const rival = rivalActual(this.h);
+        if (!this.h.derrotados.includes(rival.id)) this.h.derrotados.push(rival.id);
+        this.h.plata += rival.plata;
         this.guardar();
         this.fase = "victoria";
       } else {
@@ -126,24 +144,167 @@ export class TransporteHistoria implements Transporte {
     this.emitir();
   }
 
-  /** Empieza el encuentro: si hay un dilema pendiente, primero la decisión. */
+  /** Entra al barrio actual: carga el mapa y deja al jugador en la entrada. */
+  private entrarBarrio() {
+    const esc = escenarioActual(this.h);
+    this.mapa = mapaDeEscenario(esc.clave);
+    if (this.mapa) {
+      this.jx = this.mapa.entrada.x;
+      this.jy = this.mapa.entrada.y;
+    }
+    this.mensaje = null;
+    this.desmontar();
+    this.fase = "explorar";
+    this.emitir();
+  }
+
+  /** Desde la intro del escenario: entra a caminar el barrio. */
   historiaEmpezar() {
     if (this.fase !== "intro") return;
     this.h.prologoVisto = true;
-    if (dilemaActual(this.h)) {
-      this.dilemaElegido = null;
-      this.fase = "dilema";
-      this.guardar();
+    this.guardar();
+    this.entrarBarrio();
+  }
+
+  /** Desde la ficha del rival ("reto"): se sienta a la mesa. */
+  historiaSentarse() {
+    if (this.fase === "reto") this.montarPartida();
+  }
+
+  // --- Exploración -----------------------------------------------------------
+  historiaMover(dir: string) {
+    if (this.fase !== "explorar" || !this.mapa) return;
+    const paso = DIRS[dir as Direccion];
+    if (!paso) return;
+    const nx = this.jx + paso[0];
+    const ny = this.jy + paso[1];
+    if (esPared(this.mapa, nx, ny)) return; // muro: ni se mueve
+    const ent = entidadEn(this.mapa, nx, ny);
+    if (!ent) {
+      this.jx = nx;
+      this.jy = ny;
+      this.mensaje = null;
       this.emitir();
-    } else {
-      this.montarPartida();
+      return;
+    }
+    if (ent.tipo === "puerta") {
+      if (this.condCumplida(ent.cond)) {
+        // Puerta abierta: se cruza hacia el jefe.
+        this.jx = nx;
+        this.jy = ny;
+        this.mensaje = null;
+        this.emitir();
+      } else {
+        this.mensaje = ent.texto ?? "Está cerrado.";
+        this.emitir();
+      }
+      return;
+    }
+    this.interactuar(ent);
+  }
+
+  /** Interactúa con una entidad por id (lo usa la UI al tocar un token vecino). */
+  historiaInteractuar(id: string) {
+    if (this.fase !== "explorar" || !this.mapa) return;
+    const ent = this.mapa.entidades.find((e) => e.id === id);
+    if (!ent) return;
+    // Sólo si es adyacente (o donde está parado el jugador).
+    const dist = Math.abs(ent.x - this.jx) + Math.abs(ent.y - this.jy);
+    if (dist > 1) return;
+    if (ent.tipo === "puerta") {
+      if (this.condCumplida(ent.cond)) {
+        this.jx = ent.x;
+        this.jy = ent.y;
+        this.mensaje = null;
+        this.emitir();
+      } else {
+        this.mensaje = ent.texto ?? "Está cerrado.";
+        this.emitir();
+      }
+      return;
+    }
+    this.interactuar(ent);
+  }
+
+  private interactuar(ent: EntidadMapa) {
+    const esc = escenarioActual(this.h);
+    switch (ent.tipo) {
+      case "rival": {
+        const r = esc.rivales[ent.rivalIdx ?? -1];
+        if (!r) return;
+        if (this.h.derrotados.includes(r.id)) {
+          this.mensaje = `Ya le ganaste a ${r.nombre}.`;
+          this.emitir();
+          return;
+        }
+        this.h.rivalIdx = ent.rivalIdx ?? 0;
+        this.mensaje = null;
+        this.fase = "reto";
+        this.emitir();
+        return;
+      }
+      case "tienda":
+        this.mensaje = null;
+        this.fase = "tienda";
+        this.emitir();
+        return;
+      case "dilema": {
+        const clave = esc.dilema?.clave ?? "";
+        if (!esc.dilema || this.h.dilemasResueltos.includes(clave)) {
+          this.mensaje = "Ya tomaste esa decisión.";
+          this.emitir();
+          return;
+        }
+        this.dilemaElegido = null;
+        this.mensaje = null;
+        this.fase = "dilema";
+        this.emitir();
+        return;
+      }
+      case "letrero":
+        this.mensaje = ent.texto ?? null;
+        this.emitir();
+        return;
+      case "premio": {
+        if (this.h.premiosReclamados.includes(ent.id)) {
+          this.mensaje = "Aquí ya no queda nada.";
+          this.emitir();
+          return;
+        }
+        if (!this.condCumplida(ent.cond)) {
+          this.mensaje = ent.texto ?? "Está cerrado.";
+          this.emitir();
+          return;
+        }
+        if (ent.premio?.plata) this.h.plata += ent.premio.plata;
+        if (ent.premio?.item) {
+          const meta = itemMeta(ent.premio.item);
+          this.h.inventario[ent.premio.item] = Math.min(meta.max, this.h.inventario[ent.premio.item] + 1);
+        }
+        this.h.premiosReclamados.push(ent.id);
+        this.mensaje = ent.premio?.item ? `Te llevas: ${itemMeta(ent.premio.item).nombre}.` : "¡Encontraste plata!";
+        this.guardar();
+        this.emitir();
+        return;
+      }
     }
   }
 
-  /** Resuelve el dilema actual eligiendo una opción. */
+  private condCumplida(cond?: CondicionMapa): boolean {
+    if (!cond) return true;
+    if (cond.tipo === "rivales") {
+      const esc = escenarioActual(this.h);
+      return rivalesNoBoss(esc).every((id) => this.h.derrotados.includes(id));
+    }
+    if (cond.tipo === "plata") return this.h.plata >= cond.monto;
+    if (cond.tipo === "item") return this.h.inventario[cond.item] > 0;
+    return true;
+  }
+
+  // --- Decisiones, tienda y avance -------------------------------------------
   historiaElegir(opcionIdx: number) {
     if (this.fase !== "dilema" || this.dilemaElegido) return;
-    const dil = dilemaActual(this.h);
+    const dil = escenarioActual(this.h).dilema;
     const op = dil?.opciones[opcionIdx];
     if (!dil || !op) return;
     if (op.plata) this.h.plata = Math.max(0, this.h.plata + op.plata);
@@ -155,7 +316,7 @@ export class TransporteHistoria implements Transporte {
       const meta = ATRIBUTOS.find((a) => a.clave === op.atributo)!;
       this.h.atributos[op.atributo] = Math.min(meta.max, this.h.atributos[op.atributo] + 1);
     }
-    this.h.dilemasResueltos.push(dil.clave);
+    if (!this.h.dilemasResueltos.includes(dil.clave)) this.h.dilemasResueltos.push(dil.clave);
     this.dilemaElegido = op;
     this.guardar();
     this.emitir();
@@ -164,22 +325,35 @@ export class TransporteHistoria implements Transporte {
   historiaReintentar() {
     if (this.fase === "derrota") this.montarPartida();
   }
+
   historiaContinuar() {
-    if (this.fase === "dilema") {
-      // Tras ver el desenlace del dilema, a la mesa.
-      this.montarPartida();
-      return;
-    }
-    if (this.fase === "victoria") {
-      const { tienda, final } = avanzar(this.h);
-      this.guardar();
-      this.fase = final ? "final" : tienda ? "tienda" : "intro";
+    if (this.fase === "dilema" || this.fase === "tienda" || this.fase === "reto") {
+      // De vuelta al barrio.
+      this.fase = "explorar";
+    } else if (this.fase === "derrota") {
       this.desmontar();
-    } else if (this.fase === "tienda") {
-      this.fase = "intro";
+      this.fase = "explorar";
+    } else if (this.fase === "victoria") {
+      const rival = rivalActual(this.h);
+      this.desmontar();
+      if (rival.esBoss) {
+        if (this.h.escenarioIdx < CAMPANA.length - 1) {
+          this.h.escenarioIdx += 1;
+          this.h.rivalIdx = 0;
+          this.fase = "intro";
+        } else {
+          this.h.completado = true;
+          this.fase = "final";
+        }
+        this.guardar();
+      } else {
+        // Vuelve al barrio (el rival queda marcado como derrotado en el mapa).
+        this.fase = "explorar";
+      }
     }
     this.emitir();
   }
+
   historiaMejorar(clave: string) {
     if (this.fase !== "tienda") return;
     const c = clave as ClaveAtributo;
@@ -209,7 +383,6 @@ export class TransporteHistoria implements Transporte {
     if (this.fase !== "mesa") return;
     const meta = ITEMS.find((x) => x.id === id);
     if (!meta) return;
-    // Disponibles = en inventario menos los ya gastados en este encuentro.
     if (this.h.inventario[meta.id] - this.itemsGastados[meta.id] <= 0) return;
     let usado = false;
     if (meta.id === "cargado") {
@@ -221,7 +394,6 @@ export class TransporteHistoria implements Transporte {
       usado = true;
     }
     if (!usado) return;
-    // Se "gasta" de forma transitoria; sólo se confirma al ganar (ver onInner).
     this.itemsGastados[meta.id] += 1;
     this.emitir();
   }
@@ -261,6 +433,51 @@ export class TransporteHistoria implements Transporte {
   }
 
   // --- Vista -----------------------------------------------------------------
+  private vistaExplorar(): ExplorarVista | null {
+    if (this.fase !== "explorar" || !this.mapa) return null;
+    const m = this.mapa;
+    const esc = escenarioActual(this.h);
+    return {
+      titulo: m.titulo,
+      pista: m.pista,
+      ancho: m.ancho,
+      alto: m.alto,
+      filas: m.filas,
+      jugador: { x: this.jx, y: this.jy, nombre: this.h.nombre },
+      entidades: m.entidades.map((e) => this.entidadVista(e, esc)),
+      mensaje: this.mensaje,
+    };
+  }
+
+  private entidadVista(e: EntidadMapa, esc: Escenario): EntidadVista {
+    const base = { id: e.id, x: e.x, y: e.y };
+    if (e.tipo === "rival") {
+      const r = esc.rivales[e.rivalIdx ?? -1];
+      const derrotado = r ? this.h.derrotados.includes(r.id) : false;
+      return {
+        ...base,
+        tipo: "rival",
+        ...(r ? { rivalId: r.id, rivalNombre: r.nombre, esBoss: r.esBoss, etiqueta: r.nombre } : {}),
+        estado: derrotado ? "derrotado" : "activo",
+      };
+    }
+    if (e.tipo === "puerta") {
+      return { ...base, tipo: "puerta", estado: this.condCumplida(e.cond) ? "abierto" : "bloqueado" };
+    }
+    if (e.tipo === "premio") {
+      const reclamado = this.h.premiosReclamados.includes(e.id);
+      return { ...base, tipo: "premio", estado: reclamado ? "reclamado" : this.condCumplida(e.cond) ? "activo" : "bloqueado" };
+    }
+    if (e.tipo === "dilema") {
+      const resuelto = this.h.dilemasResueltos.includes(esc.dilema?.clave ?? "");
+      return { ...base, tipo: "dilema", estado: resuelto ? "reclamado" : "activo", etiqueta: "?" };
+    }
+    if (e.tipo === "tienda") {
+      return { ...base, tipo: "tienda", estado: "activo", etiqueta: "Tienda" };
+    }
+    return { ...base, tipo: "letrero", estado: "activo" };
+  }
+
   private vista(): VistaHistoria {
     const esc = escenarioActual(this.h);
     const rival = rivalActual(this.h);
@@ -273,8 +490,8 @@ export class TransporteHistoria implements Transporte {
 
     const enIntro = this.fase === "intro";
     const narrativa = {
-      prologo: enIntro && !this.h.prologoVisto && this.h.escenarioIdx === 0 && this.h.rivalIdx === 0 ? PROLOGO : null,
-      intro: enIntro && this.h.rivalIdx === 0 ? esc.intro : null,
+      prologo: enIntro && !this.h.prologoVisto && this.h.escenarioIdx === 0 ? PROLOGO : null,
+      intro: enIntro ? esc.intro : null,
       epilogo: this.fase === "victoria" && rival.esBoss ? esc.epilogo : null,
     };
 
@@ -303,8 +520,6 @@ export class TransporteHistoria implements Transporte {
       cantidad: this.h.inventario[it.id] - this.itemsGastados[it.id],
     })).filter((it) => it.cantidad > 0);
 
-    // En la fase de dilema mostramos el del escenario directamente: ya pudo
-    // quedar marcado como resuelto al elegir, pero seguimos mostrando su desenlace.
     const dil = this.fase === "dilema" ? esc.dilema ?? null : null;
     const dilema = dil
       ? {
@@ -315,7 +530,6 @@ export class TransporteHistoria implements Transporte {
         }
       : null;
 
-    // El soplón enciende las pistas aunque no tengas el atributo.
     const ojoEf = this.soplonActivo ? Math.max(1, this.h.atributos.ojo) : this.h.atributos.ojo;
     const colmilloEf = this.soplonActivo ? Math.max(1, this.h.atributos.colmillo) : this.h.atributos.colmillo;
 
@@ -337,7 +551,7 @@ export class TransporteHistoria implements Transporte {
       },
       mesa: rival.mesa,
       acompanantes: armarMesa(this.h).acompanantes,
-      progresoRival: { idx: this.h.rivalIdx, total: esc.rivales.length },
+      progresoRival: { idx: this.h.derrotados.filter((id) => esc.rivales.some((r) => r.id === id)).length, total: esc.rivales.length },
       suerteDisponible: this.suerteUsos,
       ojo: ojoEf,
       colmillo: colmilloEf,
@@ -345,6 +559,7 @@ export class TransporteHistoria implements Transporte {
       itemsTienda,
       itemsEnMano,
       dilema,
+      explorar: this.vistaExplorar(),
     };
   }
 
