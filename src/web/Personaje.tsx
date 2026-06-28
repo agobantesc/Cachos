@@ -21,13 +21,13 @@ import { leerPrefs, guardarPrefs } from "./prefs";
 
 const LBL_TOP: Record<string, string> = {
   corto: "Pelo corto", raya: "Con raya", calvo: "Calvo", gorra: "Gorra",
-  fedora: "Fedora", capucha: "Capucha", largo: "Pelo largo", mono: "Moño",
+  fedora: "Fedora", tongo: "Bombín", capucha: "Capucha", largo: "Pelo largo", mono: "Moño",
 };
 const LBL_CEJAS: Record<string, string> = { normal: "Normales", sinistra: "Fruncidas", alta: "Levantadas" };
 const LBL_OJOS: Record<string, string> = { normal: "Normales", entrecerrado: "Entornados", grande: "Grandes" };
 const LBL_BOCA: Record<string, string> = { neutra: "Neutra", torcida: "Torcida", seria: "Seria", mueca: "Mueca" };
 const LBL_VELLO: Record<string, string> = { nada: "Sin vello", bigote: "Bigote", barba: "Barba", perilla: "Perilla", candado: "Candado" };
-const LBL_EXTRA: Record<string, string> = { nada: "Ninguno", cicatriz: "Cicatriz", monoculo: "Monóculo", cigarro: "Cigarro" };
+const LBL_EXTRA: Record<string, string> = { nada: "Ninguno", cicatriz: "Cicatriz", monoculo: "Monóculo", cigarro: "Cigarro", diente: "Diente de oro", arete: "Arete" };
 
 function ciclar<T>(arr: readonly T[], val: T, dir: number): T {
   const i = Math.max(0, arr.indexOf(val));

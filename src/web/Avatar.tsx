@@ -2,6 +2,10 @@
 // participante), sin librerías ni red. Cada socio de la máquina tiene una cara
 // propia y estable, en la paleta humo/oro/hueso de la casa. Algunos rasgos se
 // sesgan por el nombre (p.ej. "El Tuerto" lleva parche; "Doña…" es femenina).
+//
+// El dibujo usa SÓLO superposiciones de color con opacidad (sin <defs>/gradients
+// con id) para dar volumen: así no hay choque de ids al pintar muchas caras en
+// la misma pantalla.
 import { memo } from "react";
 
 // --- Aleatoriedad determinista a partir del id ----------------------------
@@ -25,18 +29,20 @@ function prng(seed: number): () => number {
 export const PIEL = ["#d8b48f", "#caa07a", "#b07f55", "#9c6b46", "#8a5a3b", "#e0c4a4"];
 export const PELO = ["#17150f", "#2b2620", "#4a3a28", "#6e5a40", "#9a8a74", "#cfc7b6"];
 const FIELTRO = "#24222b"; // sombreros/gorras/capucha
+const FIELTRO_2 = "#312f3a"; // ala/realce del sombrero
 const ORO = "#c8a24a";
+const ORO_CLARO = "#e6c878";
 
 export type Cara = {
   piel: string;
   pelo: string;
-  top: "corto" | "raya" | "calvo" | "gorra" | "fedora" | "capucha" | "largo" | "mono";
+  top: "corto" | "raya" | "calvo" | "gorra" | "fedora" | "tongo" | "capucha" | "largo" | "mono";
   cejas: "normal" | "sinistra" | "alta";
   ojos: "normal" | "entrecerrado" | "grande";
   parche: boolean;
   boca: "neutra" | "torcida" | "seria" | "mueca";
   vello: "nada" | "bigote" | "barba" | "perilla" | "candado";
-  extra: "nada" | "cicatriz" | "monoculo" | "cigarro";
+  extra: "nada" | "cicatriz" | "monoculo" | "cigarro" | "diente" | "arete";
   femenina: boolean;
 };
 
@@ -45,13 +51,13 @@ function pick<T>(r: () => number, arr: readonly T[]): T {
 }
 
 // Opciones editables (para el editor de personaje).
-export const TOPS_M = ["corto", "raya", "calvo", "gorra", "fedora", "capucha"] as const;
+export const TOPS_M = ["corto", "raya", "calvo", "gorra", "fedora", "tongo", "capucha"] as const;
 export const TOPS_F = ["largo", "mono", "corto", "capucha"] as const;
 export const CEJAS = ["normal", "sinistra", "alta"] as const;
 export const OJOS = ["normal", "entrecerrado", "grande"] as const;
 export const BOCAS = ["neutra", "torcida", "seria", "mueca"] as const;
 export const VELLOS = ["nada", "bigote", "barba", "perilla", "candado"] as const;
-export const EXTRAS = ["nada", "cicatriz", "monoculo", "cigarro"] as const;
+export const EXTRAS = ["nada", "cicatriz", "monoculo", "cigarro", "diente", "arete"] as const;
 
 /** Cara estándar (limpia) del jugador antes de personalizar: sin barba ni cigarro. */
 export const CARA_DEFECTO: Cara = {
@@ -97,39 +103,46 @@ export function caraDe(id: string, nombre: string): Cara {
   const r = prng(hash(id));
   const n = nombre.toLowerCase();
   // "La …" / "Doña …" / "vieja"/"dama"/"suerte" ⇒ rostro femenino.
-  const femenina = /^(doña |la |señora |reina|dama)/.test(n) || /vieja|suerte/.test(n);
+  const femenina = /^(doña |la |señora |reina|dama)/.test(n) || /vieja|suerte|madame|cantinera|quintrala/.test(n);
 
   let top: Cara["top"] = pick(
     r,
-    femenina ? (["largo", "mono", "largo", "corto"] as const) : (["corto", "raya", "calvo", "gorra", "fedora", "corto", "raya"] as const),
+    femenina
+      ? (["largo", "mono", "largo", "corto"] as const)
+      : (["corto", "raya", "calvo", "gorra", "fedora", "tongo", "corto", "raya"] as const),
   );
   let cejas: Cara["cejas"] = pick(r, ["normal", "normal", "alta", "sinistra"] as const);
   const ojos = pick(r, ["normal", "normal", "entrecerrado", "grande"] as const);
   const boca = pick(r, ["neutra", "torcida", "seria", "mueca"] as const);
   let vello: Cara["vello"] = femenina ? "nada" : pick(r, ["nada", "bigote", "barba", "perilla", "candado", "nada"] as const);
-  let extra: Cara["extra"] = pick(r, ["nada", "nada", "nada", "cicatriz", "monoculo", "cigarro"] as const);
+  let extra: Cara["extra"] = pick(r, ["nada", "nada", "nada", "cicatriz", "monoculo", "cigarro", "diente", "arete"] as const);
   let parche = false;
 
   // Sesgos por el nombre (apodos de la casa).
   if (/tuert/.test(n)) parche = true;
-  if (/sombra|capuch|encapuch/.test(n)) top = "capucha";
-  if (/viej|abuel/.test(n)) { /* pelo cano se aplica abajo */ }
-  if (/brujo|diablo|cuervo|mudo/.test(n)) { cejas = "sinistra"; }
-  if (/conde|galán|galan|maestro|señor/.test(n)) { top = top === "capucha" ? top : "fedora"; if (!femenina) vello = "bigote"; extra = extra === "nada" ? "monoculo" : extra; }
-  if (/croata|turco|patas negras|charqui/.test(n) && !femenina) vello = vello === "nada" ? "barba" : vello;
+  if (/sombra|capuch|encapuch|cuervo/.test(n)) top = "capucha";
+  if (/brujo|diablo|cuervo|mudo|carnicero|verdugo/.test(n)) cejas = "sinistra";
+  if (/conde|galán|galan|maestro|señor|senador|notario|fino|turco|croata/.test(n)) {
+    top = top === "capucha" ? top : pick(r, ["fedora", "tongo"] as const);
+    if (!femenina) vello = vello === "nada" ? "bigote" : vello;
+    extra = extra === "nada" ? "monoculo" : extra;
+  }
+  if (/croata|turco|patas negras|charqui|carnicero|estibador|cargador/.test(n) && !femenina)
+    vello = vello === "nada" ? "barba" : vello;
+  if (/rey|jefe|capo|patrón|patron|don /.test(n)) extra = "diente"; // diente de oro: dinero viejo
 
-  const pelo = /viej|abuel|cano|vieja/.test(n) ? pick(r, ["#9a8a74", "#cfc7b6"] as const) : pick(r, PELO);
+  const pelo = /viej|abuel|cano|vieja|berta/.test(n) ? pick(r, ["#9a8a74", "#cfc7b6"] as const) : pick(r, PELO);
   const piel = pick(r, PIEL);
 
   return {
     piel,
     pelo,
-    top: top as Cara["top"],
-    cejas: cejas as Cara["cejas"],
+    top,
+    cejas,
     ojos,
     parche,
     boca,
-    vello: vello as Cara["vello"],
+    vello,
     extra,
     femenina,
   };
@@ -140,15 +153,18 @@ function Ojo({ x, tipo }: { x: number; tipo: Cara["ojos"] }) {
   if (tipo === "entrecerrado")
     return (
       <g>
-        <path d={`M${x - 3} 33 q3 1.4 6 0`} stroke="#15110a" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+        <path d={`M${x - 3} 33 q3 1.6 6 0`} stroke="#15110a" strokeWidth="1.7" fill="none" strokeLinecap="round" />
       </g>
     );
-  const rx = tipo === "grande" ? 3.2 : 2.6;
-  const ry = tipo === "grande" ? 2.7 : 2.1;
+  const rx = tipo === "grande" ? 3.3 : 2.7;
+  const ry = tipo === "grande" ? 2.8 : 2.2;
   return (
     <g>
-      <ellipse cx={x} cy={33} rx={rx} ry={ry} fill="#f4efe2" />
-      <circle cx={x + 0.6} cy={33.2} r={1.25} fill="#1a1712" />
+      {/* cuenca (blanco hueso), iris oscuro y un brillo para dar vida */}
+      <ellipse cx={x} cy={33} rx={rx} ry={ry} fill="#f5f0e4" />
+      <ellipse cx={x} cy={33} rx={rx} ry={ry} fill="none" stroke="#00000022" strokeWidth="0.6" />
+      <circle cx={x + 0.5} cy={33.3} r={1.35} fill="#1a1712" />
+      <circle cx={x + 1.1} cy={32.5} r={0.45} fill="#ffffff" opacity="0.9" />
     </g>
   );
 }
@@ -168,7 +184,7 @@ export const Avatar = memo(function Avatar({
   cara?: Cara;
 }) {
   const c = cara ?? (id === "humano" && _caraJugador ? _caraJugador : caraDe(id, nombre));
-  const pielSombra = "rgba(0,0,0,0.18)";
+  const sombra = "#000000";
 
   return (
     <svg
@@ -179,41 +195,55 @@ export const Avatar = memo(function Avatar({
       role="img"
       aria-label={`rostro de ${nombre}`}
     >
-      {/* Disco más claro que el fondo para que el pelo (incluso oscuro) se vea. */}
-      <circle cx="32" cy="32" r="31" fill="#3a3744" />
-      <ellipse cx="32" cy="23" rx="29" ry="19" fill="#ffffff" opacity="0.05" />
-      <circle cx="32" cy="32" r="31" fill="none" stroke={anillo ? ORO : "rgba(200,162,74,0.35)"} strokeWidth={anillo ? 2.4 : 1.2} />
+      {/* Disco: base + realce arriba + vignette abajo, para dar profundidad. */}
+      <circle cx="32" cy="32" r="31" fill="#36333f" />
+      <ellipse cx="32" cy="22" rx="30" ry="20" fill="#ffffff" opacity="0.06" />
+      <ellipse cx="32" cy="50" rx="30" ry="22" fill={sombra} opacity="0.18" />
+      <circle cx="32" cy="32" r="31" fill="none" stroke={anillo ? ORO : "rgba(200,162,74,0.32)"} strokeWidth={anillo ? 2.6 : 1.2} />
 
       {/* hombros / cuello */}
-      <path d="M14 64 q2 -13 18 -13 q16 0 18 13 z" fill="#15131a" />
-      <rect x="28" y="48" width="8" height="6" rx="2" fill={c.piel} />
+      <path d="M13 64 q2 -14 19 -14 q17 0 19 14 z" fill="#14121a" />
+      <path d="M13 64 q2 -14 19 -14 q17 0 19 14" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
+      <rect x="28" y="47" width="8" height="7" rx="2.4" fill={c.piel} />
+      <rect x="28" y="47" width="8" height="3" rx="1.5" fill={sombra} opacity="0.16" />
 
       {/* pelo largo detrás (femenino) */}
-      {c.top === "largo" && <path d="M16 30 q0 22 6 28 h4 q-6 -10 -4 -28 z M48 30 q0 22 -6 28 h-4 q6 -10 4 -28 z" fill={c.pelo} />}
+      {c.top === "largo" && (
+        <path d="M15 30 q-1 23 7 29 h4 q-7 -11 -5 -29 z M49 30 q1 23 -7 29 h-4 q7 -11 5 -29 z" fill={c.pelo} />
+      )}
 
-      {/* orejas */}
-      <ellipse cx="18.5" cy="36" rx="2.6" ry="4" fill={c.piel} />
-      <ellipse cx="45.5" cy="36" rx="2.6" ry="4" fill={c.piel} />
+      {/* orejas (con arete de oro si corresponde) */}
+      <ellipse cx="18.5" cy="36" rx="2.7" ry="4.1" fill={c.piel} />
+      <ellipse cx="45.5" cy="36" rx="2.7" ry="4.1" fill={c.piel} />
+      <ellipse cx="18.5" cy="37" rx="1.2" ry="2" fill={sombra} opacity="0.18" />
+      {c.extra === "arete" && (
+        <>
+          <circle cx="18.4" cy="40.4" r="1.5" fill="none" stroke={ORO} strokeWidth="1.1" />
+          <circle cx="45.6" cy="40.4" r="1.5" fill="none" stroke={ORO} strokeWidth="1.1" />
+        </>
+      )}
 
-      {/* cabeza */}
+      {/* cabeza + modelado (mejilla iluminada arriba-izq, mandíbula en sombra) */}
       <rect x="18" y="18" width="28" height="35" rx="14" fill={c.piel} />
-      <path d="M18 38 q14 9 28 0 v8 q-14 9 -28 0 z" fill={pielSombra} opacity="0.35" />
+      <path d="M20 20 q9 -5 18 0 q-5 -2 -9 -2 q-5 0 -9 2 z" fill="#ffffff" opacity="0.07" />
+      <path d="M18 39 q14 9 28 0 v7 q-14 9 -28 0 z" fill={sombra} opacity="0.13" />
+      <path d="M18 32 q-2 8 4 14 q-5 -7 -4 -14 z" fill={sombra} opacity="0.08" />
 
       {/* cejas */}
       {c.cejas === "sinistra" ? (
-        <g stroke={c.pelo} strokeWidth="1.7" fill="none" strokeLinecap="round">
-          <path d="M23 28 l6 2" />
-          <path d="M41 28 l-6 2" />
+        <g stroke={c.pelo} strokeWidth="1.8" fill="none" strokeLinecap="round">
+          <path d="M23 28 l6 2.2" />
+          <path d="M41 28 l-6 2.2" />
         </g>
       ) : c.cejas === "alta" ? (
-        <g stroke={c.pelo} strokeWidth="1.5" fill="none" strokeLinecap="round">
-          <path d="M23 27 q3 -1.5 6 0" />
-          <path d="M35 27 q3 -1.5 6 0" />
+        <g stroke={c.pelo} strokeWidth="1.6" fill="none" strokeLinecap="round">
+          <path d="M23 26.5 q3 -1.6 6 0" />
+          <path d="M35 26.5 q3 -1.6 6 0" />
         </g>
       ) : (
-        <g stroke={c.pelo} strokeWidth="1.6" fill="none" strokeLinecap="round">
-          <path d="M23 28.5 q3 -1 6 0" />
-          <path d="M35 28.5 q3 -1 6 0" />
+        <g stroke={c.pelo} strokeWidth="1.7" fill="none" strokeLinecap="round">
+          <path d="M23 28.4 q3 -1.1 6 0" />
+          <path d="M35 28.4 q3 -1.1 6 0" />
         </g>
       )}
 
@@ -221,8 +251,9 @@ export const Avatar = memo(function Avatar({
       {c.parche ? (
         <>
           <Ojo x={38} tipo={c.ojos} />
-          <path d="M19 30 L45 27" stroke="#0c0b0e" strokeWidth="1.6" />
-          <ellipse cx="26" cy="33" rx="4.2" ry="3.4" fill="#0c0b0e" />
+          <path d="M19 30 L45 26.5" stroke="#0c0b0e" strokeWidth="1.7" />
+          <ellipse cx="26" cy="33" rx="4.3" ry="3.5" fill="#0c0b0e" />
+          <ellipse cx="24.6" cy="31.8" rx="1.1" ry="0.8" fill="#ffffff" opacity="0.12" />
         </>
       ) : (
         <>
@@ -232,78 +263,121 @@ export const Avatar = memo(function Avatar({
       )}
 
       {/* nariz */}
-      <path d="M32 34 v4 l1.8 1.2" stroke={pielSombra} strokeWidth="1.4" fill="none" strokeLinecap="round" />
+      <path d="M32 34 v4.2 l1.9 1.3" stroke={sombra} strokeWidth="1.4" fill="none" strokeLinecap="round" opacity="0.4" />
 
-      {/* boca */}
+      {/* boca (con diente de oro si corresponde) */}
       {c.boca === "seria" ? (
-        <path d="M28 44 h8" stroke="#7a4636" strokeWidth="1.6" strokeLinecap="round" />
+        <path d="M28 44.5 h8" stroke="#7a4636" strokeWidth="1.7" strokeLinecap="round" />
       ) : c.boca === "torcida" ? (
-        <path d="M28 44 q4 2.5 8 -0.6" stroke="#7a4636" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+        <path d="M28 44 q4 2.6 8 -0.6" stroke="#7a4636" strokeWidth="1.7" fill="none" strokeLinecap="round" />
       ) : c.boca === "mueca" ? (
-        <path d="M28 45 q4 -2 8 0.6" stroke="#7a4636" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+        <path d="M28 45 q4 -2.2 8 0.6" stroke="#7a4636" strokeWidth="1.7" fill="none" strokeLinecap="round" />
       ) : (
-        <path d="M28 44 q4 2 8 0" stroke="#7a4636" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+        <path d="M28 44 q4 2.2 8 0" stroke="#7a4636" strokeWidth="1.7" fill="none" strokeLinecap="round" />
       )}
+      {c.extra === "diente" && <rect x="31.2" y="43.4" width="1.9" height="2.2" rx="0.4" fill={ORO} />}
 
       {/* vello facial */}
-      {c.vello === "bigote" && <path d="M27 42.5 q5 2.4 10 0 q-3 1.4 -5 1.4 q-2 0 -5 -1.4 z" fill={c.pelo} />}
-      {c.vello === "perilla" && <path d="M30 47 q2 2 4 0 q0 3 -2 3 q-2 0 -2 -3 z" fill={c.pelo} />}
+      {c.vello === "bigote" && <path d="M27 42.6 q5 2.5 10 0 q-3 1.5 -5 1.5 q-2 0 -5 -1.5 z" fill={c.pelo} />}
+      {c.vello === "perilla" && <path d="M30 47 q2 2 4 0 q0 3.2 -2 3.2 q-2 0 -2 -3.2 z" fill={c.pelo} />}
       {c.vello === "candado" && (
-        <path d="M22 40 q2 10 10 11 q8 -1 10 -11 q-2 4 -10 4 q-8 0 -10 -4 z" fill="none" stroke={c.pelo} strokeWidth="2" />
+        <path d="M22 40 q2 10.5 10 11.5 q8 -1 10 -11.5 q-2 4.2 -10 4.2 q-8 0 -10 -4.2 z" fill="none" stroke={c.pelo} strokeWidth="2.1" />
       )}
-      {c.vello === "barba" && <path d="M21 38 q1 13 11 14 q10 -1 11 -14 q-3 7 -11 7 q-8 0 -11 -7 z" fill={c.pelo} />}
+      {c.vello === "barba" && (
+        <>
+          <path d="M21 38 q1 13.5 11 14.5 q10 -1 11 -14.5 q-3 7.2 -11 7.2 q-8 0 -11 -7.2 z" fill={c.pelo} />
+          <path d="M24 46 q8 4 16 0 q-8 6 -16 0 z" fill={sombra} opacity="0.12" />
+        </>
+      )}
 
       {/* pelo / sombrero / capucha (encima) */}
-      {c.top === "corto" && <path d="M18 31 q-1 -17 14 -17 q15 0 14 17 q-3 -7 -14 -7 q-11 0 -14 7 z" fill={c.pelo} />}
+      {c.top === "corto" && (
+        <>
+          <path d="M18 31 q-1 -17 14 -17 q15 0 14 17 q-3 -7 -14 -7 q-11 0 -14 7 z" fill={c.pelo} />
+          <path d="M19 27 q5 -8 13 -8 q8 0 13 8 q-6 -4 -13 -4 q-7 0 -13 4 z" fill="#ffffff" opacity="0.06" />
+        </>
+      )}
       {c.top === "raya" && (
         <>
           <path d="M18 31 q-1 -17 14 -17 q15 0 14 17 q-3 -7 -14 -7 q-11 0 -14 7 z" fill={c.pelo} />
-          <path d="M30 15 q4 4 1 9" stroke="#00000033" strokeWidth="1.4" fill="none" />
+          <path d="M30 15 q4 4 1 9" stroke="#00000044" strokeWidth="1.5" fill="none" />
+          <path d="M19 27 q5 -8 13 -8 q8 0 13 8 q-6 -4 -13 -4 q-7 0 -13 4 z" fill="#ffffff" opacity="0.05" />
         </>
       )}
-      {c.top === "calvo" && <path d="M20 22 q12 -7 24 0 q-4 -3 -12 -3 q-8 0 -12 3 z" fill="rgba(255,255,255,0.05)" />}
+      {c.top === "calvo" && (
+        <>
+          <path d="M20 22 q12 -7 24 0 q-4 -3 -12 -3 q-8 0 -12 3 z" fill="#ffffff" opacity="0.05" />
+          <ellipse cx="27" cy="20" rx="5" ry="2.4" fill="#ffffff" opacity="0.06" />
+        </>
+      )}
       {c.top === "mono" && (
         <>
           <path d="M18 30 q-1 -16 14 -16 q15 0 14 16 q-3 -7 -14 -7 q-11 0 -14 7 z" fill={c.pelo} />
           <circle cx="32" cy="11" r="5" fill={c.pelo} />
+          <circle cx="30.5" cy="9.6" r="1.6" fill="#ffffff" opacity="0.08" />
         </>
       )}
-      {c.top === "largo" && <path d="M18 32 q-1 -18 14 -18 q15 0 14 18 q-3 -8 -14 -8 q-11 0 -14 8 z" fill={c.pelo} />}
+      {c.top === "largo" && (
+        <>
+          <path d="M18 32 q-1 -18 14 -18 q15 0 14 18 q-3 -8 -14 -8 q-11 0 -14 8 z" fill={c.pelo} />
+          <path d="M19 28 q5 -9 13 -9 q8 0 13 9 q-6 -5 -13 -5 q-7 0 -13 5 z" fill="#ffffff" opacity="0.05" />
+        </>
+      )}
       {c.top === "gorra" && (
         <>
           <path d="M17 25 q0 -13 15 -13 q15 0 15 13 z" fill={FIELTRO} />
-          <path d="M30 25 h18 q1 2 -1 3 h-17 z" fill={FIELTRO} />
-          <circle cx="32" cy="13" r="1.6" fill={ORO} />
+          <path d="M17 25 q0 -13 15 -13 q15 0 15 13" fill="none" stroke="#ffffff" strokeOpacity="0.06" strokeWidth="1" />
+          <path d="M30 25 h18 q1 2 -1 3 h-17 z" fill={FIELTRO_2} />
+          <circle cx="32" cy="13" r="1.7" fill={ORO} />
         </>
       )}
       {c.top === "fedora" && (
         <>
-          <path d="M12 25 q20 -8 40 0 q-20 5 -40 0 z" fill={FIELTRO} />
+          <path d="M12 25 q20 -8.5 40 0 q-20 5.5 -40 0 z" fill={FIELTRO} />
           <path d="M19 24 q0 -12 13 -12 q13 0 13 12 z" fill={FIELTRO} />
-          <path d="M19 22 h26" stroke={ORO} strokeWidth="1.4" opacity="0.8" />
+          <path d="M19 24 q0 -12 13 -12 q13 0 13 12" fill="none" stroke="#ffffff" strokeOpacity="0.05" strokeWidth="1" />
+          <path d="M19 22.5 h26" stroke={ORO} strokeWidth="1.6" opacity="0.85" />
+          <path d="M12 25 q20 -3 40 0" fill="none" stroke={sombra} strokeOpacity="0.25" strokeWidth="0.8" />
+        </>
+      )}
+      {c.top === "tongo" && (
+        /* bombín: el sombrero del hampa elegante */
+        <>
+          <path d="M16 26 q16 -5 32 0 q-3 2.5 -16 2.5 q-13 0 -16 -2.5 z" fill={FIELTRO} />
+          <path d="M21 26 q0 -13 11 -13 q11 0 11 13 z" fill={FIELTRO} />
+          <path d="M21 26 q0 -13 11 -13 q11 0 11 13" fill="none" stroke="#ffffff" strokeOpacity="0.06" strokeWidth="1" />
+          <path d="M21.5 24.5 h21" stroke={ORO} strokeWidth="1.3" opacity="0.7" />
         </>
       )}
       {c.top === "capucha" && (
         <>
           <path d="M13 40 q-2 -28 19 -28 q21 0 19 28 q-5 -16 -19 -16 q-14 0 -19 16 z" fill="#16141c" />
-          <path d="M13 40 q-2 -28 19 -28 q21 0 19 28" fill="none" stroke="rgba(200,162,74,0.25)" strokeWidth="1.2" />
+          <path d="M13 40 q-2 -28 19 -28 q21 0 19 28" fill="none" stroke="rgba(200,162,74,0.22)" strokeWidth="1.2" />
+          <path d="M19 26 q13 -11 26 0 q-13 -6 -26 0 z" fill={sombra} opacity="0.3" />
         </>
       )}
 
-      {/* extras */}
-      {c.extra === "cicatriz" && <path d="M40 25 l1.6 8" stroke="#a86b5a" strokeWidth="1.1" strokeLinecap="round" />}
+      {/* extras puntuales */}
+      {c.extra === "cicatriz" && (
+        <path d="M40 24.5 l1.7 8.5" stroke="#a86b5a" strokeWidth="1.2" strokeLinecap="round" />
+      )}
       {c.extra === "monoculo" && !c.parche && (
         <>
-          <circle cx="38" cy="33" r="4.4" fill="none" stroke={ORO} strokeWidth="1.3" />
-          <path d="M40 37 q2 5 0 9" stroke={ORO} strokeWidth="0.9" fill="none" opacity="0.8" />
+          <circle cx="38" cy="33" r="4.6" fill="#bfe0ee" opacity="0.1" />
+          <circle cx="38" cy="33" r="4.6" fill="none" stroke={ORO} strokeWidth="1.4" />
+          <path d="M40.5 37 q2 5 0 9" stroke={ORO} strokeWidth="0.9" fill="none" opacity="0.8" />
         </>
       )}
       {c.extra === "cigarro" && (
         <>
-          <rect x="36" y="45" width="9" height="2.2" rx="1" fill="#e9e3d2" transform="rotate(8 40 46)" />
-          <circle cx="45.5" cy="46.6" r="1.2" fill="#e0703a" />
+          <rect x="36" y="45" width="9.5" height="2.3" rx="1" fill="#e9e3d2" transform="rotate(8 40 46)" />
+          <rect x="36" y="45" width="2.4" height="2.3" rx="1" fill="#8a5a3b" transform="rotate(8 40 46)" />
+          <circle cx="46" cy="46.8" r="1.3" fill="#e0703a" />
+          <circle cx="46" cy="46.8" r="2.2" fill="#e0703a" opacity="0.25" />
         </>
       )}
+      {/* brillo de oro extra para el diente: un puntito en la mejilla, sutil */}
+      {c.extra === "diente" && <circle cx="32.1" cy="44.3" r="0.5" fill={ORO_CLARO} opacity="0.9" />}
     </svg>
   );
 });

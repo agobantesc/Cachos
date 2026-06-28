@@ -179,8 +179,45 @@ input:focus { border-color: var(--oro); box-shadow: 0 0 0 2px rgba(200, 162, 74,
   position: relative; background: var(--humo); border-radius: 12px; padding: 6px 5px;
   flex: 1 1 0; min-width: 0; max-width: 110px; border: 1px solid var(--linea); text-align: center;
 }
-.vaso--turno { border-color: var(--oro); box-shadow: 0 0 16px rgba(200, 162, 74, 0.4); }
+.vaso--turno { border-color: var(--oro); box-shadow: 0 0 16px rgba(200, 162, 74, 0.4); animation: vaso-pulso 1.5s ease-in-out infinite; }
+.vaso--mi-turno { animation: vaso-pulso-yo 1.1s ease-in-out infinite; }
+@keyframes vaso-pulso {
+  0%, 100% { box-shadow: 0 0 10px rgba(200, 162, 74, 0.28); }
+  50% { box-shadow: 0 0 20px rgba(200, 162, 74, 0.55); }
+}
+@keyframes vaso-pulso-yo {
+  0%, 100% { box-shadow: 0 0 14px rgba(200, 162, 74, 0.45); border-color: var(--oro); }
+  50% { box-shadow: 0 0 26px rgba(230, 200, 120, 0.85); border-color: var(--oro-claro); }
+}
+.vaso-turno {
+  position: absolute; top: -8px; left: 50%; transform: translateX(-50%); z-index: 3;
+  font-size: 8.5px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+  background: var(--oro); color: #15110a; padding: 1px 7px; border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
 .vaso--out { opacity: 0.4; }
+
+/* Barra de turno: dice de quién es el turno, siempre visible. En TU turno se
+   enciende en oro para que no se te pase. */
+.turno-barra {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  font-size: 13px; color: var(--tenue); letter-spacing: 0.3px;
+  background: rgba(0, 0, 0, 0.25); border: 1px solid var(--linea); border-radius: 999px;
+  padding: 6px 14px; margin: 2px auto 0; max-width: max-content;
+}
+.turno-barra b { color: var(--hueso); font-weight: 700; }
+.turno-barra--yo {
+  color: #15110a; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+  background: linear-gradient(180deg, var(--oro-claro), var(--oro)); border-color: var(--oro);
+  box-shadow: 0 4px 16px rgba(200, 162, 74, 0.35); animation: turno-glow 1.3s ease-in-out infinite;
+}
+.turno-barra--yo .tb-flecha { font-size: 15px; }
+@keyframes turno-glow {
+  0%, 100% { box-shadow: 0 4px 14px rgba(200, 162, 74, 0.3); }
+  50% { box-shadow: 0 4px 22px rgba(230, 200, 120, 0.6); }
+}
+/* En TU turno, tu mano se realza para reforzar que te toca. */
+.mesa--mi-turno .mi-mano { border-top-color: var(--oro-claro); box-shadow: 0 12px 34px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(200, 162, 74, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04); }
 .vaso-nombre {
   font-size: 12px; font-weight: 700; margin-bottom: 2px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -585,6 +622,46 @@ button { touch-action: manipulation; }
 .historia-card .tc-titulo { color: #e8c8bc; text-shadow: 0 2px 14px rgba(178, 58, 46, 0.3); }
 .historia-card .tc-flecha { color: var(--sangre-viva); }
 
+/* Menú de modos: cuatro placas con su acento propio. */
+.menu-modos { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 10px; margin-top: 2px; }
+.menu-modos .torneo-card { max-width: none; }
+/* Sheens escalonados para que las cuatro placas no brillen al unísono. */
+.solo-card::after { animation-delay: 2.7s; }
+.historia-card::after { animation-delay: 1.4s; }
+.online-card::after { animation-delay: 4.1s; }
+
+.solo-card {
+  border-color: var(--acero);
+  background:
+    radial-gradient(150px 90px at 16% 22%, rgba(59, 85, 99, 0.4), transparent 70%),
+    linear-gradient(180deg, #1c2228, #11161a);
+}
+.solo-card::before { border-color: rgba(120, 160, 180, 0.25); }
+.solo-card::after { background: linear-gradient(100deg, transparent, rgba(185, 222, 235, 0.13), transparent); }
+.solo-emblema {
+  background: radial-gradient(circle at 50% 32%, #7fa3b3, #3b5563 78%);
+  color: #eaf3f6; box-shadow: 0 4px 12px rgba(59, 85, 99, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.solo-card .tc-kicker { color: #94b7c6; }
+.solo-card .tc-titulo { color: #d9e9f0; text-shadow: 0 2px 14px rgba(120, 160, 180, 0.25); }
+.solo-card .tc-flecha { color: #94b7c6; }
+
+.online-card {
+  border-color: #2f9e57;
+  background:
+    radial-gradient(150px 90px at 16% 22%, rgba(46, 160, 86, 0.32), transparent 70%),
+    linear-gradient(180deg, #15231a, #0e1712);
+}
+.online-card::before { border-color: rgba(60, 180, 110, 0.28); }
+.online-card::after { background: linear-gradient(100deg, transparent, rgba(120, 235, 160, 0.13), transparent); }
+.online-emblema {
+  background: radial-gradient(circle at 50% 32%, #44cd78, #1e8a4a 78%);
+  color: #eafff1; box-shadow: 0 4px 12px rgba(46, 160, 86, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+.online-card .tc-kicker { color: #5fcf8a; }
+.online-card .tc-titulo { color: #cdeed8; text-shadow: 0 2px 14px rgba(46, 160, 86, 0.3); }
+.online-card .tc-flecha { color: #5fcf8a; }
+
 .historia-pantalla { align-items: center; text-align: center; gap: 12px; padding-top: 5vh; }
 .historia-pantalla .grande, .historia-pantalla .btn-link { width: 100%; max-width: 360px; }
 .hist-kicker { font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--sangre-viva); }
@@ -653,6 +730,40 @@ button { touch-action: manipulation; }
   text-align: center; font-size: 12px; color: var(--oro-claro);
   background: rgba(200, 162, 74, 0.08); border: 1px dashed var(--linea); border-radius: 10px; padding: 5px 8px;
 }
+
+/* Fila de poderes en el HUD (Suerte + items) */
+.hh-poderes { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.hh-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 5px 11px; }
+.hh-chip:active { transform: translateY(1px); }
+.hh-item {
+  color: var(--hueso); background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--linea);
+}
+.hh-item:active { background: rgba(0, 0, 0, 0.5); }
+
+/* Items "bajo la manga" (inventario en la intro) */
+.hist-bolsa { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.hb-tit { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--oro); }
+.hb-items { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.hb-item { font-size: 11.5px; color: var(--texto); background: var(--humo); border: 1px solid var(--linea); border-radius: 999px; padding: 3px 10px; }
+.hb-item b { color: var(--oro); }
+
+/* Dilema (decisión de calle) */
+.dilema-texto { max-width: 27em; font-style: normal; }
+.dilema-opciones { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 360px; margin-top: 4px; }
+.dilema-opcion { width: 100%; padding: 14px; font-size: 15px; text-align: center; line-height: 1.3; }
+.dilema-desenlace {
+  background: linear-gradient(180deg, rgba(200, 162, 74, 0.1), var(--humo));
+  border: 1px solid var(--linea); border-left: 3px solid var(--oro); border-radius: 0 12px 12px 0;
+  padding: 12px 14px; max-width: 27em; line-height: 1.55; color: var(--texto); text-align: left;
+}
+
+/* Tienda: secciones y stock de items */
+.tienda-seccion-tit {
+  font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--oro);
+  width: 100%; max-width: 380px; text-align: left; margin: 8px 0 -2px;
+}
+.mejora-cant { font-size: 12px; color: var(--oro); font-weight: 700; }
 
 /* Sello de versión: discreto, fijo en una esquina. Sirve para confirmar que el
    navegador cargó la última versión (y no una cacheada por el service worker). */

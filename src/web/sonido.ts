@@ -161,6 +161,16 @@ function rattle(c: AudioContext, t0: number): void {
 export const Sonidos = {
   dados: () => reproducir(rattle),
   apostar: () => reproducir((c, t) => tono(c, t, 660, 0.09, "triangle", 0.15)),
+  // Te toca a TI: campanilla ascendente, clara y distinta, para que no te pierdas
+  // tu turno aunque estés mirando para otro lado (sobre todo jugando en línea).
+  tuTurno: () =>
+    reproducir((c, t) => {
+      tono(c, t, 660, 0.12, "triangle", 0.17);
+      tono(c, t + 0.1, 988, 0.18, "triangle", 0.16);
+    }),
+  // Jugó un rival: golpecito breve y suave, para oír que la mesa avanza mientras
+  // esperas tu turno (sin molestar: volumen bajo).
+  tic: () => reproducir((c, t) => tono(c, t, 300, 0.05, "sine", 0.07)),
   dudar: () =>
     reproducir((c, t) => {
       tono(c, t, 320, 0.14, "sawtooth", 0.18);

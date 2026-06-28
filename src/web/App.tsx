@@ -3,7 +3,7 @@ import { Mesa } from "./Mesa";
 import { PantallaTorneo } from "./PantallaTorneo";
 import { PantallaHistoria } from "./PantallaHistoria";
 import { CampoJugador } from "./Personaje";
-import { Emblema, IconoCopa, IconoCalavera, IconoWhatsApp } from "./Iconos";
+import { Emblema, IconoCopa, IconoCalavera, IconoWhatsApp, IconoDado, IconoPersonas } from "./Iconos";
 import { Avatar, fijarCaraJugador, CARA_DEFECTO } from "./Avatar";
 import { invitarWhatsApp, copiarInvitacion, salaDesdeURL, limpiarURLSala } from "./invitacion";
 import { TransporteLocal, type Transporte } from "./transporte";
@@ -168,34 +168,57 @@ function Inicio({ onListo }: { onListo: (t: Transporte) => void }) {
       </h1>
       <p className="sub">El dudo de la casa, entre socios.</p>
       <div className="filete" />
-      <button className="btn btn--apostar grande" onClick={() => setVista("solo")}>
-        Jugar solo (vs la máquina)
-      </button>
-      <button className="torneo-card" onClick={() => setVista("torneo")} aria-label="Torneo">
-        <span className="tc-emblema" aria-hidden="true">
-          <IconoCopa tam={28} />
-        </span>
-        <span className="tc-texto">
-          <span className="tc-kicker">La copa de la casa</span>
-          <span className="tc-titulo">Torneo</span>
-          <span className="tc-sub">Súbete al bracket y gánale a la banca</span>
-        </span>
-        <span className="tc-flecha" aria-hidden="true">›</span>
-      </button>
-      <button className="torneo-card historia-card" onClick={() => setVista("historia")} aria-label="Modo Historia">
-        <span className="tc-emblema hc-emblema" aria-hidden="true">
-          <IconoCalavera tam={28} />
-        </span>
-        <span className="tc-texto">
-          <span className="tc-kicker">Modo historia</span>
-          <span className="tc-titulo">El Bajo Mundo</span>
-          <span className="tc-sub">Del muelle a la cumbre. Sólo para los que aguantan</span>
-        </span>
-        <span className="tc-flecha" aria-hidden="true">›</span>
-      </button>
-      <button className="btn btn--dudar grande" onClick={() => setVista("online")}>
-        Mesa en línea
-      </button>
+
+      <div className="menu-modos">
+        <button className="torneo-card solo-card" onClick={() => setVista("solo")} aria-label="Jugar solo">
+          <span className="tc-emblema solo-emblema" aria-hidden="true">
+            <IconoDado tam={26} />
+          </span>
+          <span className="tc-texto">
+            <span className="tc-kicker">A tu ritmo</span>
+            <span className="tc-titulo">Jugar solo</span>
+            <span className="tc-sub">Tú contra la banca, para afilar el ojo</span>
+          </span>
+          <span className="tc-flecha" aria-hidden="true">›</span>
+        </button>
+
+        <button className="torneo-card" onClick={() => setVista("torneo")} aria-label="Torneo">
+          <span className="tc-emblema" aria-hidden="true">
+            <IconoCopa tam={28} />
+          </span>
+          <span className="tc-texto">
+            <span className="tc-kicker">La copa de la casa</span>
+            <span className="tc-titulo">Torneo</span>
+            <span className="tc-sub">Súbete al bracket y gánale a la banca</span>
+          </span>
+          <span className="tc-flecha" aria-hidden="true">›</span>
+        </button>
+
+        <button className="torneo-card historia-card" onClick={() => setVista("historia")} aria-label="Modo Historia">
+          <span className="tc-emblema hc-emblema" aria-hidden="true">
+            <IconoCalavera tam={28} />
+          </span>
+          <span className="tc-texto">
+            <span className="tc-kicker">Modo historia</span>
+            <span className="tc-titulo">El Bajo Mundo</span>
+            <span className="tc-sub">Del muelle a la cumbre. Sólo para los que aguantan</span>
+          </span>
+          <span className="tc-flecha" aria-hidden="true">›</span>
+        </button>
+
+        <button className="torneo-card online-card" onClick={() => setVista("online")} aria-label="Mesa en línea">
+          <span className="tc-emblema online-emblema" aria-hidden="true">
+            <IconoPersonas tam={26} />
+          </span>
+          <span className="tc-texto">
+            <span className="tc-kicker">Con amigos</span>
+            <span className="tc-titulo">Mesa en línea</span>
+            <span className="tc-sub">Crea una sala e invita por WhatsApp</span>
+          </span>
+          <span className="tc-flecha" aria-hidden="true">›</span>
+        </button>
+      </div>
+
       <button className="btn-link" onClick={() => setVista("reglas")}>
         Reglas de la Asociación
       </button>

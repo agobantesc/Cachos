@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { EstadoPublico, EventoRonda, Pinta, ResolucionRonda, Sentido } from "../engine";
 import { Dado, ManoDados } from "./Dado";
 import { Avatar } from "./Avatar";
@@ -47,6 +47,21 @@ export function Mesa({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p.fase, p.numeroRonda]);
+
+  // Aviso de turno: campanilla cuando te toca a TI, y un golpecito suave cuando
+  // juega un rival. Así no te pierdes tu turno —el dolor de jugar acompañado—.
+  const turnoPrev = useRef<string | null>(p.turnoJugadorId);
+  useEffect(() => {
+    const turno = p.turnoJugadorId;
+    if (p.fase === "EN_RONDA" && turno !== turnoPrev.current) {
+      if (turno === snap.miId) Sonidos.tuTurno();
+      else if (turnoPrev.current !== null) Sonidos.tic();
+    }
+    turnoPrev.current = turno;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [p.turnoJugadorId, p.fase]);
+
+  const miTurno = p.fase === "EN_RONDA" && p.turnoJugadorId === snap.miId;
 
   if (p.fase === "FIN_JUEGO") {
     // Puesto: el ganador es 1º; el resto según el orden de eliminación inverso
@@ -114,7 +129,7 @@ export function Mesa({
   }
 
   return (
-    <div className="mesa">
+    <div className={"mesa" + (miTurno ? " mesa--mi-turno" : "")}>
       {snap.torneo && snap.torneo.faseTorneo === "mesa" && (
         <div className="torneo-hud">
           <span className="torneo-hud-etq">{snap.torneo.etiquetaRonda}</span>
@@ -132,14 +147,24 @@ export function Mesa({
             {snap.historia.rival.esBoss && <span className="hh-boss">JEFE</span>}
             {snap.historia.rival.nombre}
           </span>
-          {snap.historia.suerteDisponible > 0 && p.fase === "EN_RONDA" && (
-            <button
-              className="hh-suerte"
-              onClick={() => transporte.historiaSuerte?.()}
-              title="Re-tira tu mano"
-            >
-              <IconoDado /> Suerte ({snap.historia.suerteDisponible})
-            </button>
+          {p.fase === "EN_RONDA" && (
+            <div className="hh-poderes">
+              {snap.historia.suerteDisponible > 0 && (
+                <button className="hh-chip hh-suerte" onClick={() => transporte.historiaSuerte?.()} title="Re-tira tu mano">
+                  <IconoDado /> Suerte ({snap.historia.suerteDisponible})
+                </button>
+              )}
+              {snap.historia.itemsEnMano.map((it) => (
+                <button
+                  key={it.id}
+                  className="hh-chip hh-item"
+                  onClick={() => transporte.historiaUsarItem?.(it.id)}
+                  title={it.desc}
+                >
+                  {it.corto} ({it.cantidad})
+                </button>
+              ))}
+            </div>
           )}
         </div>
       )}
@@ -161,13 +186,41 @@ export function Mesa({
         </button>
       </header>
 
+      {(p.fase === "EN_RONDA" || p.fase === "FIN_RONDA") && (
+        <div className={"turno-barra" + (miTurno ? " turno-barra--yo" : "")} aria-live="polite">
+          {miTurno ? (
+            <>
+              <span className="tb-flecha" aria-hidden="true">▸</span> Tu turno
+            </>
+          ) : (
+            <>
+              Juega <b>{nombre(p.turnoJugadorId)}</b>
+              <span className="puntos-vivos" aria-hidden="true">
+                <i></i>
+                <i></i>
+                <i></i>
+              </span>
+            </>
+          )}
+        </div>
+      )}
+
       <section className="vasos">
         {p.ordenAsientos.map((id) => {
           const j = p.jugadores.find((x) => x.id === id)!;
           const esTurno = p.turnoJugadorId === id && p.fase === "EN_RONDA";
           const ev = ultimoEventoDe(id);
           return (
-            <div key={id} className={"vaso" + (esTurno ? " vaso--turno" : "") + (j.eliminado ? " vaso--out" : "")}>
+            <div
+              key={id}
+              className={
+                "vaso" +
+                (esTurno ? " vaso--turno" : "") +
+                (esTurno && id === snap.miId ? " vaso--mi-turno" : "") +
+                (j.eliminado ? " vaso--out" : "")
+              }
+            >
+              {esTurno && <span className="vaso-turno" aria-hidden="true">juega</span>}
               <div className="vaso-cara">
                 <Avatar id={id} nombre={j.nombre} tam={30} anillo={id === snap.miId} />
               </div>
@@ -183,7 +236,9 @@ export function Mesa({
                   </>
                 )}
               </div>
-              {ev && <div className={"burbuja" + (ev.tipo === "PASO" ? " burbuja--paso" : "")}>{textoEvento(ev)}</div>}
+              {ev && !esTurno && (
+                <div className={"burbuja" + (ev.tipo === "PASO" ? " burbuja--paso" : "")}>{textoEvento(ev)}</div>
+              )}
             </div>
           );
         })}

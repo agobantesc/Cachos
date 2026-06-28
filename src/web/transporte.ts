@@ -84,6 +84,12 @@ export interface Transporte {
   historiaReintentar?(): void;
   /** Compra una mejora de atributo en la tienda. */
   historiaMejorar?(clave: string): void;
+  /** Compra un item en la tienda. */
+  historiaComprarItem?(id: string): void;
+  /** Usa un item desde la mesa (cargar tu mano, marcar al rival, soplón). */
+  historiaUsarItem?(id: string): void;
+  /** Resuelve un dilema eligiendo una opción. */
+  historiaElegir?(opcionIdx: number): void;
   /** Usa el poder "Suerte": re-tira tu mano. */
   historiaSuerte?(): void;
   /** Abandona: corta temporizadores/suscripciones (para volver al menú). */
@@ -173,6 +179,38 @@ export class TransporteLocal implements Transporte {
       }
     }
     j.dados = mejor;
+    this.emitir();
+    return true;
+  }
+
+  /** Modo historia: "dados marcados" — re-tira la mano de un rival buscando la
+   *  más DISPERSA (todos distintos), para dejarlo con una mano floja. */
+  descargarMano(jugadorId: string): boolean {
+    if (this.estado.fase !== "EN_RONDA") return false;
+    const j = this.estado.jugadores.find((x) => x.id === jugadorId);
+    if (!j || j.eliminado || j.dados.length === 0) return false;
+    const concentracion = (caras: Pinta[]) => {
+      const cuenta = new Map<number, number>();
+      let mejor = 0;
+      for (const c of caras) {
+        const n = (cuenta.get(c) ?? 0) + 1;
+        cuenta.set(c, n);
+        if (n > mejor) mejor = n;
+      }
+      return mejor;
+    };
+    let peor = j.dados;
+    let peorScore = concentracion(peor);
+    for (let k = 0; k < 8; k++) {
+      const tirada = j.dados.map(() => (1 + Math.floor(Math.random() * 6)) as Pinta);
+      const s = concentracion(tirada);
+      if (s < peorScore) {
+        peor = tirada;
+        peorScore = s;
+      }
+    }
+    j.dados = peor;
+    this.emitir();
     return true;
   }
 

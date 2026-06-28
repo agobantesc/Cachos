@@ -75,6 +75,20 @@ export function IconoCalavera({ tam = 28 }: { tam?: number }) {
   );
 }
 
+/** Dos figuras: para la mesa en línea (jugar con amigos). */
+export function IconoPersonas({ tam = 28 }: { tam?: number }) {
+  return (
+    <svg className="ico" width={tam} height={tam} viewBox="0 0 24 24" aria-hidden="true">
+      <g fill="currentColor">
+        <circle cx="8.5" cy="8" r="3.2" />
+        <path d="M2.5 19.5 c0 -3.6 2.7 -6 6 -6 c3.3 0 6 2.4 6 6 z" />
+        <circle cx="16.4" cy="8.8" r="2.7" opacity="0.85" />
+        <path d="M13.6 14.2 c0.9 -0.5 1.8 -0.7 2.8 -0.7 c3 0 5.1 2.1 5.1 5.3 h-5.1 c0 -1.9 -1 -3.5 -2.8 -4.6 z" opacity="0.85" />
+      </g>
+    </svg>
+  );
+}
+
 /** Glifo de WhatsApp (burbuja con teléfono), para el botón de invitar. */
 export function IconoWhatsApp({ tam = 20 }: { tam?: number }) {
   return (

@@ -23,6 +23,22 @@ function BarraStats({ t }: { t: VistaHistoria }) {
   );
 }
 
+function Bolsa({ t }: { t: VistaHistoria }) {
+  if (t.itemsEnMano.length === 0) return null;
+  return (
+    <div className="hist-bolsa" aria-label="Tus items">
+      <span className="hb-tit">Bajo la manga</span>
+      <div className="hb-items">
+        {t.itemsEnMano.map((it) => (
+          <span key={it.id} className="hb-item" title={it.desc}>
+            {it.nombre} <b>x{it.cantidad}</b>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function MesaInfo({ t }: { t: VistaHistoria }) {
   if (t.mesa <= 2) return <p className="hist-mesa">Mano a mano.</p>;
   return (
@@ -81,6 +97,7 @@ export function PantallaHistoria({
         )}
         <p className="hist-dialogo">“{r.dialogo}”</p>
         <BarraStats t={t} />
+        <Bolsa t={t} />
         <div className="hist-acciones">
           <button className="btn btn--apostar grande" onClick={() => transporte.historiaEmpezar?.()}>
             {t.mesa <= 2 ? "Sentarse al duelo" : "Sentarse a la mesa"}
@@ -136,6 +153,37 @@ export function PantallaHistoria({
     );
   }
 
+  // --- DILEMA: una decisión de calle ---
+  if (t.faseHistoria === "dilema" && t.dilema) {
+    const dil = t.dilema;
+    return (
+      <div className="pantalla historia-pantalla">
+        <span className="hist-kicker">{t.escenario.lugar}</span>
+        <h1 className="hist-titulo">{dil.titulo}</h1>
+        <p className="hist-dialogo dilema-texto">{dil.texto}</p>
+        {dil.resultado ? (
+          <>
+            <div className="dilema-desenlace">{dil.resultado}</div>
+            <BarraStats t={t} />
+            <div className="hist-acciones">
+              <button className="btn btn--apostar grande" onClick={() => transporte.historiaContinuar?.()}>
+                A la mesa
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="dilema-opciones">
+            {dil.opciones.map((o, i) => (
+              <button key={i} className="btn btn--calzar dilema-opcion" onClick={() => transporte.historiaElegir?.(i)}>
+                {o.etiqueta}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   // --- TIENDA: subir atributos con plata ---
   if (t.faseHistoria === "tienda") {
     return (
@@ -148,6 +196,7 @@ export function PantallaHistoria({
         <div className="hist-plata-grande">
           Tienes <Plata n={t.plata} />
         </div>
+        <div className="tienda-seccion-tit">Atributos</div>
         <div className="tienda-mejoras">
           {t.mejoras.map((m) => (
             <div key={m.clave} className={"mejora" + (m.nivel >= m.max ? " mejora--tope" : "")}>
@@ -169,6 +218,30 @@ export function PantallaHistoria({
                   onClick={() => transporte.historiaMejorar?.(m.clave)}
                 >
                   Subir · ${m.costo.toLocaleString("es-CL")}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="tienda-seccion-tit">Bajo la manga</div>
+        <div className="tienda-mejoras">
+          {t.itemsTienda.map((it) => (
+            <div key={it.id} className="mejora">
+              <div className="mejora-cab">
+                <span className="mejora-nombre">{it.nombre}</span>
+                <span className="mejora-cant">x{it.cantidad}{it.cantidad >= it.max ? " · lleno" : ""}</span>
+              </div>
+              <p className="mejora-desc">{it.desc}</p>
+              {it.cantidad >= it.max ? (
+                <div className="mejora-tope">Bolsillo lleno</div>
+              ) : (
+                <button
+                  className="btn btn--calzar mejora-btn"
+                  disabled={!it.alcanzable}
+                  onClick={() => transporte.historiaComprarItem?.(it.id)}
+                >
+                  Comprar · ${it.costo.toLocaleString("es-CL")}
                 </button>
               )}
             </div>
