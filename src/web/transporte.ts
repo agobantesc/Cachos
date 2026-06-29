@@ -88,8 +88,10 @@ export interface Transporte {
   historiaComprarItem?(id: string): void;
   /** Usa un item desde la mesa (cargar tu mano, marcar al rival, soplón). */
   historiaUsarItem?(id: string): void;
-  /** Resuelve un dilema eligiendo una opción. */
+  /** Resuelve un evento de decisión (dilema/pelea) eligiendo una opción. */
   historiaElegir?(opcionIdx: number): void;
+  /** Da vuelta una carta en una lectura de suerte. */
+  historiaSacarCarta?(cartaIdx: number): void;
   /** Usa el poder "Suerte": re-tira tu mano. */
   historiaSuerte?(): void;
   /** Abandona: corta temporizadores/suscripciones (para volver al menú). */

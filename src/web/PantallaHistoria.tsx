@@ -155,17 +155,35 @@ export function PantallaHistoria({
     );
   }
 
-  // --- DILEMA: una decisión de calle ---
-  if (t.faseHistoria === "dilema" && t.dilema) {
-    const dil = t.dilema;
+  // --- EVENTO de calle: decisión (dilema/pelea) o lectura de suerte ---
+  if (t.faseHistoria === "evento" && t.evento) {
+    const ev = t.evento;
+    const esPelea = ev.tipo === "pelea";
+    const esLectura = ev.tipo === "lectura";
+    const kicker = esPelea ? "Bronca en el bajo mundo" : esLectura ? "Lectura de suerte" : t.escenario.lugar;
     return (
-      <div className="pantalla historia-pantalla">
-        <span className="hist-kicker">{t.escenario.lugar}</span>
-        <h1 className="hist-titulo">{dil.titulo}</h1>
-        <p className="hist-dialogo dilema-texto">{dil.texto}</p>
-        {dil.resultado ? (
+      <div className={"pantalla historia-pantalla" + (esPelea ? " hist-pelea" : "")}>
+        <span className="hist-kicker">{kicker}</span>
+        <h1 className="hist-titulo">{ev.titulo}</h1>
+        <p className="hist-dialogo dilema-texto">{ev.texto}</p>
+
+        {ev.resultado ? (
           <>
-            <div className="dilema-desenlace">{dil.resultado}</div>
+            {esLectura && (
+              <div className="lectura-cartas reveladas">
+                {ev.cartas.map((c, i) => (
+                  <div key={i} className={"carta carta--abierta" + (c.elegida ? " carta--elegida" : " carta--otra")}>
+                    <span className="carta-nombre">{c.nombre}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="dilema-desenlace">{ev.resultado}</div>
+            {ev.efecto && (
+              <div className={"efecto-aviso" + (ev.efecto.bueno ? " efecto--bueno" : " efecto--malo")} role="status">
+                {ev.efecto.titulo}
+              </div>
+            )}
             <BarraStats t={t} />
             <div className="hist-acciones">
               <button className="btn btn--apostar grande" onClick={() => transporte.historiaContinuar?.()}>
@@ -173,9 +191,25 @@ export function PantallaHistoria({
               </button>
             </div>
           </>
+        ) : esLectura ? (
+          <>
+            <p className="lectura-instr">Elige una carta. Lo que salga, salió.</p>
+            <div className="lectura-cartas">
+              {ev.cartas.map((c, i) => (
+                <button
+                  key={i}
+                  className="carta carta--dorso"
+                  onClick={() => transporte.historiaSacarCarta?.(i)}
+                  aria-label={`Dar vuelta la carta ${i + 1}`}
+                >
+                  <span className="carta-marca" aria-hidden="true" />
+                </button>
+              ))}
+            </div>
+          </>
         ) : (
           <div className="dilema-opciones">
-            {dil.opciones.map((o, i) => (
+            {ev.opciones.map((o, i) => (
               <button key={i} className="btn btn--calzar dilema-opcion" onClick={() => transporte.historiaElegir?.(i)}>
                 {o.etiqueta}
               </button>

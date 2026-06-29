@@ -14,7 +14,8 @@ import { guardarPrefs } from "./prefs";
 import {
   rivalActual,
   escenarioActual,
-  dilemaActual,
+  eventoActual,
+  etiquetaEfecto,
   avanzar,
   armarMesa,
   costoMejora,
@@ -28,12 +29,15 @@ import {
   type EstadoHistoria,
   type FaseHistoria,
   type VistaHistoria,
+  type EventoVista,
+  type Evento,
+  type EfectoMesa,
+  type PremioEvento,
   type ClaveAtributo,
   type ItemId,
   type MejoraVista,
   type ItemTiendaVista,
   type ItemManoVista,
-  type OpcionDilema,
 } from "./historia";
 
 export class TransporteHistoria implements Transporte {
@@ -50,8 +54,12 @@ export class TransporteHistoria implements Transporte {
   /** Items gastados en el encuentro EN CURSO. No se descuentan del inventario
    *  hasta GANAR: si pierdes y reintentas (o recargas a mitad), los recuperas. */
   private itemsGastados: Record<ItemId, number> = { cargado: 0, marcado: 0, soplon: 0 };
-  /** Opción de dilema ya elegida (para mostrar el desenlace antes de seguir). */
-  private dilemaElegido: OpcionDilema | null = null;
+  /** Evento de calle en curso (dilema, pelea o lectura) y su desenlace. */
+  private eventoEnCurso: Evento | null = null;
+  private eventoResultado: string | null = null;
+  private eventoEfecto: EfectoMesa | null = null;
+  /** Lectura: índice de la carta elegida (para revelarla). */
+  private cartaElegida: number | null = null;
 
   constructor(estado: EstadoHistoria) {
     this.h = normalizar(estado);
@@ -88,14 +96,28 @@ export class TransporteHistoria implements Transporte {
     this.suerteUsos = this.h.atributos.suerte;
     this.soplonActivo = false;
     this.itemsGastados = { cargado: 0, marcado: 0, soplon: 0 };
-    this.dilemaElegido = null;
+    this.eventoEnCurso = null;
+
+    // Efecto pendiente (de una lectura o pelea): se consume en esta mesa.
+    const ef = this.h.efectoPendiente ?? null;
+    let cargarHumanoAlInicio = false;
+    if (ef) {
+      if (ef === "suerte_extra") this.suerteUsos += 1;
+      else if (ef === "sin_suerte") this.suerteUsos = 0;
+      else if (ef === "rival_cargado") this.dadoCargadoId = rivalActual(this.h).id;
+      else if (ef === "mano_cargada") cargarHumanoAlInicio = true;
+      this.h.efectoPendiente = null;
+      this.guardar();
+    }
+
     this.inner = new TransporteLocal(mesa.jugadores, {
       humanoId: HUMANO_ID,
       nivelPorJugador: mesa.nivelPorJugador,
       reglas: mesa.reglas,
     });
     this.innerUnsub = this.inner.suscribir(() => this.onInner());
-    this.aplicarTrampa();
+    this.aplicarTrampa(); // dado cargado del rival (boss tramposo o efecto rival_cargado)
+    if (cargarHumanoAlInicio) this.inner.cargarMano(HUMANO_ID); // ventaja "mano cargada"
     this.fase = "mesa";
     this.emitir();
   }
@@ -126,13 +148,17 @@ export class TransporteHistoria implements Transporte {
     this.emitir();
   }
 
-  /** Empieza el encuentro: si hay un dilema pendiente, primero la decisión. */
+  /** Empieza el encuentro: si hay un evento de calle pendiente, va primero. */
   historiaEmpezar() {
     if (this.fase !== "intro") return;
     this.h.prologoVisto = true;
-    if (dilemaActual(this.h)) {
-      this.dilemaElegido = null;
-      this.fase = "dilema";
+    const ev = eventoActual(this.h);
+    if (ev) {
+      this.eventoEnCurso = ev;
+      this.eventoResultado = null;
+      this.eventoEfecto = null;
+      this.cartaElegida = null;
+      this.fase = "evento";
       this.guardar();
       this.emitir();
     } else {
@@ -140,23 +166,47 @@ export class TransporteHistoria implements Transporte {
     }
   }
 
-  /** Resuelve el dilema actual eligiendo una opción. */
+  /** Aplica el premio de una opción/carta (plata, item, atributo o efecto). */
+  private aplicarPremio(p: PremioEvento) {
+    if (p.plata) this.h.plata = Math.max(0, this.h.plata + p.plata);
+    if (p.item) {
+      const meta = itemMeta(p.item);
+      this.h.inventario[p.item] = Math.min(meta.max, this.h.inventario[p.item] + 1);
+    }
+    if (p.atributo) {
+      const meta = ATRIBUTOS.find((a) => a.clave === p.atributo)!;
+      this.h.atributos[p.atributo] = Math.min(meta.max, this.h.atributos[p.atributo] + 1);
+    }
+    if (p.efecto) this.h.efectoPendiente = p.efecto;
+  }
+
+  /** Resuelve un evento de DECISIÓN (dilema/pelea) eligiendo una opción. */
   historiaElegir(opcionIdx: number) {
-    if (this.fase !== "dilema" || this.dilemaElegido) return;
-    const dil = dilemaActual(this.h);
-    const op = dil?.opciones[opcionIdx];
-    if (!dil || !op) return;
-    if (op.plata) this.h.plata = Math.max(0, this.h.plata + op.plata);
-    if (op.item) {
-      const meta = itemMeta(op.item);
-      this.h.inventario[op.item] = Math.min(meta.max, this.h.inventario[op.item] + 1);
-    }
-    if (op.atributo) {
-      const meta = ATRIBUTOS.find((a) => a.clave === op.atributo)!;
-      this.h.atributos[op.atributo] = Math.min(meta.max, this.h.atributos[op.atributo] + 1);
-    }
-    this.h.dilemasResueltos.push(dil.clave);
-    this.dilemaElegido = op;
+    if (this.fase !== "evento" || this.eventoResultado || !this.eventoEnCurso) return;
+    const ev = this.eventoEnCurso;
+    if (ev.tipo === "lectura") return;
+    const op = ev.opciones[opcionIdx];
+    if (!op) return;
+    this.aplicarPremio(op);
+    this.eventoResultado = op.resultado;
+    this.eventoEfecto = op.efecto ?? null;
+    if (!this.h.dilemasResueltos.includes(ev.clave)) this.h.dilemasResueltos.push(ev.clave);
+    this.guardar();
+    this.emitir();
+  }
+
+  /** Resuelve una LECTURA dando vuelta una carta. */
+  historiaSacarCarta(cartaIdx: number) {
+    if (this.fase !== "evento" || this.eventoResultado || !this.eventoEnCurso) return;
+    const ev = this.eventoEnCurso;
+    if (ev.tipo !== "lectura") return;
+    const c = ev.cartas[cartaIdx];
+    if (!c) return;
+    this.aplicarPremio(c);
+    this.cartaElegida = cartaIdx;
+    this.eventoResultado = c.resultado;
+    this.eventoEfecto = c.efecto ?? null;
+    if (!this.h.dilemasResueltos.includes(ev.clave)) this.h.dilemasResueltos.push(ev.clave);
     this.guardar();
     this.emitir();
   }
@@ -165,8 +215,8 @@ export class TransporteHistoria implements Transporte {
     if (this.fase === "derrota") this.montarPartida();
   }
   historiaContinuar() {
-    if (this.fase === "dilema") {
-      // Tras ver el desenlace del dilema, a la mesa.
+    if (this.fase === "evento") {
+      // Tras ver el desenlace del evento, a la mesa.
       this.montarPartida();
       return;
     }
@@ -305,15 +355,25 @@ export class TransporteHistoria implements Transporte {
       cantidad: this.h.inventario[it.id] - this.itemsGastados[it.id],
     })).filter((it) => it.cantidad > 0);
 
-    // En la fase de dilema mostramos el del escenario directamente: ya pudo
-    // quedar marcado como resuelto al elegir, pero seguimos mostrando su desenlace.
-    const dil = this.fase === "dilema" ? esc.dilema ?? null : null;
-    const dilema = dil
+    // En la fase de evento mostramos el que está en curso (puede ya estar
+    // resuelto: seguimos mostrando su desenlace antes de pasar a la mesa).
+    const ev = this.fase === "evento" ? this.eventoEnCurso : null;
+    const evento: EventoVista | null = ev
       ? {
-          titulo: dil.titulo,
-          texto: dil.texto,
-          opciones: dil.opciones.map((o) => ({ etiqueta: o.etiqueta })),
-          resultado: this.dilemaElegido?.resultado ?? null,
+          tipo: ev.tipo,
+          titulo: ev.titulo,
+          texto: ev.texto,
+          opciones: ev.tipo === "lectura" ? [] : ev.opciones.map((o) => ({ etiqueta: o.etiqueta })),
+          cartas:
+            ev.tipo === "lectura"
+              ? ev.cartas.map((c, i) => ({
+                  volteada: this.cartaElegida !== null,
+                  nombre: this.cartaElegida !== null ? c.nombre : null,
+                  elegida: i === this.cartaElegida,
+                }))
+              : [],
+          resultado: this.eventoResultado,
+          efecto: this.eventoEfecto ? etiquetaEfecto(this.eventoEfecto) : null,
         }
       : null;
 
@@ -346,7 +406,7 @@ export class TransporteHistoria implements Transporte {
       mejoras,
       itemsTienda,
       itemsEnMano,
-      dilema,
+      evento,
     };
   }
 

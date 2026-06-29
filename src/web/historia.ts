@@ -135,27 +135,45 @@ export function itemMeta(id: ItemId): ItemMeta {
   return ITEMS.find((x) => x.id === id)!;
 }
 
-// --- Dilemas (decisiones de calle que moldean tu camino) --------------------
+// --- Eventos entre mesas (decisiones, peleas, lecturas de suerte) -----------
 
-export interface OpcionDilema {
-  etiqueta: string;
-  /** Narración del desenlace de elegir esta opción. */
-  resultado: string;
+/** Efecto de UNA mesa (la inmediatamente siguiente al evento). Reutiliza las
+ *  trampas del motor: ventajas y desventajas que vienen de un evento. */
+export type EfectoMesa =
+  | "mano_cargada" // ventaja: tu mano sale concentrada
+  | "suerte_extra" // ventaja: +1 Suerte
+  | "rival_cargado" // desventaja: el rival juega con dados cargados
+  | "sin_suerte"; // desventaja: entras nervioso, sin Suerte
+
+/** Lo que entrega una opción de evento o una carta de lectura. */
+export interface PremioEvento {
   /** Plata que ganas (o pierdes, si es negativa). */
   plata?: number;
   /** Item que te llevas. */
   item?: ItemId;
   /** Atributo que sube un nivel, gratis. */
   atributo?: ClaveAtributo;
+  /** Ventaja/desventaja para la próxima mesa. */
+  efecto?: EfectoMesa;
 }
 
-export interface Dilema {
-  /** Clave única (para no repetirlo). */
-  clave: string;
-  titulo: string;
-  texto: string;
-  opciones: OpcionDilema[];
+export interface OpcionDilema extends PremioEvento {
+  etiqueta: string;
+  /** Narración del desenlace de elegir esta opción. */
+  resultado: string;
 }
+
+/** Una carta de la lectura de suerte: se da vuelta al elegirla. */
+export interface CartaLectura extends PremioEvento {
+  /** Nombre de la carta (se revela al darla vuelta). */
+  nombre: string;
+  resultado: string;
+}
+
+/** Un evento de calle entre mesas. */
+export type Evento =
+  | { tipo: "dilema" | "pelea"; clave: string; titulo: string; texto: string; opciones: OpcionDilema[] }
+  | { tipo: "lectura"; clave: string; titulo: string; texto: string; cartas: CartaLectura[] };
 
 export interface Escenario {
   clave: string;
@@ -166,8 +184,8 @@ export interface Escenario {
   intro: string;
   /** Narración al caer el boss del escenario (antes de la tienda). */
   epilogo: string;
-  /** Decisión de calle, al llegar al escenario (una vez). */
-  dilema?: Dilema;
+  /** Eventos de calle, cada uno antes de enfrentar al rival de ese índice. */
+  eventos?: { antesDe: number; evento: Evento }[];
   rivales: RivalHistoria[]; // termina en el boss
 }
 
@@ -183,16 +201,19 @@ export const CAMPANA: Escenario[] = [
     lugar: "Muelle de Valparaíso",
     ambiente: "Olor a pescado podrido y vino caliente.",
     intro: "Aquí parten todos los que sueñan con el cacho… y aquí se quedan casi todos. La mesa está pegajosa de vino y los parroquianos huelen la sangre nueva. Siéntate y demuestra que no eres uno más.",
-    epilogo: "La pocilga entera te mira distinto ahora. Doña Berta te sirve un trago de la casa, en silencio. Diste el primer paso fuera del barro.",
-    dilema: {
-      clave: "pocilga-cabro",
-      titulo: "El cabro de la puerta",
-      texto: "Un cabro chico, descalzo, te tira la manga. 'Tío, ¿le vigilo la puerta mientras juega? O si quiere… le consigo un dato de los que sirven.' Tiene cara de saber más de lo que aparenta.",
-      opciones: [
-        { etiqueta: "Págale por vigilar", plata: 40, resultado: "El cabro se planta en la puerta como perro guardián. Nadie te molesta, y de paso te llena los bolsillos con lo que le sobra a la casa. Primera plata de la noche." },
-        { etiqueta: "Mándalo por el dato", item: "soplon", resultado: "El cabro desaparece y vuelve con un soplón viejo que te susurra al oído cómo leer la mesa. Guárdate ese dato: vale más que la plata." },
-      ],
-    },
+    epilogo: "La pocilga entera te mira distinto ahora. Doña Berta te sirve un trago de la casa, en silencio. Afuera, dos hombres arrastran un saco pesado hacia el muelle; nadie voltea a mirar. Diste el primer paso fuera del barro… y aquí el barro se traga a la gente entera.",
+    eventos: [
+      { antesDe: 0, evento: {
+        tipo: "dilema",
+        clave: "pocilga-cabro",
+        titulo: "El cabro de la puerta",
+        texto: "Un cabro chico, descalzo, te tira la manga. 'Tío, ¿le vigilo la puerta mientras juega? O si quiere… le consigo un dato de los que sirven.' Tiene cara de saber más de lo que aparenta, y un corte mal cosido en la ceja.",
+        opciones: [
+          { etiqueta: "Págale por vigilar", plata: 40, resultado: "El cabro se planta en la puerta como perro guardián. Nadie te molesta, y de paso te llena los bolsillos con lo que le sobra a la casa. Primera plata de la noche." },
+          { etiqueta: "Mándalo por el dato", item: "soplon", resultado: "El cabro desaparece y vuelve con un soplón viejo que te susurra al oído cómo leer la mesa. 'Cuídese del que pierde y sonríe, tío.' Guárdate ese dato: vale más que la plata." },
+        ],
+      } },
+    ],
     rivales: [
       { id: "r-pulga", nombre: "El Pulguita", nivel: "facil", mesa: 4, esBoss: false, plata: 20,
         presentacion: "El más chico de la mesa te mide con una sonrisa de dientes podridos. Por algo le dicen Pulguita: salta de mesa en mesa picando a los novatos.",
@@ -218,15 +239,29 @@ export const CAMPANA: Escenario[] = [
     ambiente: "Cajones de fruta, sangre de matadero y plata sucia.",
     intro: "Subiste del puerto a la capital. En La Vega, de noche, la fruta tapa cosas peores y el que duda mal amanece flotando en el Mapocho. Aquí ya se juega por plata de verdad.",
     epilogo: "El Carnicero te da la mano con la suya manchada. 'Hay sangre nueva en Santiago', dice, y por primera vez no suena a amenaza. Suena a respeto.",
-    dilema: {
-      clave: "vega-billetera",
-      titulo: "La billetera en el cajón",
-      texto: "Moviendo un cajón de manzanas podridas, una billetera gorda cae al suelo. Nadie la vio caer… o eso crees. Adentro hay un fajo que huele a plata grande.",
-      opciones: [
-        { etiqueta: "Quédatela", plata: 90, resultado: "Te embolsas el fajo sin pestañear. Plata es plata. Pero al levantar la vista, El Charqui te clava los ojos desde su puesto: vio todo, y no olvida." },
-        { etiqueta: "Devuélvela", atributo: "colmillo", resultado: "Era del Carnicero. Te mira raro —nadie devuelve nada en La Vega— y te suelta, bajito, un consejo para oler la mentira ajena. Vale más que el fajo." },
-      ],
-    },
+    eventos: [
+      { antesDe: 0, evento: {
+        tipo: "dilema",
+        clave: "vega-billetera",
+        titulo: "La billetera en el cajón",
+        texto: "Moviendo un cajón de manzanas podridas encuentras una billetera gorda… y la mano fría del dueño todavía agarrada a ella, tiesa entre la fruta. Nadie va a reclamarla. Adentro hay un fajo que huele a plata grande.",
+        opciones: [
+          { etiqueta: "Quédatela", plata: 90, resultado: "Le sueltas los dedos al muerto y te embolsas el fajo sin pestañear. Plata es plata. Pero al levantar la vista, El Charqui te clava los ojos desde su puesto: vio todo, y no olvida." },
+          { etiqueta: "Déjala donde está", atributo: "colmillo", resultado: "Le cierras la mano al finado sobre su plata y te persignas. El Carnicero, que miraba de lejos, asiente lento: nadie respeta a los muertos en La Vega. Te susurra, al pasar, un consejo para oler la mentira ajena. Vale más que el fajo." },
+        ],
+      } },
+      { antesDe: 2, evento: {
+        tipo: "lectura",
+        clave: "vega-pitona",
+        titulo: "La Pitona de los cajones",
+        texto: "Una vieja ciega te agarra la muñeca con dedos de raíz. 'Te leo la suerte, mijo. Tres cartas. Elige una… pero cuidado: el destino acá no devuelve el vuelto.' Sus ojos blancos no te sueltan, y huele a flores de velorio.",
+        cartas: [
+          { nombre: "El Sol", efecto: "suerte_extra", resultado: "Sale El Sol. La vieja sonríe sin dientes. 'Andas con luz esta noche, mijo. La próxima mano te va a obedecer como perro.'" },
+          { nombre: "El Ahorcado", plata: 70, resultado: "Sale El Ahorcado, colgando sobre el Mapocho. La vieja escupe al suelo. 'Plata vas a tener… pero a alguien le van a cobrar tu suerte, y no vas a ser tú.' Te deja unos billetes sucios en la mano." },
+          { nombre: "La Mano Negra", efecto: "rival_cargado", resultado: "Sale La Mano Negra. La vieja te suelta de golpe, como quemada. 'Alguien te cargó los dados antes de que te sentaras, mijo. La próxima mesa viene torcida en tu contra. Reza.'" },
+        ],
+      } },
+    ],
     rivales: [
       { id: "r-charqui", nombre: "El Charqui", nivel: "medio", mesa: 5, esBoss: false, plata: 32,
         presentacion: "Entre cajones de fruta podrida, El Charqui reparte mesa para cinco. 'Esto no es el puerto, cabro.' Aquí ya se juega con plata que mancha.",
@@ -252,15 +287,29 @@ export const CAMPANA: Escenario[] = [
     ambiente: "Fierro oxidado, aceite quemado y trenes que ya no salen.",
     intro: "Te corriste la voz y te llamaron a la Maestranza: galpones muertos donde se juntan los pesados de verdad, los que ya no le temen a nadie. Acá no hay vino ni fruta que tape nada. Sólo fierro, y la pura mentira al hueso.",
     epilogo: "El Verdugo guarda su cacho en un saco de género y te mira de arriba abajo. 'Pasaste por el fierro y seguís de pie', gruñe. Te señala un boquerón oscuro entre los rieles: el camino sigue para abajo.",
-    dilema: {
-      clave: "maestranza-perro",
-      titulo: "El quiltro entre los fierros",
-      texto: "Un perro flaco, todo costilla, se acerca olfateando tu bolsillo. Trae el lomo pelado y los ojos de los que aguantaron mucho. En la Maestranza dicen que el que adopta a un quiltro de acá, adopta su suerte.",
-      opciones: [
-        { etiqueta: "Dale tu pan", atributo: "suerte", resultado: "Partes tu marraqueta y se la das. El quiltro te sigue toda la noche y se echa bajo tu silla. Los viejos asienten: ahora andas con suerte de la buena." },
-        { etiqueta: "Sigue de largo", plata: 50, resultado: "No estás para regalar pan. El perro se va con otro. Te guardas tu marraqueta y, de paso, lo que ibas a gastar en tonteras: la plata pesa más que la pena." },
-      ],
-    },
+    eventos: [
+      { antesDe: 0, evento: {
+        tipo: "dilema",
+        clave: "maestranza-perro",
+        titulo: "El quiltro entre los fierros",
+        texto: "Un perro flaco, todo costilla, se acerca olfateando tu bolsillo. Trae el lomo pelado y, en el hocico, sangre que no es suya. En la Maestranza dicen que el que adopta a un quiltro de acá, adopta su suerte… y sus muertos.",
+        opciones: [
+          { etiqueta: "Dale tu pan", atributo: "suerte", resultado: "Partes tu marraqueta y se la das. El quiltro te sigue toda la noche y se echa bajo tu silla, gruñendo a las sombras. Los viejos asienten: ahora andas con suerte de la buena." },
+          { etiqueta: "Sigue de largo", plata: 50, resultado: "No estás para regalar pan. El perro se va a olfatear un bulto tirado junto a los rieles que más vale no mirar. Te guardas tu marraqueta y lo que ibas a gastar en tonteras: la plata pesa más que la pena." },
+        ],
+      } },
+      { antesDe: 1, evento: {
+        tipo: "pelea",
+        clave: "maestranza-bronca",
+        titulo: "Bronca en los fierros",
+        texto: "Un soldador borracho te acusa de hacerle trampa en la mano anterior. Saca una cuchilla oxidada y la clava en la mesa, a un dedo de tus dados. El galpón se queda mudo. Acá las broncas no terminan con palabras; terminan en el saco de género.",
+        opciones: [
+          { etiqueta: "Rómpele la mano", efecto: "mano_cargada", resultado: "Le agarras la muñeca y la doblas hasta que algo cruje seco. El cuchillo cae. Nadie más te va a mirar feo esta noche. Te sientas a la próxima mesa con la sangre caliente y el pulso firme." },
+          { etiqueta: "Cómprale el silencio", plata: -60, resultado: "Le tiras unos billetes a la cara. El borracho los recoge del suelo, humillado, y se va mascullando una amenaza. Compraste paz… por ahora. En la Maestranza todo se cobra dos veces." },
+          { etiqueta: "Échale al Fundidor encima", item: "marcado", resultado: "Le murmuras al Fundidor que el borracho habló mal de él. Vuelan fierros. Cuando se asienta la polvareda, hay uno que no se levanta y nadie se agacha a ver. En el desorden te guardas unos dados marcados de la mesa." },
+        ],
+      } },
+    ],
     rivales: [
       { id: "r-fundidor", nombre: "El Fundidor", nivel: "avanzado", mesa: 5, esBoss: false, plata: 60,
         presentacion: "El calor del galpón te golpea antes que él. El Fundidor reparte para cinco entre chispas de soldadura. 'Aquí fundimos fierro… y novatos.'",
@@ -285,16 +334,30 @@ export const CAMPANA: Escenario[] = [
     lugar: "Tras una botillería en San Diego",
     ambiente: "Humo de cigarro barato y deudas que se pagan con sangre.",
     intro: "Bajaste por los rieles hasta una trastienda. Un foco amarillo cuelga sobre el paño verde y aquí ya nadie juega por plata: se juega por respeto, y a veces por la vida.",
-    epilogo: "El Croata apaga su cigarro sin apuro. 'Pocos me hacen sudar', dice. Te abre la puerta a lo más profundo. Del otro lado, todo es más oscuro.",
-    dilema: {
-      clave: "trastienda-prestamo",
-      titulo: "El adelanto del Notario",
-      texto: "El Notario te corre la silla antes de empezar. 'Joven, le adelanto un fajo contra sus ganancias de hoy. Firme aquí y juega tranquilo… o no firme nada, y siga debiéndose sólo a usted mismo.' La lapicera brilla más que su sonrisa.",
-      opciones: [
-        { etiqueta: "Firma el adelanto", plata: 120, resultado: "Firmas sin leer la letra chica —nunca hay que leerla— y te embolsas el fajo. Plata fresca para la mesa. La deuda, como todo aquí, ya verás cómo se paga." },
-        { etiqueta: "No le debas a nadie", atributo: "ojo", resultado: "Le devuelves la lapicera sin firmar. El Notario sonríe de verdad por una vez: 'Hombre libre.' Jugar sin deuda encima te aclara la vista como nada." },
-      ],
-    },
+    epilogo: "El Croata apaga su cigarro en el dorso de su propia mano, sin pestañear. 'Pocos me hacen sudar. El último fue hace diez años; lo sacaron del Mapocho en pedazos.' Te abre la puerta a lo más profundo. Del otro lado, todo es más oscuro.",
+    eventos: [
+      { antesDe: 0, evento: {
+        tipo: "dilema",
+        clave: "trastienda-prestamo",
+        titulo: "El adelanto del Notario",
+        texto: "El Notario te corre la silla antes de empezar. 'Joven, le adelanto un fajo contra sus ganancias de hoy. Firme aquí y juega tranquilo… o no firme nada, y siga debiéndose sólo a usted mismo.' La lapicera brilla más que su sonrisa, y la última firma de su libreta está tachada con una cruz.",
+        opciones: [
+          { etiqueta: "Firma el adelanto", plata: 120, resultado: "Firmas sin leer la letra chica —nunca hay que leerla— y te embolsas el fajo. Plata fresca para la mesa. La deuda, como todo aquí, ya verás con qué se paga." },
+          { etiqueta: "No le debas a nadie", atributo: "ojo", resultado: "Le devuelves la lapicera sin firmar. El Notario sonríe de verdad por una vez: 'Hombre libre. Qué raro ver uno con vida.' Jugar sin deuda encima te aclara la vista como nada." },
+        ],
+      } },
+      { antesDe: 2, evento: {
+        tipo: "pelea",
+        clave: "trastienda-cobrador",
+        titulo: "El cobrador",
+        texto: "Un grandote con cara de cicatrices te corta el paso en el callejón. 'El que jugó antes que tú me debía plata, y se borró… abajo del puente. Alguien va a pagar esa deuda esta noche.' Sus nudillos truenan. La trastienda mira para otro lado, como siempre.",
+        opciones: [
+          { etiqueta: "Encáralo a combos", plata: 90, efecto: "sin_suerte", resultado: "Le sostienes la mirada y le caes encima. Sales del callejón con su fajo en el bolsillo y una costilla rota: la próxima mano la juegas con el cuerpo molido y el aire cortado." },
+          { etiqueta: "Paga la deuda del muerto", plata: -80, resultado: "Pagas lo que debía un finado, sólo para que te suelten. El cobrador cuenta los billetes y asiente. 'Hombre práctico.' Te deja pasar limpio, sin un rasguño, listo para la mesa." },
+          { etiqueta: "Señálale a otro", item: "soplon", resultado: "Le apuntas a un borracho que dormita en un rincón. El cobrador te cree. Lo último que ves al entrar es al pobre diablo arrastrado hacia el puente. No preguntes qué pasó después; te quedas con el dato que el borracho ya no va a usar." },
+        ],
+      } },
+    ],
     rivales: [
       { id: "r-notario", nombre: "El Notario", nivel: "avanzado", mesa: 3, esBoss: false, plata: 70,
         presentacion: "Bajo el foco amarillo, El Notario anota cada jugada en una libreta grasienta. 'Todo queda registrado, joven. Hasta su derrota de hoy.'",
@@ -319,16 +382,30 @@ export const CAMPANA: Escenario[] = [
     lugar: "Club clandestino bajo el río",
     ambiente: "Terciopelo gastado y armas bajo la mesa.",
     intro: "Para entrar pagaste con favores; para salir, hay que ganar. Aquí nadie pregunta nombres y todos tienen algo que esconder. Estás en lo profundo, y lo profundo se traga a los ambiciosos.",
-    epilogo: "El Senador se va sin pagar, claro, pero todos lo vieron caer. Por primera vez en años, alguien le ganó algo que no se compra. La noticia ya va subiendo… hasta la cumbre.",
-    dilema: {
-      clave: "club-madame",
-      titulo: "La mano privada de Madame Ruiz",
-      texto: "Madame Ruiz te aparta a un reservado de terciopelo. 'Antes del circo, una manito entre tú y yo, querido. Si me caes bien, te presto un favor de los míos. Si no… igual aprenderás algo.' Sus anillos valen más que toda la mesa.",
-      opciones: [
-        { etiqueta: "Acepta su juego", item: "marcado", resultado: "Juegas suave, la dejas ganar lo justo. Madame ríe encantada y te desliza un par de dados marcados bajo la servilleta. 'Para el capo de turno, mi amor. Que sufra él.'" },
-        { etiqueta: "Declina con clase", plata: 60, resultado: "Le besas la mano y declinas. 'Elegante el muchacho', ronronea, y te paga una propina sólo por el gesto. Guardas tu energía para la mesa de verdad." },
-      ],
-    },
+    epilogo: "El Senador se va sin pagar, claro, pero todos lo vieron caer. Antes de cruzar la puerta te deja una promesa con voz de terciopelo: 'Esto no te lo perdono ni muerto, cabro.' La noticia, igual, ya va subiendo… hasta la cumbre.",
+    eventos: [
+      { antesDe: 0, evento: {
+        tipo: "dilema",
+        clave: "club-madame",
+        titulo: "La mano privada de Madame Ruiz",
+        texto: "Madame Ruiz te aparta a un reservado de terciopelo manchado. 'Antes del circo, una manito entre tú y yo, querido. Si me caes bien, te presto un favor de los míos. Si no… igual aprenderás algo.' Sus anillos valen más que toda la mesa; uno lleva grabada una inicial que no es la suya.",
+        opciones: [
+          { etiqueta: "Acepta su juego", item: "marcado", resultado: "Juegas suave, la dejas ganar lo justo. Madame ríe encantada y te desliza un par de dados marcados bajo la servilleta. 'Para el capo de turno, mi amor. Que sufra él, como sufrieron otros.'" },
+          { etiqueta: "Declina con clase", plata: 60, resultado: "Le besas la mano y declinas. 'Elegante el muchacho', ronronea, y te paga una propina sólo por el gesto. Guardas tu energía para la mesa de verdad." },
+        ],
+      } },
+      { antesDe: 2, evento: {
+        tipo: "lectura",
+        clave: "club-tarot",
+        titulo: "Las cartas de Madame",
+        texto: "En el reservado, Madame baraja un mazo de tarot con uñas rojas como sangre fresca. 'Antes de seguir bajando, querido, deja que las cartas te digan cómo termina esto. Elige una. Lo que salga, salió: aquí abajo el destino se cumple sí o sí.'",
+        cartas: [
+          { nombre: "La Estrella", efecto: "suerte_extra", resultado: "La Estrella. Madame ronronea, complacida. 'El destino te debe una, mi amor. Cóbrasela en la próxima mano, sin pena.'" },
+          { nombre: "El Diablo", item: "cargado", resultado: "El Diablo, riéndose desde la carta. Madame se persigna con la mano de los anillos. 'Vas a ganar… pero algo se te va a pedir a cambio, más arriba.' Te desliza un cacho cargado bajo la mesa, como anticipo del pacto." },
+          { nombre: "La Torre", efecto: "rival_cargado", resultado: "La Torre, cayéndose en llamas con dos cuerpos despeñados. Madame frunce el ceño. 'El de abajo te espera con todo comprado, hasta los dados. La próxima mesa viene torcida. Cuídate, lindo.'" },
+        ],
+      } },
+    ],
     rivales: [
       { id: "r-madame", nombre: "Madame Ruiz", nivel: "experto", mesa: 6, esBoss: false, plata: 90,
         presentacion: "Terciopelo gastado y seis sillas. Madame Ruiz preside lo profundo con anillos que valen más que toda la mesa. 'Pocos llegan tan abajo, querido.'",
@@ -353,16 +430,19 @@ export const CAMPANA: Escenario[] = [
     lugar: "Penthouse, lo más alto de Santiago",
     ambiente: "Desde este ventanal se ve todo Chile encendido.",
     intro: "Llegaste desde el último muelle hasta el cielo. Abajo, toda la ciudad. Arriba, nada. Sólo queda un nombre por borrar del mapa, y te está esperando con una sonrisa de treinta años.",
-    epilogo: "El cacho, por fin, tiene un dueño nuevo.",
-    dilema: {
-      clave: "cumbre-oferta",
-      titulo: "La oferta del Heredero",
-      texto: "El Heredero te corta el paso antes del salón final. 'Mira, seamos claros: te doy la mitad de mi fortuna ahora mismo, en efectivo, y te devuelves al barro siendo rico. O entras ahí y el Rey te entierra. ¿Qué dice el forastero?'",
-      opciones: [
-        { etiqueta: "Escúpele la oferta", atributo: "ojo", resultado: "Le escupes a los pies. 'No vine por tu plata. Vine por el trono.' El Heredero palidece. Esa rabia fría te despierta cada sentido: nunca viste la mesa tan clara." },
-        { etiqueta: "Ríete en su cara", atributo: "colmillo", resultado: "Te ríes hasta que se te saltan las lágrimas. El Heredero aprieta los puños, humillado. Leer el miedo ajeno —ese de él, justo ahora— te afila el colmillo como ninguna lección." },
-      ],
-    },
+    epilogo: "El Rey deja su cacho sobre el paño con manos que, por primera vez en treinta años, le tiemblan. Afuera, el Mapocho se lleva en silencio a todos los que apostaron antes que tú y perdieron; esta noche, por fin, el río pasa de largo. Subiste desde un saco de pescado podrido hasta el cielo de Santiago, dejando una estela de tahúres caídos, y nadie —nadie— quedó por encima de tu nombre. El cacho, al fin, tiene un dueño nuevo. Duerme con un ojo abierto: el trono se gana una vez, pero se defiende toda la vida.",
+    eventos: [
+      { antesDe: 0, evento: {
+        tipo: "dilema",
+        clave: "cumbre-oferta",
+        titulo: "La oferta del Heredero",
+        texto: "El Heredero te corta el paso antes del salón final. 'Mira, seamos claros: te doy la mitad de mi fortuna ahora mismo, en efectivo, y te devuelves al barro siendo rico. O entras ahí y el Rey te entierra junto a todos los que lo intentaron —y son hartos, mira el ventanal.' Afuera, el río brilla negro.",
+        opciones: [
+          { etiqueta: "Escúpele la oferta", atributo: "ojo", resultado: "Le escupes a los pies. 'No vine por tu plata. Vine por el trono.' El Heredero palidece. Esa rabia fría te despierta cada sentido: nunca viste la mesa tan clara." },
+          { etiqueta: "Ríete en su cara", atributo: "colmillo", resultado: "Te ríes hasta que se te saltan las lágrimas. El Heredero aprieta los puños, humillado. Leer el miedo ajeno —ese de él, justo ahora— te afila el colmillo como ninguna lección." },
+        ],
+      } },
+    ],
     rivales: [
       { id: "r-heredero", nombre: "El Heredero", nivel: "experto", mesa: 3, esBoss: false, plata: 150,
         presentacion: "El penthouse huele a dinero viejo. El Heredero te recibe con desprecio de cuna. 'Mi padre fue el segundo mejor de Chile. Yo seré el primero.'",
@@ -443,8 +523,10 @@ export interface EstadoHistoria {
   completado: boolean;
   /** Para mostrar el prólogo sólo una vez. */
   prologoVisto?: boolean;
-  /** Claves de dilemas ya resueltos (para no repetirlos). */
+  /** Claves de eventos ya resueltos (dilemas, peleas, lecturas — no se repiten). */
   dilemasResueltos: string[];
+  /** Ventaja/desventaja para la PRÓXIMA mesa (de una lectura o pelea). */
+  efectoPendiente?: EfectoMesa | null;
   /** Versión del formato (para migrar índices de escenario al crecer la campaña). */
   version?: number;
 }
@@ -494,12 +576,27 @@ export function rivalActual(h: EstadoHistoria): RivalHistoria {
   return esc.rivales[Math.min(h.rivalIdx, esc.rivales.length - 1)]!;
 }
 
-/** El dilema del escenario actual, si toca (primer rival y aún sin resolver). */
-export function dilemaActual(h: EstadoHistoria): Dilema | null {
+/** El evento de calle que toca antes del rival actual (si hay y sin resolver). */
+export function eventoActual(h: EstadoHistoria): Evento | null {
   const esc = escenarioActual(h);
-  if (h.rivalIdx !== 0 || !esc.dilema) return null;
-  if (h.dilemasResueltos.includes(esc.dilema.clave)) return null;
-  return esc.dilema;
+  for (const e of esc.eventos ?? []) {
+    if (e.antesDe === h.rivalIdx && !h.dilemasResueltos.includes(e.evento.clave)) return e.evento;
+  }
+  return null;
+}
+
+/** Etiqueta humana de un efecto de mesa (para la UI). */
+export function etiquetaEfecto(ef: EfectoMesa): { titulo: string; bueno: boolean } {
+  switch (ef) {
+    case "mano_cargada":
+      return { titulo: "Ventaja · tu próxima mano sale cargada", bueno: true };
+    case "suerte_extra":
+      return { titulo: "Ventaja · +1 Suerte para la próxima mesa", bueno: true };
+    case "rival_cargado":
+      return { titulo: "Desventaja · el rival jugará con dados cargados", bueno: false };
+    case "sin_suerte":
+      return { titulo: "Desventaja · entras nervioso: sin Suerte", bueno: false };
+  }
 }
 
 export function avanzar(h: EstadoHistoria): { tienda: boolean; final: boolean } {
@@ -556,7 +653,7 @@ export function armarMesa(h: EstadoHistoria): {
 // Vista para la UI
 // ---------------------------------------------------------------------------
 
-export type FaseHistoria = "intro" | "dilema" | "mesa" | "victoria" | "derrota" | "tienda" | "final";
+export type FaseHistoria = "intro" | "evento" | "mesa" | "victoria" | "derrota" | "tienda" | "final";
 
 export interface MejoraVista {
   clave: ClaveAtributo;
@@ -586,12 +683,28 @@ export interface ItemManoVista {
   cantidad: number;
 }
 
-export interface DilemaVista {
+/** Una carta de lectura, como la ve la UI. */
+export interface CartaVista {
+  /** Boca abajo hasta darla vuelta. */
+  volteada: boolean;
+  /** Nombre, sólo si está volteada. */
+  nombre: string | null;
+  /** true si fue la elegida. */
+  elegida: boolean;
+}
+
+export interface EventoVista {
+  tipo: "dilema" | "pelea" | "lectura";
   titulo: string;
   texto: string;
+  /** Opciones (dilema/pelea). */
   opciones: { etiqueta: string }[];
-  /** Si ya elegiste, el desenlace a mostrar (con un botón para seguir). */
+  /** Cartas (lectura). */
+  cartas: CartaVista[];
+  /** Desenlace tras elegir/dar vuelta (con botón para seguir). */
   resultado: string | null;
+  /** Efecto otorgado por el desenlace (ventaja/desventaja), si hubo. */
+  efecto: { titulo: string; bueno: boolean } | null;
 }
 
 export interface VistaHistoria {
@@ -634,6 +747,6 @@ export interface VistaHistoria {
   itemsTienda: ItemTiendaVista[];
   /** Items en tu poder, para usar en la mesa. */
   itemsEnMano: ItemManoVista[];
-  /** Decisión de calle, si toca. */
-  dilema: DilemaVista | null;
+  /** Evento de calle (decisión, pelea o lectura de suerte), si toca. */
+  evento: EventoVista | null;
 }

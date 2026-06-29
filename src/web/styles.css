@@ -767,6 +767,53 @@ button { touch-action: manipulation; }
   padding: 12px 14px; max-width: 27em; line-height: 1.55; color: var(--texto); text-align: left;
 }
 
+/* Pelea: la misma decisión pero con acento de sangre. */
+.hist-pelea .hist-kicker { color: var(--sangre-viva); }
+.hist-pelea .hist-titulo { color: #e8c8bc; }
+.hist-pelea .dilema-opcion { border-color: rgba(178, 58, 46, 0.5); }
+
+/* Lectura de suerte: cartas para elegir. */
+.lectura-instr { color: var(--tenue); font-style: italic; font-size: 13px; margin: 2px 0; }
+.lectura-cartas { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 4px 0 2px; }
+.carta {
+  width: 78px; height: 116px; border-radius: 12px; display: grid; place-items: center;
+  background: none; padding: 0; position: relative;
+}
+.carta--dorso {
+  border: 2px solid var(--oro); cursor: pointer;
+  background:
+    repeating-linear-gradient(45deg, rgba(200, 162, 74, 0.14) 0 6px, transparent 6px 12px),
+    linear-gradient(180deg, #241a2a, #15101a);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: transform 0.08s ease, box-shadow 0.15s ease;
+}
+.carta--dorso:active { transform: translateY(2px); }
+.carta--dorso .carta-marca {
+  width: 26px; height: 26px; border: 1.5px solid var(--oro); transform: rotate(45deg);
+  box-shadow: inset 0 0 0 4px rgba(200, 162, 74, 0.18);
+}
+.carta--dorso:hover { box-shadow: 0 0 0 1px var(--oro-claro), 0 10px 24px rgba(0, 0, 0, 0.55); }
+.carta--abierta {
+  border: 1px solid var(--linea);
+  background: linear-gradient(180deg, var(--humo-2), var(--humo));
+}
+.carta--elegida { border-color: var(--oro); box-shadow: 0 0 16px rgba(200, 162, 74, 0.45); }
+.carta--otra { opacity: 0.5; }
+.carta-nombre {
+  font-family: var(--display); font-size: 13.5px; color: var(--hueso); text-align: center;
+  padding: 0 6px; line-height: 1.2; letter-spacing: 0.5px;
+}
+.carta--elegida .carta-nombre { color: var(--oro-claro); }
+.reveladas { margin-bottom: 6px; }
+
+/* Aviso de ventaja / desventaja para la próxima mesa. */
+.efecto-aviso {
+  font-size: 13px; font-weight: 700; border-radius: 999px; padding: 7px 14px; max-width: max-content;
+  margin: 2px auto 0; letter-spacing: 0.2px;
+}
+.efecto--bueno { color: #15110a; background: linear-gradient(180deg, var(--oro-claro), var(--oro)); }
+.efecto--malo { color: #f1d6cf; background: rgba(143, 45, 36, 0.3); border: 1px solid var(--sangre-viva); }
+
 /* Tienda: secciones y stock de items */
 .tienda-seccion-tit {
   font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--oro);

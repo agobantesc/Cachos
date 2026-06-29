@@ -6,7 +6,7 @@ import {
   historiaNueva,
   normalizar,
   armarMesa,
-  dilemaActual,
+  eventoActual,
   type EstadoHistoria,
 } from "../historia";
 import { TransporteHistoria } from "../transporteHistoria";
@@ -48,10 +48,11 @@ describe("campaña", () => {
     expect(tam.has(6)).toBe(true);
   });
 
-  it("los ids de rival son únicos y los dilemas no se repiten de clave", () => {
+  it("los ids de rival son únicos y los eventos no repiten clave", () => {
     const ids = CAMPANA.flatMap((e) => e.rivales.map((r) => r.id));
     expect(new Set(ids).size).toBe(ids.length);
-    const claves = CAMPANA.map((e) => e.dilema?.clave).filter(Boolean);
+    const claves = CAMPANA.flatMap((e) => (e.eventos ?? []).map((x) => x.evento.clave));
+    expect(claves.length).toBeGreaterThan(6); // 6 dilemas + lecturas/peleas nuevas
     expect(new Set(claves).size).toBe(claves.length);
   });
 
@@ -111,24 +112,49 @@ describe("normalizar (migración de saves)", () => {
   });
 });
 
-describe("dilemas e items (TransporteHistoria)", () => {
-  it("empezar entra al dilema; elegir entrega el premio y muestra el desenlace", () => {
+describe("eventos e items (TransporteHistoria)", () => {
+  it("empezar entra al evento (dilema); elegir entrega el premio y muestra el desenlace", () => {
     const th = new TransporteHistoria(historiaNueva("Detective"));
     th.historiaEmpezar();
     let v = th.instantanea().historia!;
-    expect(v.faseHistoria).toBe("dilema");
-    expect(v.dilema).toBeTruthy();
-    expect(v.dilema!.opciones.length).toBe(2);
-    expect(v.dilema!.resultado).toBeNull();
+    expect(v.faseHistoria).toBe("evento");
+    expect(v.evento!.tipo).toBe("dilema");
+    expect(v.evento!.opciones.length).toBe(2);
+    expect(v.evento!.resultado).toBeNull();
 
     // Opción del soplón (índice 1 en La Pocilga).
     th.historiaElegir!(1);
     v = th.instantanea().historia!;
-    expect(v.dilema!.resultado).toBeTruthy();
+    expect(v.evento!.resultado).toBeTruthy();
     expect(v.itemsEnMano.some((it) => it.id === "soplon" && it.cantidad === 1)).toBe(true);
 
     th.historiaContinuar!();
     expect(th.instantanea().historia!.faseHistoria).toBe("mesa");
+    th.detener();
+  });
+
+  it("la lectura de suerte da vuelta una carta y aplica su efecto (ventaja a la mesa)", () => {
+    const h = historiaNueva("Pitona");
+    h.escenarioIdx = 1; // La Vega
+    h.rivalIdx = 2; // la lectura está antesDe 2
+    const th = new TransporteHistoria(h);
+    th.historiaEmpezar();
+    let v = th.instantanea().historia!;
+    expect(v.faseHistoria).toBe("evento");
+    expect(v.evento!.tipo).toBe("lectura");
+    expect(v.evento!.cartas.length).toBe(3);
+    expect(v.evento!.cartas.every((c) => !c.volteada)).toBe(true);
+
+    th.historiaSacarCarta!(0); // El Sol -> suerte_extra
+    v = th.instantanea().historia!;
+    expect(v.evento!.resultado).toBeTruthy();
+    expect(v.evento!.efecto?.bueno).toBe(true);
+    expect(v.evento!.cartas[0]!.elegida).toBe(true);
+
+    th.historiaContinuar!(); // a la mesa: la ventaja suma +1 a la Suerte
+    v = th.instantanea().historia!;
+    expect(v.faseHistoria).toBe("mesa");
+    expect(v.suerteDisponible).toBe(1); // atributo 0 + 1 de la ventaja
     th.detener();
   });
 
@@ -168,14 +194,15 @@ describe("dilemas e items (TransporteHistoria)", () => {
     }
   });
 
-  it("dilemaActual sólo aparece en el primer rival y no si ya fue resuelto", () => {
+  it("eventoActual aparece antes del rival indicado y no si ya fue resuelto", () => {
     const h = historiaNueva("X");
-    expect(dilemaActual(h)).toBeTruthy();
+    const ev0 = CAMPANA[0]!.eventos![0]!.evento;
+    expect(eventoActual(h)?.clave).toBe(ev0.clave); // antesDe 0
     h.rivalIdx = 1;
-    expect(dilemaActual(h)).toBeNull();
+    expect(eventoActual(h)).toBeNull(); // La Pocilga no tiene evento antesDe 1
     h.rivalIdx = 0;
-    h.dilemasResueltos = [CAMPANA[0]!.dilema!.clave];
-    expect(dilemaActual(h)).toBeNull();
+    h.dilemasResueltos = [ev0.clave];
+    expect(eventoActual(h)).toBeNull(); // ya resuelto
   });
 });
 
