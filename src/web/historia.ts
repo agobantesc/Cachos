@@ -651,6 +651,27 @@ export function eventoActual(h: EstadoHistoria): Evento | null {
   return null;
 }
 
+/** Estampa (viñeta) que ilustra cada evento, por su clave. Ver Escena.tsx. */
+const ESCENA_EVENTO: Record<string, string> = {
+  "pocilga-cabro": "cabro",
+  "vega-billetera": "billetera",
+  "vega-pitona": "lectura",
+  "maestranza-perro": "perro",
+  "maestranza-bronca": "cuchillo",
+  "trastienda-prestamo": "notario",
+  "trastienda-cobrador": "cobrador",
+  "club-madame": "lectura",
+  "club-hermano": "cuchillo",
+  "club-recado": "carnicero",
+  "club-tarot": "lectura",
+  "cumbre-oferta": "oferta",
+  "cumbre-huerfano": "huerfano",
+  "cumbre-aliado": "manoamiga",
+};
+export function escenaDe(clave: string): string {
+  return ESCENA_EVENTO[clave] ?? "generico";
+}
+
 /** Etiqueta humana de un efecto de mesa (para la UI). */
 export function etiquetaEfecto(ef: EfectoMesa): { titulo: string; bueno: boolean } {
   switch (ef) {
@@ -763,6 +784,8 @@ export interface EventoVista {
   tipo: "dilema" | "pelea" | "lectura";
   titulo: string;
   texto: string;
+  /** Clave de la estampa SVG que ilustra la escena (ver Escena.tsx). */
+  imagen: string;
   /** Opciones (dilema/pelea). */
   opciones: { etiqueta: string }[];
   /** Cartas (lectura). */

@@ -16,6 +16,7 @@ import {
   escenarioActual,
   eventoActual,
   etiquetaEfecto,
+  escenaDe,
   avanzar,
   armarMesa,
   costoMejora,
@@ -364,6 +365,7 @@ export class TransporteHistoria implements Transporte {
           tipo: ev.tipo,
           titulo: ev.titulo,
           texto: ev.texto,
+          imagen: escenaDe(ev.clave),
           opciones: ev.tipo === "lectura" ? [] : ev.opciones.map((o) => ({ etiqueta: o.etiqueta })),
           cartas:
             ev.tipo === "lectura"

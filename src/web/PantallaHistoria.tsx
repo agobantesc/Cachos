@@ -1,6 +1,7 @@
 // Pantallas del modo historia alrededor de la mesa: intro del rival, victoria,
 // derrota, la tienda (subir atributos) y el final de la campaña.
 import { Avatar } from "./Avatar";
+import { Escena } from "./Escena";
 import type { Instantanea, Transporte } from "./transporte";
 import type { VistaHistoria } from "./historia";
 
@@ -165,6 +166,7 @@ export function PantallaHistoria({
       <div className={"pantalla historia-pantalla" + (esPelea ? " hist-pelea" : "")}>
         <span className="hist-kicker">{kicker}</span>
         <h1 className="hist-titulo">{ev.titulo}</h1>
+        <Escena escena={ev.imagen} />
         <p className="hist-dialogo dilema-texto">{ev.texto}</p>
 
         {ev.resultado ? (

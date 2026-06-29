@@ -758,6 +758,13 @@ button { touch-action: manipulation; }
 .hb-item b { color: var(--oro); }
 
 /* Dilema (decisión de calle) */
+/* Estampa (viñeta SVG) que ilustra cada evento. */
+.escena {
+  display: block; width: 100%; max-width: 360px; height: auto; aspect-ratio: 320 / 140;
+  border-radius: 14px; margin: 2px auto 4px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5);
+}
+
 .dilema-texto { max-width: 27em; font-style: normal; }
 .dilema-opciones { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 360px; margin-top: 4px; }
 .dilema-opcion { width: 100%; padding: 14px; font-size: 15px; text-align: center; line-height: 1.3; }
