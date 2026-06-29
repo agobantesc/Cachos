@@ -56,6 +56,27 @@ describe("campaña", () => {
     expect(new Set(claves).size).toBe(claves.length);
   });
 
+  it("toda consecuencia (requiere) tiene una causa que la dispara en un capítulo anterior", () => {
+    // marca -> índice de escenario donde se PUEDE obtener
+    const producidaEn = new Map<string, number[]>();
+    CAMPANA.forEach((e, ei) =>
+      (e.eventos ?? []).forEach((pe) => {
+        const premios = pe.evento.tipo === "lectura" ? pe.evento.cartas : pe.evento.opciones;
+        premios.forEach((p) => {
+          if (p.marca) producidaEn.set(p.marca, [...(producidaEn.get(p.marca) ?? []), ei]);
+        });
+      }),
+    );
+    CAMPANA.forEach((e, ei) =>
+      (e.eventos ?? []).forEach((pe) => {
+        if (!pe.requiere) return;
+        const fuentes = producidaEn.get(pe.requiere) ?? [];
+        expect(fuentes.length, `la marca ${pe.requiere} se produce en algún lado`).toBeGreaterThan(0);
+        expect(fuentes.some((idx) => idx < ei), `la marca ${pe.requiere} se obtiene antes del cap. ${ei}`).toBe(true);
+      }),
+    );
+  });
+
   it("La Maestranza traslada la habilidad 'Puro fierro' (as no comodín) a la mesa", () => {
     const idx = CAMPANA.findIndex((e) => e.clave === "maestranza");
     expect(idx).toBeGreaterThan(0);
@@ -192,6 +213,39 @@ describe("eventos e items (TransporteHistoria)", () => {
       expect(it.costo).toBeGreaterThan(0);
       expect(it.max).toBeGreaterThan(0);
     }
+  });
+
+  it("una decisión deja marca, y la marca ramifica eventos futuros", () => {
+    // En La Vega, robarle al muerto deja la marca "saqueador".
+    const h = historiaNueva("Saq");
+    h.escenarioIdx = 1; // La Vega
+    h.rivalIdx = 0; // la billetera está antesDe 0
+    const th = new TransporteHistoria(h);
+    th.historiaEmpezar();
+    expect(th.instantanea().historia!.evento!.tipo).toBe("dilema");
+    th.historiaElegir!(0); // "Quédatela"
+    expect(th.instantanea().historia!.marcas).toContain("saqueador");
+    th.detener();
+
+    // Más adelante (El Subterráneo), esa marca abre la consecuencia "el hermano".
+    const idxClub = CAMPANA.findIndex((e) => e.clave === "club");
+    const base = () => {
+      const x = historiaNueva("X");
+      x.escenarioIdx = idxClub;
+      x.rivalIdx = 1;
+      return x;
+    };
+    const conSaqueador = base();
+    conSaqueador.marcas = ["saqueador"];
+    expect(eventoActual(conSaqueador)?.clave).toBe("club-hermano");
+
+    const conHonrado = base();
+    conHonrado.marcas = ["honrado"];
+    expect(eventoActual(conHonrado)?.clave).toBe("club-recado");
+
+    const sinMarca = base();
+    sinMarca.marcas = [];
+    expect(eventoActual(sinMarca)).toBeNull(); // sin pasado, no hay consecuencia
   });
 
   it("eventoActual aparece antes del rival indicado y no si ya fue resuelto", () => {

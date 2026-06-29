@@ -155,6 +155,8 @@ export interface PremioEvento {
   atributo?: ClaveAtributo;
   /** Ventaja/desventaja para la próxima mesa. */
   efecto?: EfectoMesa;
+  /** Marca que queda en tu historial: cambia el rumbo de eventos futuros. */
+  marca?: string;
 }
 
 export interface OpcionDilema extends PremioEvento {
@@ -175,6 +177,17 @@ export type Evento =
   | { tipo: "dilema" | "pelea"; clave: string; titulo: string; texto: string; opciones: OpcionDilema[] }
   | { tipo: "lectura"; clave: string; titulo: string; texto: string; cartas: CartaLectura[] };
 
+/** Un evento agendado: aparece antes del rival `antesDe`, quizá condicionado a
+ *  una MARCA previa (así una decisión de antes cambia lo que viene después). */
+export interface EventoProgramado {
+  antesDe: number;
+  evento: Evento;
+  /** Sólo aparece si llevas esta marca (una consecuencia de tu pasado). */
+  requiere?: string;
+  /** No aparece si llevas esta marca. */
+  vetadoPor?: string;
+}
+
 export interface Escenario {
   clave: string;
   nombre: string;
@@ -184,8 +197,8 @@ export interface Escenario {
   intro: string;
   /** Narración al caer el boss del escenario (antes de la tienda). */
   epilogo: string;
-  /** Eventos de calle, cada uno antes de enfrentar al rival de ese índice. */
-  eventos?: { antesDe: number; evento: Evento }[];
+  /** Eventos de calle (decisiones, peleas, lecturas y consecuencias). */
+  eventos?: EventoProgramado[];
   rivales: RivalHistoria[]; // termina en el boss
 }
 
@@ -246,8 +259,8 @@ export const CAMPANA: Escenario[] = [
         titulo: "La billetera en el cajón",
         texto: "Moviendo un cajón de manzanas podridas encuentras una billetera gorda… y la mano fría del dueño todavía agarrada a ella, tiesa entre la fruta. Nadie va a reclamarla. Adentro hay un fajo que huele a plata grande.",
         opciones: [
-          { etiqueta: "Quédatela", plata: 90, resultado: "Le sueltas los dedos al muerto y te embolsas el fajo sin pestañear. Plata es plata. Pero al levantar la vista, El Charqui te clava los ojos desde su puesto: vio todo, y no olvida." },
-          { etiqueta: "Déjala donde está", atributo: "colmillo", resultado: "Le cierras la mano al finado sobre su plata y te persignas. El Carnicero, que miraba de lejos, asiente lento: nadie respeta a los muertos en La Vega. Te susurra, al pasar, un consejo para oler la mentira ajena. Vale más que el fajo." },
+          { etiqueta: "Quédatela", plata: 90, marca: "saqueador", resultado: "Le sueltas los dedos al muerto y te embolsas el fajo sin pestañear. Plata es plata. Pero al levantar la vista, un cargador joven te clava los ojos desde el fondo: vio todo, y se queda mirándote el rostro como quien aprende una cara de memoria." },
+          { etiqueta: "Déjala donde está", atributo: "colmillo", marca: "honrado", resultado: "Le cierras la mano al finado sobre su plata y te persignas. El Carnicero, que miraba de lejos, asiente lento: nadie respeta a los muertos en La Vega. Te susurra, al pasar, un consejo para oler la mentira ajena. 'Me acordaré de esto', dice. Y el Carnicero nunca olvida un favor." },
         ],
       } },
       { antesDe: 2, evento: {
@@ -306,7 +319,7 @@ export const CAMPANA: Escenario[] = [
         opciones: [
           { etiqueta: "Rómpele la mano", efecto: "mano_cargada", resultado: "Le agarras la muñeca y la doblas hasta que algo cruje seco. El cuchillo cae. Nadie más te va a mirar feo esta noche. Te sientas a la próxima mesa con la sangre caliente y el pulso firme." },
           { etiqueta: "Cómprale el silencio", plata: -60, resultado: "Le tiras unos billetes a la cara. El borracho los recoge del suelo, humillado, y se va mascullando una amenaza. Compraste paz… por ahora. En la Maestranza todo se cobra dos veces." },
-          { etiqueta: "Échale al Fundidor encima", item: "marcado", resultado: "Le murmuras al Fundidor que el borracho habló mal de él. Vuelan fierros. Cuando se asienta la polvareda, hay uno que no se levanta y nadie se agacha a ver. En el desorden te guardas unos dados marcados de la mesa." },
+          { etiqueta: "Échale al Fundidor encima", item: "marcado", marca: "sangre-fria", resultado: "Le murmuras al Fundidor que el borracho habló mal de él. Vuelan fierros. Cuando se asienta la polvareda, hay uno que no se levanta y nadie se agacha a ver. En el desorden te guardas unos dados marcados de la mesa. Aprendiste algo de ti esta noche, y no te gustó." },
         ],
       } },
     ],
@@ -354,7 +367,7 @@ export const CAMPANA: Escenario[] = [
         opciones: [
           { etiqueta: "Encáralo a combos", plata: 90, efecto: "sin_suerte", resultado: "Le sostienes la mirada y le caes encima. Sales del callejón con su fajo en el bolsillo y una costilla rota: la próxima mano la juegas con el cuerpo molido y el aire cortado." },
           { etiqueta: "Paga la deuda del muerto", plata: -80, resultado: "Pagas lo que debía un finado, sólo para que te suelten. El cobrador cuenta los billetes y asiente. 'Hombre práctico.' Te deja pasar limpio, sin un rasguño, listo para la mesa." },
-          { etiqueta: "Señálale a otro", item: "soplon", resultado: "Le apuntas a un borracho que dormita en un rincón. El cobrador te cree. Lo último que ves al entrar es al pobre diablo arrastrado hacia el puente. No preguntes qué pasó después; te quedas con el dato que el borracho ya no va a usar." },
+          { etiqueta: "Señálale a otro", item: "soplon", marca: "delator", resultado: "Le apuntas a un viejo que dormita en un rincón con un niño dormido en las piernas. El cobrador se lo lleva. Lo último que ves es al crío despertando solo, gritando un nombre hacia el puente. No preguntes qué pasó después; te quedas con el dato que el viejo ya no va a usar." },
         ],
       } },
     ],
@@ -392,6 +405,27 @@ export const CAMPANA: Escenario[] = [
         opciones: [
           { etiqueta: "Acepta su juego", item: "marcado", resultado: "Juegas suave, la dejas ganar lo justo. Madame ríe encantada y te desliza un par de dados marcados bajo la servilleta. 'Para el capo de turno, mi amor. Que sufra él, como sufrieron otros.'" },
           { etiqueta: "Declina con clase", plata: 60, resultado: "Le besas la mano y declinas. 'Elegante el muchacho', ronronea, y te paga una propina sólo por el gesto. Guardas tu energía para la mesa de verdad." },
+        ],
+      } },
+      { antesDe: 1, requiere: "saqueador", evento: {
+        tipo: "pelea",
+        clave: "club-hermano",
+        titulo: "El hermano del finado",
+        texto: "Un cargador joven se planta frente a tu mesa, temblando. 'Tú le sacaste la billetera a mi hermano muerto, allá en La Vega. Lo enterré sin un peso por tu culpa, y te seguí hasta este agujero.' Saca una corvina de destripar pescado, todavía con escamas. Es la cara que te miraba aquella noche.",
+        opciones: [
+          { etiqueta: "Devuélvele el doble", plata: -160, resultado: "Le pones el doble del fajo en la mano. El muchacho llora, escupe, se lo guarda. 'Esto no devuelve a mi hermano… pero me deja dormir.' Se va. Saldaste una deuda que creías gratis." },
+          { etiqueta: "Acábalo tú primero", efecto: "sin_suerte", marca: "asesino", resultado: "No alcanza a clavarte. Cuando todo termina, hay dos hermanos bajo el río en vez de uno. Te tiemblan las manos el resto de la noche: la próxima mano la juegas con la culpa pesándote en los dedos." },
+          { etiqueta: "Niégalo todo", efecto: "rival_cargado", resultado: "Lo miras a los ojos y le juras que se equivocó de hombre. Casi te cree… pero algo en tu cara lo delata, y se va prometiendo volver con gente. Entras a la mesa sabiendo que alguien, en las sombras, ya juega en tu contra." },
+        ],
+      } },
+      { antesDe: 1, requiere: "honrado", evento: {
+        tipo: "dilema",
+        clave: "club-recado",
+        titulo: "El recado del Carnicero",
+        texto: "Un tipo enorme con delantal manchado te aparta del bullicio. 'El Carnicero manda saludos. Dice que un hombre que respeta a los muertos merece un respiro acá abajo.' Te ofrece, a elección, plata o algo bajo la manga. Su palabra, en este sótano, vale más que un arma.",
+        opciones: [
+          { etiqueta: "Acepta la plata", plata: 130, marca: "aliado", resultado: "Te pasa un fajo grueso. 'Por lo de La Vega.' El nombre del Carnicero, acá abajo, ahora también te cubre a ti. Por primera vez no estás del todo solo." },
+          { etiqueta: "Acepta el dato", item: "soplon", marca: "aliado", resultado: "Te susurra cómo respiran los de la mesa de abajo. 'El Carnicero ve todo. Y ahora, un poco, ve por ti.' Tienes un aliado donde nadie hace amigos." },
         ],
       } },
       { antesDe: 2, evento: {
@@ -440,6 +474,26 @@ export const CAMPANA: Escenario[] = [
         opciones: [
           { etiqueta: "Escúpele la oferta", atributo: "ojo", resultado: "Le escupes a los pies. 'No vine por tu plata. Vine por el trono.' El Heredero palidece. Esa rabia fría te despierta cada sentido: nunca viste la mesa tan clara." },
           { etiqueta: "Ríete en su cara", atributo: "colmillo", resultado: "Te ríes hasta que se te saltan las lágrimas. El Heredero aprieta los puños, humillado. Leer el miedo ajeno —ese de él, justo ahora— te afila el colmillo como ninguna lección." },
+        ],
+      } },
+      { antesDe: 1, requiere: "delator", evento: {
+        tipo: "dilema",
+        clave: "cumbre-huerfano",
+        titulo: "El mozo que te conoce",
+        texto: "Un mozo joven te llena la copa en el penthouse y se queda mirándote demasiado tiempo. Tiene los ojos de alguien que te buscó la cara durante años. 'Yo a usted lo conozco', dice bajito. 'Usted señaló a mi viejo, allá en la trastienda. Yo era el niño del puente.' No grita. Sólo deja la botella y espera.",
+        opciones: [
+          { etiqueta: "Cómprale el olvido", plata: -150, resultado: "Le metes un fajo en el delantal. No lo rechaza —el hambre manda— pero te mira con un asco que no se compra. La culpa, al menos, te la callas con plata por esta noche." },
+          { etiqueta: "Sostenle la mirada", efecto: "sin_suerte", marca: "sin-alma", resultado: "No bajas la vista. El crío entiende que no hay perdón ni vergüenza en ti, y algo se le apaga en la cara. Confirmar lo que eres también te cuesta: subes a la mesa de la Jueza con la mano fría y el pulso peor." },
+        ],
+      } },
+      { antesDe: 2, requiere: "aliado", evento: {
+        tipo: "dilema",
+        clave: "cumbre-aliado",
+        titulo: "Una mano amiga",
+        texto: "Cuando ya no esperabas a nadie, una figura conocida se cuela al penthouse: el hombre del Carnicero, el que te debía una desde La Vega. 'No vas a entrar solo a esa mesa', dice, y se acerca a tu oído. 'Te traigo cómo respira el Rey cuando miente. Treinta años de tics, en un susurro.'",
+        opciones: [
+          { etiqueta: "Acepta la ayuda", efecto: "suerte_extra", resultado: "Asientes. Por primera vez en toda la noche no estás solo frente a la mesa. Entras al duelo final con una ventaja que ningún Rey puede comprar: alguien de tu lado." },
+          { etiqueta: "Hazlo a tu manera", efecto: "mano_cargada", resultado: "Le agradeces y le dices que esta la juegas solo, como empezaste. Pero el dato te queda dando vueltas y la mano te sale firme: entras al trono con el pulso de hierro." },
         ],
       } },
     ],
@@ -525,6 +579,9 @@ export interface EstadoHistoria {
   prologoVisto?: boolean;
   /** Claves de eventos ya resueltos (dilemas, peleas, lecturas — no se repiten). */
   dilemasResueltos: string[];
+  /** Marcas de tu pasado (honrado, saqueador, delator, aliado…): condicionan
+   *  eventos de consecuencia más adelante. Tus decisiones cambian el rumbo. */
+  marcas: string[];
   /** Ventaja/desventaja para la PRÓXIMA mesa (de una lectura o pelea). */
   efectoPendiente?: EfectoMesa | null;
   /** Versión del formato (para migrar índices de escenario al crecer la campaña). */
@@ -542,6 +599,7 @@ export function historiaNueva(nombre: string): EstadoHistoria {
     completado: false,
     prologoVisto: false,
     dilemasResueltos: [],
+    marcas: [],
     version: HISTORIA_VERSION,
   };
 }
@@ -564,6 +622,7 @@ export function normalizar(h: EstadoHistoria): EstadoHistoria {
     atributos: atributosLimpios(h.atributos),
     inventario: inventarioLimpio(h.inventario),
     dilemasResueltos: Array.isArray(h.dilemasResueltos) ? h.dilemasResueltos : [],
+    marcas: Array.isArray(h.marcas) ? h.marcas : [],
     version: HISTORIA_VERSION,
   };
 }
@@ -576,11 +635,18 @@ export function rivalActual(h: EstadoHistoria): RivalHistoria {
   return esc.rivales[Math.min(h.rivalIdx, esc.rivales.length - 1)]!;
 }
 
-/** El evento de calle que toca antes del rival actual (si hay y sin resolver). */
+/** El evento de calle que toca antes del rival actual (si hay y sin resolver).
+ *  Las MARCAS del jugador pueden abrir o vetar eventos: una decisión pasada
+ *  cambia lo que aparece después. */
 export function eventoActual(h: EstadoHistoria): Evento | null {
   const esc = escenarioActual(h);
+  const marcas = h.marcas ?? [];
   for (const e of esc.eventos ?? []) {
-    if (e.antesDe === h.rivalIdx && !h.dilemasResueltos.includes(e.evento.clave)) return e.evento;
+    if (e.antesDe !== h.rivalIdx) continue;
+    if (h.dilemasResueltos.includes(e.evento.clave)) continue;
+    if (e.requiere && !marcas.includes(e.requiere)) continue;
+    if (e.vetadoPor && marcas.includes(e.vetadoPor)) continue;
+    return e.evento;
   }
   return null;
 }
@@ -749,4 +815,6 @@ export interface VistaHistoria {
   itemsEnMano: ItemManoVista[];
   /** Evento de calle (decisión, pelea o lectura de suerte), si toca. */
   evento: EventoVista | null;
+  /** Marcas de tu pasado (lo que tus decisiones dejaron escrito). */
+  marcas: string[];
 }

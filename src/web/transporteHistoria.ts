@@ -178,6 +178,7 @@ export class TransporteHistoria implements Transporte {
       this.h.atributos[p.atributo] = Math.min(meta.max, this.h.atributos[p.atributo] + 1);
     }
     if (p.efecto) this.h.efectoPendiente = p.efecto;
+    if (p.marca && !this.h.marcas.includes(p.marca)) this.h.marcas.push(p.marca);
   }
 
   /** Resuelve un evento de DECISIÓN (dilema/pelea) eligiendo una opción. */
@@ -407,6 +408,7 @@ export class TransporteHistoria implements Transporte {
       itemsTienda,
       itemsEnMano,
       evento,
+      marcas: [...this.h.marcas],
     };
   }
 
