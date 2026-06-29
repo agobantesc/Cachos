@@ -89,6 +89,7 @@ export function PantallaHistoria({
         {t.narrativa.intro && <p className="hist-ambiente">{t.narrativa.intro}</p>}
         <FichaRival t={t} />
         <MesaInfo t={t} />
+        {t.narrativa.presentacion && <p className="hist-relato">{t.narrativa.presentacion}</p>}
         {r.esBoss && r.habilidad && (
           <div className="boss-habilidad">
             <span className="bh-tit">Habilidad · {r.habilidad.nombre}</span>
@@ -121,11 +122,12 @@ export function PantallaHistoria({
         <div className="hist-premio">
           Te llevas <Plata n={r.plata ?? 0} />
         </div>
+        {t.narrativa.relato && <p className="hist-relato">{t.narrativa.relato}</p>}
         {t.narrativa.epilogo && <p className="hist-ambiente">{t.narrativa.epilogo}</p>}
         <BarraStats t={t} />
         <div className="hist-acciones">
           <button className="btn btn--apostar grande" onClick={() => transporte.historiaContinuar?.()}>
-            Seguir bajando al fondo
+            {r.esBoss ? "Seguir bajando al fondo" : "Seguir el camino"}
           </button>
         </div>
       </div>

@@ -25,6 +25,23 @@ describe("campaña", () => {
     }
   });
 
+  it("cada rival trae narrativa: presentación, y relato si no es jefe", () => {
+    for (const e of CAMPANA) {
+      for (const r of e.rivales) {
+        expect(r.presentacion, `${r.id} presentación`).toBeTruthy();
+        if (!r.esBoss) expect(r.relato, `${r.id} relato`).toBeTruthy();
+      }
+    }
+  });
+
+  it("la intro del rival expone su presentación en la vista", () => {
+    const th = new TransporteHistoria(historiaNueva("Narrador"));
+    const v = th.instantanea().historia!;
+    expect(v.faseHistoria).toBe("intro");
+    expect(v.narrativa.presentacion).toBe(CAMPANA[0]!.rivales[0]!.presentacion);
+    th.detener();
+  });
+
   it("ofrece variedad de mesas (1v1 y mesas grandes hasta 6)", () => {
     const tam = new Set(CAMPANA.flatMap((e) => e.rivales.map((r) => r.mesa)));
     expect(tam.has(2)).toBe(true);

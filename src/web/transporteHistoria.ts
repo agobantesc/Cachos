@@ -275,6 +275,8 @@ export class TransporteHistoria implements Transporte {
     const narrativa = {
       prologo: enIntro && !this.h.prologoVisto && this.h.escenarioIdx === 0 && this.h.rivalIdx === 0 ? PROLOGO : null,
       intro: enIntro && this.h.rivalIdx === 0 ? esc.intro : null,
+      presentacion: enIntro ? rival.presentacion ?? null : null,
+      relato: this.fase === "victoria" && !rival.esBoss ? rival.relato ?? null : null,
       epilogo: this.fase === "victoria" && rival.esBoss ? esc.epilogo : null,
     };
 

@@ -81,6 +81,11 @@ export interface RivalHistoria {
   habilidad?: HabilidadBoss;
   plata: number;
   dialogos: DialogosRival;
+  /** Narración del NARRADOR al presentar a este rival (antes de la mesa). */
+  presentacion?: string;
+  /** Narración del NARRADOR tras vencerlo (puente a lo que viene). Sólo no-boss;
+   *  los jefes cierran con el epílogo del escenario. */
+  relato?: string;
 }
 
 // --- Items (consumibles que el jugador junta y usa en la mesa) --------------
@@ -190,12 +195,19 @@ export const CAMPANA: Escenario[] = [
     },
     rivales: [
       { id: "r-pulga", nombre: "El Pulguita", nivel: "facil", mesa: 4, esBoss: false, plata: 20,
+        presentacion: "El más chico de la mesa te mide con una sonrisa de dientes podridos. Por algo le dicen Pulguita: salta de mesa en mesa picando a los novatos.",
+        relato: "El Pulguita se va rascándose el orgullo. En un rincón, alguien deja de reír: el forastero ganó la primera mano de la noche, y eso, en la pocilga, ya es noticia.",
         dialogos: d("¿Y este cabro nuevo? A la mesa, a ver si aguanta.", "…la cresta. Tuviste suerte, mocoso.", "Jajaja, ándate pa' la casa con tu mamá.") },
       { id: "r-roto", nombre: "Roto Manríquez", nivel: "facil", mesa: 2, esBoss: false, plata: 26,
+        presentacion: "Un tipo curtido despeja la mesa de un manotazo. 'Tú y yo, sin público.' Roto Manríquez no pierde mano a mano desde que tiene memoria.",
+        relato: "Roto se toma el resto de su trago de un sorbo y no dice nada. Dos seguidas. La pocilga empieza a mirarte como se mira a un problema.",
         dialogos: d("Tú y yo, mano a mano. Sin testigos.", "No puede ser… me ganó un pendejo.", "Otra cañita pa' celebrar tu paliza.") },
       { id: "r-cabrera", nombre: "La Cabrera", nivel: "medio", mesa: 3, esBoss: false, plata: 34,
+        presentacion: "La Cabrera te clava los ojos desde el fondo. Dicen que huele la mentira antes de que la digas, y que nunca, nunca, paga de más.",
+        relato: "La Cabrera se levanta sin reclamar. Antes de irse te suelta tres palabras que valen oro: 'Doña Berta supo.' La dueña de la pocilga ya tiene tu nombre.",
         dialogos: d("Tres en la mesa y dos van a llorar. Adivina cuáles.", "Mierda, el cabro tiene ojo. Anótenlo.", "Vuelve cuando sepas mentir, niño.") },
       { id: "b-berta", nombre: "Doña Berta", nivel: "medio", mesa: 3, esBoss: true, plata: 90, habilidad: SIN_CLEMENCIA,
+        presentacion: "Al fondo, tras una cortina de humo, la mismísima Doña Berta acomoda su cacho. Treinta años reinando este chiquero. En su mesa no le gana nadie. Nadie.",
         dialogos: d("Soy la dueña de esta pocilga, mijito. Treinta años y nadie me gana en mi mesa.", "Treinta años invicta… y me la ganó este forastero. Anda, sigue subiendo.", "La casa siempre gana, cabrito. Vuelve cuando seas grande.") },
     ],
   },
@@ -217,12 +229,19 @@ export const CAMPANA: Escenario[] = [
     },
     rivales: [
       { id: "r-charqui", nombre: "El Charqui", nivel: "medio", mesa: 5, esBoss: false, plata: 32,
+        presentacion: "Entre cajones de fruta podrida, El Charqui reparte mesa para cinco. 'Esto no es el puerto, cabro.' Aquí ya se juega con plata que mancha.",
+        relato: "El Charqui te reconoce con un gesto seco. La Vega de noche es chica para los secretos: para cuando llegues a la próxima mesa, ya sabrán que vienes ganando.",
         dialogos: d("Cinco en la mesa, cabro. Esto no es el puerto.", "Mierda. Tienes algo, lo reconozco.", "Vuelve a tu caleta, esto te queda grande.") },
       { id: "r-quintrala", nombre: "La Quintrala", nivel: "medio", mesa: 2, esBoss: false, plata: 38,
+        presentacion: "La Quintrala te sienta a su lado con una sonrisa que corta. Mano a mano. Lindo cachito el tuyo… sería una pena perderlo con ella.",
+        relato: "La Quintrala recoge sus anillos y se va sin mirar atrás. Te queda su perfume y una certeza: en La Vega, los que sonríen son los que más muerden.",
         dialogos: d("Lindo cachito… sería una pena que lo perdieras conmigo.", "Maldito seas. Nadie me lee la mano así.", "Te lo dije, lindo. Esto era mío.") },
       { id: "r-sapo", nombre: "Sapo Reyes", nivel: "avanzado", mesa: 4, esBoss: false, plata: 48,
+        presentacion: "Sapo Reyes le cuenta todo al jefe. Hoy te toca a ti ser su informe. 'De ti todavía no tengo nada bueno', dice, afilando el lápiz.",
+        relato: "El Sapo se va a cantar lo que vio. Y lo que vio fue una paliza. Al fondo del matadero, El Carnicero deja de filetear un segundo para escuchar tu nombre.",
         dialogos: d("Yo le cuento todo al jefe. Y de ti… todavía no tengo nada bueno.", "Ya, ya. Le voy a decir que tenga cuidado contigo.", "El sapo siempre canta primero, cabro.") },
       { id: "b-carnicero", nombre: "El Carnicero", nivel: "avanzado", mesa: 4, esBoss: true, plata: 150, habilidad: SANGRE_FACIL,
+        presentacion: "El olor a sangre se hace más fuerte. El Carnicero limpia su cuchillo en el delantal y te corre la silla. 'Despreso vacas y ambiciosos por igual.'",
         dialogos: d("Yo despresa vacas y ambiciosos por igual. En mi mesa, dudar al que abre se paga caro.", "…veinte años que no perdía. Sube nomás, te van a comer más arriba.", "Otro pa'l gancho. Límpienle la sangre a la mesa.") },
     ],
   },
@@ -244,12 +263,19 @@ export const CAMPANA: Escenario[] = [
     },
     rivales: [
       { id: "r-fundidor", nombre: "El Fundidor", nivel: "avanzado", mesa: 5, esBoss: false, plata: 60,
+        presentacion: "El calor del galpón te golpea antes que él. El Fundidor reparte para cinco entre chispas de soldadura. 'Aquí fundimos fierro… y novatos.'",
+        relato: "El Fundidor apaga su soplete. 'No te derretiste', gruñe, casi con respeto. En la Maestranza, eso ya es un diploma.",
         dialogos: d("Aquí fundimos fierro… y novatos. Cinco a la mesa, aguanta el calor.", "Te saliste del molde, cabro. No me pasa seguido.", "Al horno con él. Que se derrita solo.") },
       { id: "r-trenza", nombre: "La Trenza", nivel: "avanzado", mesa: 3, esBoss: false, plata: 66,
+        presentacion: "La Trenza manejó locomotoras toda su vida. Ahora maneja mentiras desde una silla de fierro. 'Las dos te aplastan igual.'",
+        relato: "La Trenza te deja pasar entre los rieles muertos. 'Cuídate del Verdugo', murmura bajito. 'Ese no juega: ejecuta.'",
         dialogos: d("Manejé locomotoras y manejo mentiras. Las dos te aplastan igual.", "Me descarrilaste, desgraciado. Bien jugado.", "Quítenlo de la vía, que viene el tren.") },
       { id: "r-mecha", nombre: "Mecha Corta", nivel: "experto", mesa: 4, esBoss: false, plata: 80,
+        presentacion: "Mecha Corta golpetea la mesa con los dedos. Le dicen así por algo: tienes una mano para ganarle, o estalla.",
+        relato: "Mecha aguanta el bufido y, por una vez, no explota. 'Pasa nomás.' Al fondo del galpón, una sombra enorme deja un saco de género sobre la mesa.",
         dialogos: d("Tengo la paciencia justa para una mano. Apúrate o exploto.", "…contuviste la mecha. Pocos lo logran.", "Bum. Te dije que tenía la mecha corta, cabro.") },
       { id: "b-verdugo", nombre: "El Verdugo", nivel: "experto", mesa: 4, esBoss: true, plata: 220, habilidad: SIN_COMODIN,
+        presentacion: "Una mole de hombre desata el saco: adentro, un cacho gastado por mil ejecuciones. 'En mi mesa el as no salva a nadie.' El Verdugo no parpadea.",
         dialogos: d("En mi mesa el as no salva a nadie. Aquí la pinta vale lo que es, igual que la gente.", "Sin comodines me ganaste. Eso… eso es de los grandes. Baja, te están esperando.", "Sin comodines no eres nada, cabro. Como casi todos.") },
     ],
   },
@@ -271,12 +297,19 @@ export const CAMPANA: Escenario[] = [
     },
     rivales: [
       { id: "r-notario", nombre: "El Notario", nivel: "avanzado", mesa: 3, esBoss: false, plata: 70,
+        presentacion: "Bajo el foco amarillo, El Notario anota cada jugada en una libreta grasienta. 'Todo queda registrado, joven. Hasta su derrota de hoy.'",
+        relato: "El Notario cierra su libreta. 'Que conste en acta', suspira. Tu nombre ya está escrito en la trastienda, y de ahí no se borra fácil.",
         dialogos: d("Todo queda registrado, joven. Hasta su derrota de hoy.", "Objeto… objeto, pero perdí. Que conste en acta.", "Caso cerrado. El siguiente.") },
       { id: "r-pituto", nombre: "Pituto", nivel: "avanzado", mesa: 4, esBoss: false, plata: 78,
+        presentacion: "Pituto conoce a todos los que mandan. A ti no te conoce… todavía. Te da la mano blanda y los ojos duros.",
+        relato: "Pituto te guarda en su memoria de elefante. 'Ahora sí te tengo en el radar.' Que Pituto ande pendiente de ti puede salvarte la vida… o costártela.",
         dialogos: d("Yo conozco a todos los que mandan. A ti no te conozco… todavía.", "Ya te tengo en el radar ahora, cabro.", "Nadie va a recordar tu nombre.") },
       { id: "r-viuda", nombre: "La Viuda Alegre", nivel: "experto", mesa: 3, esBoss: false, plata: 95,
+        presentacion: "La Viuda Alegre enterró a tres maridos en esta misma mesa. Te corre la silla con una sonrisa negra. 'Hay sitio, lindo.'",
+        relato: "La Viuda te despide con un beso al aire. 'Otro luto para mi colección.' Tras el humo, El Croata apaga su cigarro: llegó tu turno con el hielo.",
         dialogos: d("Enterré a tres maridos jugando al cacho. Siéntate, lindo, hay sitio.", "Me dejas viuda otra vez… de mi invicto. Qué hombre.", "Otro luto más para mi colección, mijito.") },
       { id: "b-croata", nombre: "El Croata", nivel: "experto", mesa: 2, esBoss: true, plata: 260, habilidad: TEMPANO,
+        presentacion: "El Croata no te mira: te calcula. Frío como témpano, lleva cuenta de cada gesto tuyo. 'Veamos cuál pesa más: tu ojo o mi paciencia.'",
         dialogos: d("Dicen que tienes ojo. Yo tengo paciencia de hielo. Mano a mano: veamos cuál pesa más.", "Frío como soy, esto me hierve la sangre. Buen juego, forastero.", "Tu cara te delató tres manos atrás. Aprende a mentir.") },
     ],
   },
@@ -298,12 +331,19 @@ export const CAMPANA: Escenario[] = [
     },
     rivales: [
       { id: "r-madame", nombre: "Madame Ruiz", nivel: "experto", mesa: 6, esBoss: false, plata: 90,
+        presentacion: "Terciopelo gastado y seis sillas. Madame Ruiz preside lo profundo con anillos que valen más que toda la mesa. 'Pocos llegan tan abajo, querido.'",
+        relato: "Madame Ruiz aplaude bajito, encantada. 'Tienes hambre de verdad', ronronea. 'Eso aquí se huele… y atrae a las fieras grandes.'",
         dialogos: d("Seis a la mesa, querido. Bienvenido a lo profundo: pocos llegan tan abajo.", "Tienes hambre de verdad. Me agrada… y me asusta.", "Lo profundo se traga a los ambiciosos, mi amor.") },
       { id: "r-turco", nombre: "El Turco Fino", nivel: "experto", mesa: 3, esBoss: false, plata: 105,
+        presentacion: "El Turco Fino no se quita el traje ni los cachos. Elegancia hasta para robarte. 'Las dos cosas que nunca suelto.'",
+        relato: "El Turco se sacude una arruga invisible. 'Me ganaste limpio, cabro.' Viniendo de un tramposo de seda, es casi un honor.",
         dialogos: d("Traje y cachos: las dos cosas que nunca me quito.", "Me arrugaste el traje, desgraciado. Bien jugado.", "Elegancia, cabro. Eso es lo que te falta.") },
       { id: "r-comisario", nombre: "El Comisario", nivel: "experto", mesa: 4, esBoss: false, plata: 130,
+        presentacion: "De civil, pero huele a placa a un metro. El Comisario persigue al hampa de día y le gana la plata de noche. 'Conozco todos sus trucos.'",
+        relato: "El Comisario te deja libre 'por esta vez'. Antes de irse, baja la voz: 'El Senador hace trampa y tiene comprado a medio Chile. Arriba ya no hay reglas.'",
         dialogos: d("De día persigo al hampa; de noche le gano la plata. Conozco todos sus trucos.", "Si fueras delincuente, serías el mejor. Lástima que eres honrado.", "Queda detenido… en el último puesto, cabro.") },
       { id: "b-senador", nombre: "El Senador", nivel: "experto", mesa: 4, esBoss: true, plata: 360, habilidad: DADO_CARGADO,
+        presentacion: "El Senador llega tarde, como los que mandan. Se sienta sin saludar. 'Yo hago las leyes de esta mesa, muchacho. Y la primera es que yo gano.'",
         dialogos: d("Yo hago las leyes de esta mesa, muchacho. Y la primera es que yo gano.", "Esto… esto no se compra. Maldito talento. Te van a estar esperando arriba.", "El poder no se reparte, se quita. Y a ti te lo acabo de quitar.") },
     ],
   },
@@ -325,10 +365,15 @@ export const CAMPANA: Escenario[] = [
     },
     rivales: [
       { id: "r-heredero", nombre: "El Heredero", nivel: "experto", mesa: 3, esBoss: false, plata: 150,
+        presentacion: "El penthouse huele a dinero viejo. El Heredero te recibe con desprecio de cuna. 'Mi padre fue el segundo mejor de Chile. Yo seré el primero.'",
+        relato: "El Heredero se hunde en su sillón de cuero. La sangre no le alcanzó. Una puerta doble se abre al fondo: del otro lado espera la Jueza, y después… el trono.",
         dialogos: d("Mi padre era el segundo mejor de Chile. Yo voy a ser el primero.", "No… ese trono era mío por sangre.", "La sangre manda, advenedizo.") },
       { id: "r-jueza", nombre: "La Jueza", nivel: "experto", mesa: 2, esBoss: false, plata: 200,
+        presentacion: "La Jueza condenó a hombres por menos que tu ambición. Te mira por encima de sus lentes. 'A ver si me convences, forastero.'",
+        relato: "La Jueza dicta su último veredicto de la noche: 'Culpable… de ser mejor que yo. Pasa.' Se hace un silencio. Tras la última puerta, treinta años de leyenda te esperan.",
         dialogos: d("He condenado a hombres por menos que tu ambición. A ver si me convences.", "Veredicto: culpable… de ser mejor que yo. Pasa.", "Sentencia firme: de vuelta al barro, sin apelación.") },
       { id: "b-rey", nombre: "El Rey del Cacho", nivel: "experto", mesa: 2, esBoss: true, plata: 1500, habilidad: OJO_HALCON,
+        presentacion: "Treinta años invicto, sentado contra el ventanal con todo Chile a sus pies. El Rey del Cacho sonríe como quien ya ganó. 'La leyenda termina aquí, mano a mano.'",
         dialogos: d("Subiste desde el barro hasta mi mesa. Eso ya es leyenda. Pero la leyenda termina aquí, mano a mano.", "Treinta años… y un don nadie del puerto me destrona. El cacho es tuyo. Chile es tuyo.", "Yo SOY el cacho, muchacho. Vuelve al barro de donde saliste.") },
     ],
   },
@@ -555,8 +600,16 @@ export interface VistaHistoria {
   plata: number;
   atributos: AtributosJugador;
   escenario: { nombre: string; lugar: string; ambiente: string; idx: number; total: number };
-  /** Narración: prólogo (1ª vez), intro del escenario (1er rival), epílogo (boss caído). */
-  narrativa: { prologo: string | null; intro: string | null; epilogo: string | null };
+  /** Narración del narrador. prologo: 1ª vez. intro: al entrar al escenario.
+   *  presentacion: al presentar al rival (antes de la mesa). relato: tras vencer
+   *  a un rival (puente a lo que viene). epilogo: al caer el jefe. */
+  narrativa: {
+    prologo: string | null;
+    intro: string | null;
+    presentacion: string | null;
+    relato: string | null;
+    epilogo: string | null;
+  };
   rival: {
     id: string;
     nombre: string;
