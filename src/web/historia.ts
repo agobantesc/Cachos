@@ -492,8 +492,8 @@ export const CAMPANA: Escenario[] = [
         titulo: "Una mano amiga",
         texto: "Cuando ya no esperabas a nadie, una figura conocida se cuela al penthouse: el hombre del Carnicero, el que te debía una desde La Vega. 'No vas a entrar solo a esa mesa', dice, y se acerca a tu oído. 'Te traigo cómo respira el Rey cuando miente. Treinta años de tics, en un susurro.'",
         opciones: [
-          { etiqueta: "Acepta la ayuda", efecto: "suerte_extra", resultado: "Asientes. Por primera vez en toda la noche no estás solo frente a la mesa. Entras al duelo final con una ventaja que ningún Rey puede comprar: alguien de tu lado." },
-          { etiqueta: "Hazlo a tu manera", efecto: "mano_cargada", resultado: "Le agradeces y le dices que esta la juegas solo, como empezaste. Pero el dato te queda dando vueltas y la mano te sale firme: entras al trono con el pulso de hierro." },
+          { etiqueta: "Acepta la ayuda", efecto: "suerte_extra", marca: "verdad", resultado: "Asientes. El aliado te sopla los tics del Rey… y algo más, bajando la voz hasta casi no oírse: 'Una última cosa. El Rey que vas a enfrentar lleva treinta años invicto porque nunca jugó en serio: es una fachada. El verdadero Rey del Cacho está más arriba, en una pieza sin número. Si de verdad quieres el trono, no te quedes con el de la vitrina.' Entras al duelo con una ventaja… y con un secreto que pocos llegan a oír." },
+          { etiqueta: "Hazlo a tu manera", efecto: "mano_cargada", resultado: "Le agradeces y le dices que esta la juegas solo, como empezaste. El aliado se encoge de hombros, se guarda lo que iba a decirte, y se va. El dato te queda dando vueltas y la mano te sale firme: entras al trono con el pulso de hierro… y sin saber lo que ese hombre callaba." },
         ],
       } },
     ],
@@ -512,6 +512,71 @@ export const CAMPANA: Escenario[] = [
     ],
   },
 ];
+
+// ---------------------------------------------------------------------------
+// El jefe final SECRETO y los tres finales
+// ---------------------------------------------------------------------------
+
+const LA_BANCA: HabilidadBoss = {
+  nombre: "La banca nunca pierde",
+  desc: "El verdadero capo: juego perfecto y dados comprados. Treinta años invicto… de verdad esta vez.",
+  dadoCargado: true,
+};
+
+/** El VERDADERO Rey del Cacho: jefe final secreto del final real. */
+export const REY_VERDADERO: RivalHistoria = {
+  id: "b-patron",
+  nombre: "El Patrón del Cacho",
+  nivel: "experto",
+  mesa: 2,
+  esBoss: true,
+  habilidad: LA_BANCA,
+  plata: 5000,
+  presentacion:
+    "La pieza no tiene ventanas. Bajo una sola ampolleta, un hombre sin edad baraja un cacho más viejo que Santiago. No te mira: ya sabe cómo termina esto, o eso cree. 'Treinta años esperando a alguien que llegara hasta acá', dice la voz. 'Siéntate. La banca te recibe.'",
+  dialogos: d(
+    "Bienvenido a la única mesa que importa. De acá nadie sale segundo… nadie sale, en realidad.",
+    "Im… imposible. Treinta años. La banca nunca… nunca pierde.",
+    "Te lo dije, cabro. La banca siempre gana. Vuelve al barro, que es donde se reparte a los que sueñan.",
+  ),
+};
+
+/** Marcas "oscuras": acciones turbias que empujan al final malo. */
+const MARCAS_OSCURAS = ["delator", "saqueador", "sangre-fria", "asesino", "sin-alma"];
+
+export type TipoFinal = "estandar" | "malo" | "verdadero";
+
+/** Qué final le toca al jugador, según el camino que eligió. */
+export function tipoFinal(h: EstadoHistoria): TipoFinal {
+  const m = h.marcas ?? [];
+  const oscuro = MARCAS_OSCURAS.filter((x) => m.includes(x)).length;
+  if (m.includes("verdad") && oscuro === 0) return "verdadero"; // limpio + descubrió el secreto
+  if (oscuro >= 2) return "malo"; // se hizo monstruo: lo traicionan
+  return "estandar";
+}
+
+/** Giro al caer el Rey "público", cuando se desbloqueó el final verdadero. */
+export const TWIST_VERDADERO =
+  "El Rey, en el suelo, se ríe con la boca llena de sangre. '¿Treinta años invicto… yo? Pobre iluso. Yo soy la cara que ponen en la mesa para los que llegan hasta acá. El que de verdad reparte la baraja de todo Chile nunca se sienta donde lo vean.' Al fondo del penthouse se abre una puerta sin número. Tu aliado te aprieta el hombro: 'Esto te quería mostrar. El verdadero Rey del Cacho. Nadie volvió de esa pieza… pero tú no eres nadie.'";
+
+/** Textos de los tres finales. */
+export const FINALES: Record<TipoFinal, { titulo: string; texto: string }> = {
+  estandar: {
+    titulo: "El mejor de Chile",
+    texto:
+      "Partiste en una pocilga del puerto, oliendo a pescado y a fracaso. Hoy, desde lo más alto de Santiago, no queda un nombre por encima del tuyo. El cacho, por fin, tiene dueño. Y sin embargo, de madrugada, contando tu plata frente al ventanal, una duda no te deja dormir: el Rey cayó demasiado fácil para treinta años de leyenda. Como si alguien, más arriba todavía, te hubiera dejado ganar. Pero estás cansado, y los reyes cansados no hacen preguntas. Te quedas con el trono… y con la incógnita.",
+  },
+  malo: {
+    titulo: "La banca siempre cobra",
+    texto:
+      "Levantaste tu imperio sobre cadáveres: el muerto de los cajones, el viejo del puente, el hermano que te buscó la cara. Subiste pisando a todos y arriba, donde ya no queda nadie a quien traicionar, te traicionan a ti. La copa de la victoria te sabe rara un segundo antes de que las piernas te fallen. Caes frente al ventanal con todo Chile encendido a tus pies, y lo último que oyes es una voz que no reconoces: 'La banca siempre cobra, cabro.' Otro saco de género rumbo al Mapocho. El cacho, esta noche, sigue sin dueño.",
+  },
+  verdadero: {
+    titulo: "El verdadero Rey del Cacho",
+    texto:
+      "No fue el penthouse, ni las luces, ni el aplauso. Fue una pieza sin ventanas, a oscuras, contra el hombre que llevaba treinta años repartiendo la baraja de todo Chile sin que nadie le viera la cara. Y lo bajaste. De verdad, esta vez. Cuando sales, el sol asoma sobre el río y, por primera vez, el Mapocho no se lleva a nadie. No hay rey escondido más arriba: lo comprobaste en carne propia. Empezaste en el barro, sin nombre, y hoy ERES el cacho —el de verdad, el que nadie va a destronar con trucos—. Te lo ganaste limpio, y acompañado. Esa, y no el trono, es la parte que cuenta.",
+  },
+};
 
 // Relleno de las mesas grandes (parroquianos sin nombre propio).
 const RELLENO = [
@@ -736,6 +801,25 @@ export function armarMesa(h: EstadoHistoria): {
   };
 }
 
+/** Mesa 1v1 contra el jefe final SECRETO (final verdadero). */
+export function armarMesaSecreta(nombre: string): {
+  jugadores: { id: string; nombre: string }[];
+  nivelPorJugador: Record<string, Nivel>;
+  reglas: ReglasCasa;
+  dadoCargadoId: string | null;
+} {
+  const r = REY_VERDADERO;
+  return {
+    jugadores: [
+      { id: HUMANO_ID, nombre },
+      { id: r.id, nombre: r.nombre },
+    ],
+    nivelPorJugador: { [r.id]: r.nivel },
+    reglas: crearReglas(r.habilidad?.reglas ?? {}),
+    dadoCargadoId: r.habilidad?.dadoCargado ? r.id : null,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Vista para la UI
 // ---------------------------------------------------------------------------
@@ -840,4 +924,8 @@ export interface VistaHistoria {
   evento: EventoVista | null;
   /** Marcas de tu pasado (lo que tus decisiones dejaron escrito). */
   marcas: string[];
+  /** Qué final se está mostrando (fase "final"). */
+  finalTipo: TipoFinal | null;
+  /** En la victoria del Rey "público", se desbloqueó el jefe secreto. */
+  haySecreto: boolean;
 }

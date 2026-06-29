@@ -7,6 +7,9 @@ import {
   normalizar,
   armarMesa,
   eventoActual,
+  tipoFinal,
+  REY_VERDADERO,
+  FINALES,
   type EstadoHistoria,
 } from "../historia";
 import { TransporteHistoria } from "../transporteHistoria";
@@ -75,6 +78,33 @@ describe("campaña", () => {
         expect(fuentes.some((idx) => idx < ei), `la marca ${pe.requiere} se obtiene antes del cap. ${ei}`).toBe(true);
       }),
     );
+  });
+
+  it("hay tres finales y un jefe final secreto", () => {
+    expect(Object.keys(FINALES).sort()).toEqual(["estandar", "malo", "verdadero"]);
+    expect(REY_VERDADERO.esBoss).toBe(true);
+    expect(REY_VERDADERO.mesa).toBe(2); // duelo 1v1 secreto
+    expect(REY_VERDADERO.habilidad).toBeTruthy();
+  });
+
+  it("tipoFinal decide el final según las marcas del camino", () => {
+    const con = (marcas: string[]) => ({ ...historiaNueva("X"), marcas });
+    // verdadero: limpio + descubrió el secreto (verdad), sin marcas oscuras
+    expect(tipoFinal(con(["honrado", "aliado", "verdad"]))).toBe("verdadero");
+    // verdad pero con una mancha oscura -> NO verdadero (cae a estándar)
+    expect(tipoFinal(con(["verdad", "delator"]))).toBe("estandar");
+    // dos acciones oscuras -> malo (traición y muerte)
+    expect(tipoFinal(con(["saqueador", "delator"]))).toBe("malo");
+    expect(tipoFinal(con(["asesino", "sin-alma"]))).toBe("malo");
+    // camino tibio -> estándar
+    expect(tipoFinal(con([]))).toBe("estandar");
+    expect(tipoFinal(con(["honrado"]))).toBe("estandar");
+  });
+
+  it("aceptar la ayuda del aliado deja la marca 'verdad' (la llave del final real)", () => {
+    const cumbre = CAMPANA.find((e) => e.clave === "cumbre")!;
+    const aliado = cumbre.eventos!.find((pe) => pe.evento.clave === "cumbre-aliado")!.evento;
+    expect(aliado.tipo === "lectura" ? [] : aliado.opciones[0]!.marca).toBe("verdad");
   });
 
   it("La Maestranza traslada la habilidad 'Puro fierro' (as no comodín) a la mesa", () => {

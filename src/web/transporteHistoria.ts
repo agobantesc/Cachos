@@ -22,11 +22,15 @@ import {
   costoMejora,
   normalizar,
   itemMeta,
+  tipoFinal,
+  armarMesaSecreta,
   ATRIBUTOS,
   ITEMS,
   CAMPANA,
   PROLOGO,
   HUMANO_ID,
+  REY_VERDADERO,
+  TWIST_VERDADERO,
   type EstadoHistoria,
   type FaseHistoria,
   type VistaHistoria,
@@ -34,6 +38,8 @@ import {
   type Evento,
   type EfectoMesa,
   type PremioEvento,
+  type RivalHistoria,
+  type TipoFinal,
   type ClaveAtributo,
   type ItemId,
   type MejoraVista,
@@ -61,6 +67,10 @@ export class TransporteHistoria implements Transporte {
   private eventoEfecto: EfectoMesa | null = null;
   /** Lectura: índice de la carta elegida (para revelarla). */
   private cartaElegida: number | null = null;
+  /** Combate contra el jefe final SECRETO (final verdadero) en curso. */
+  private secretoActivo = false;
+  /** Qué final mostrar (en fase "final"). */
+  private finalTipo: TipoFinal | null = null;
 
   constructor(estado: EstadoHistoria) {
     this.h = normalizar(estado);
@@ -89,10 +99,16 @@ export class TransporteHistoria implements Transporte {
     this.inner = null;
   }
 
+  /** El rival que se está enfrentando (el de la campaña, o el jefe secreto). */
+  private rivalEnCurso(): RivalHistoria {
+    return this.secretoActivo ? REY_VERDADERO : rivalActual(this.h);
+  }
+
   // --- Flujo de la campaña ---------------------------------------------------
   private montarPartida() {
     this.desmontar();
-    const mesa = armarMesa(this.h);
+    const rival = this.rivalEnCurso();
+    const mesa = this.secretoActivo ? armarMesaSecreta(this.h.nombre) : armarMesa(this.h);
     this.dadoCargadoId = mesa.dadoCargadoId;
     this.suerteUsos = this.h.atributos.suerte;
     this.soplonActivo = false;
@@ -105,7 +121,7 @@ export class TransporteHistoria implements Transporte {
     if (ef) {
       if (ef === "suerte_extra") this.suerteUsos += 1;
       else if (ef === "sin_suerte") this.suerteUsos = 0;
-      else if (ef === "rival_cargado") this.dadoCargadoId = rivalActual(this.h).id;
+      else if (ef === "rival_cargado") this.dadoCargadoId = rival.id;
       else if (ef === "mano_cargada") cargarHumanoAlInicio = true;
       this.h.efectoPendiente = null;
       this.guardar();
@@ -138,7 +154,7 @@ export class TransporteHistoria implements Transporte {
           this.h.inventario[id] = Math.max(0, this.h.inventario[id] - this.itemsGastados[id]);
         }
         this.itemsGastados = { cargado: 0, marcado: 0, soplon: 0 };
-        this.h.plata += rivalActual(this.h).plata;
+        this.h.plata += this.rivalEnCurso().plata;
         this.guardar();
         this.fase = "victoria";
       } else {
@@ -223,10 +239,36 @@ export class TransporteHistoria implements Transporte {
       return;
     }
     if (this.fase === "victoria") {
-      const { tienda, final } = avanzar(this.h);
-      this.guardar();
-      this.fase = final ? "final" : tienda ? "tienda" : "intro";
-      this.desmontar();
+      if (this.secretoActivo) {
+        // Cayó el jefe SECRETO: final verdadero.
+        this.h.completado = true;
+        this.finalTipo = "verdadero";
+        this.secretoActivo = false;
+        this.desmontar();
+        this.fase = "final";
+        this.guardar();
+      } else {
+        const { tienda, final } = avanzar(this.h);
+        if (final) {
+          // Cayó el Rey "público": se decide el final.
+          const tipo = tipoFinal(this.h);
+          if (tipo === "verdadero") {
+            // El giro: aún falta el verdadero Rey. La campaña no termina aquí.
+            this.h.completado = false;
+            this.secretoActivo = true;
+            this.desmontar();
+            this.fase = "intro"; // intro del jefe secreto (rivalEnCurso = REY_VERDADERO)
+          } else {
+            this.finalTipo = tipo; // completado=true lo dejó avanzar()
+            this.desmontar();
+            this.fase = "final";
+          }
+        } else {
+          this.fase = tienda ? "tienda" : "intro";
+          this.desmontar();
+        }
+        this.guardar();
+      }
     } else if (this.fase === "tienda") {
       this.fase = "intro";
     }
@@ -267,7 +309,7 @@ export class TransporteHistoria implements Transporte {
     if (meta.id === "cargado") {
       usado = !!this.inner?.cargarMano(HUMANO_ID);
     } else if (meta.id === "marcado") {
-      usado = !!this.inner?.descargarMano(rivalActual(this.h).id);
+      usado = !!this.inner?.descargarMano(this.rivalEnCurso().id);
     } else if (meta.id === "soplon") {
       this.soplonActivo = true;
       usado = true;
@@ -315,7 +357,7 @@ export class TransporteHistoria implements Transporte {
   // --- Vista -----------------------------------------------------------------
   private vista(): VistaHistoria {
     const esc = escenarioActual(this.h);
-    const rival = rivalActual(this.h);
+    const rival = this.rivalEnCurso();
     const dialogo =
       this.fase === "victoria"
         ? rival.dialogos.derrota
@@ -323,13 +365,18 @@ export class TransporteHistoria implements Transporte {
           ? rival.dialogos.victoria
           : rival.dialogos.entrada;
 
+    // Al caer el Rey "público", si el camino desbloqueó el final verdadero,
+    // se revela el giro: todavía falta el verdadero Rey del Cacho.
+    const ultimoBoss = rival.esBoss && this.h.escenarioIdx >= CAMPANA.length - 1;
+    const haySecreto = this.fase === "victoria" && !this.secretoActivo && ultimoBoss && tipoFinal(this.h) === "verdadero";
+
     const enIntro = this.fase === "intro";
     const narrativa = {
       prologo: enIntro && !this.h.prologoVisto && this.h.escenarioIdx === 0 && this.h.rivalIdx === 0 ? PROLOGO : null,
       intro: enIntro && this.h.rivalIdx === 0 ? esc.intro : null,
       presentacion: enIntro ? rival.presentacion ?? null : null,
       relato: this.fase === "victoria" && !rival.esBoss ? rival.relato ?? null : null,
-      epilogo: this.fase === "victoria" && rival.esBoss ? esc.epilogo : null,
+      epilogo: haySecreto ? TWIST_VERDADERO : this.fase === "victoria" && rival.esBoss ? esc.epilogo : null,
     };
 
     const mejoras: MejoraVista[] =
@@ -411,6 +458,8 @@ export class TransporteHistoria implements Transporte {
       itemsEnMano,
       evento,
       marcas: [...this.h.marcas],
+      finalTipo: this.fase === "final" ? this.finalTipo : null,
+      haySecreto,
     };
   }
 

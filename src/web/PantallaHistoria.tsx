@@ -2,6 +2,7 @@
 // derrota, la tienda (subir atributos) y el final de la campaña.
 import { Avatar } from "./Avatar";
 import { Escena } from "./Escena";
+import { FINALES } from "./historia";
 import type { Instantanea, Transporte } from "./transporte";
 import type { VistaHistoria } from "./historia";
 
@@ -124,11 +125,13 @@ export function PantallaHistoria({
           Te llevas <Plata n={r.plata ?? 0} />
         </div>
         {t.narrativa.relato && <p className="hist-relato">{t.narrativa.relato}</p>}
-        {t.narrativa.epilogo && <p className="hist-ambiente">{t.narrativa.epilogo}</p>}
+        {t.narrativa.epilogo && (
+          <p className={"hist-ambiente" + (t.haySecreto ? " hist-twist" : "")}>{t.narrativa.epilogo}</p>
+        )}
         <BarraStats t={t} />
         <div className="hist-acciones">
           <button className="btn btn--apostar grande" onClick={() => transporte.historiaContinuar?.()}>
-            {r.esBoss ? "Seguir bajando al fondo" : "Seguir el camino"}
+            {t.haySecreto ? "Entra a esa pieza sin número" : r.esBoss ? "Seguir bajando al fondo" : "Seguir el camino"}
           </button>
         </div>
       </div>
@@ -294,16 +297,15 @@ export function PantallaHistoria({
     );
   }
 
-  // --- FINAL ---
+  // --- FINAL (estándar / malo / verdadero) ---
+  const tipo = t.finalTipo ?? "estandar";
+  const fin = FINALES[tipo];
+  const esMalo = tipo === "malo";
   return (
-    <div className="pantalla historia-pantalla hist-final">
-      <span className="hist-kicker">{t.escenario.lugar}</span>
-      <h1 className="hist-titulo hist-gano">El mejor de Chile</h1>
-      <p className="hist-ambiente">
-        Partiste en una pocilga del puerto, oliendo a pescado y a fracaso. Hoy, desde lo más alto de
-        Santiago, no queda un solo nombre por encima del tuyo. El cacho, por fin, tiene dueño.
-      </p>
-      <p className="hist-dialogo">“{r.dialogo}”</p>
+    <div className={"pantalla historia-pantalla hist-final" + (esMalo ? " hist-final-malo" : "")}>
+      <span className="hist-kicker">{esMalo ? "Penthouse, lo más alto de Santiago" : t.escenario.lugar}</span>
+      <h1 className={"hist-titulo " + (esMalo ? "hist-perdio" : "hist-gano")}>{fin.titulo}</h1>
+      <p className="hist-ambiente">{fin.texto}</p>
       <BarraStats t={t} />
       <div className="hist-acciones">
         <button className="btn btn--apostar grande" onClick={salir}>
