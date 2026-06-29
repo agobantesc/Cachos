@@ -76,15 +76,9 @@ export interface Transporte {
   /** Torneo: pasa de la pantalla "entre rondas" a sembrar la siguiente mesa. */
   avanzarTorneo?(): Promise<void>;
   // --- Modo historia ---
-  /** Desde la intro del escenario: entra a caminar el barrio (mapa). */
+  /** Empieza la partida contra el rival actual (desde la intro). */
   historiaEmpezar?(): void;
-  /** Camina por el mapa (arriba/abajo/izquierda/derecha). */
-  historiaMover?(dir: string): void;
-  /** Interactúa con una entidad del mapa por id (token vecino). */
-  historiaInteractuar?(id: string): void;
-  /** Desde la ficha del rival ("reto"): se sienta a la mesa. */
-  historiaSentarse?(): void;
-  /** Avanza tras ganar/perder/decidir (de vuelta al barrio o al siguiente). */
+  /** Avanza tras ganar (a la tienda, al siguiente rival o al final). */
   historiaContinuar?(): void;
   /** Reintenta la partida perdida contra el mismo rival. */
   historiaReintentar?(): void;
