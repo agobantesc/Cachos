@@ -835,6 +835,52 @@ button { touch-action: manipulation; }
 }
 .mejora-cant { font-size: 12px; color: var(--oro); font-weight: 700; }
 
+/* ---------- La apuesta y el desafío de la casa (modo historia) ---------- */
+/* Reglas de mesa de un rival común: mismo formato del jefe, en oro. */
+.mesa-regla { background: rgba(200, 162, 74, 0.08); border-color: rgba(200, 162, 74, 0.45); }
+.mesa-regla .bh-tit { color: var(--oro); }
+
+/* El desafío de la casa: objetivo opcional que paga bono. */
+.desafio-chip {
+  background: rgba(59, 85, 99, 0.16); border: 1px dashed rgba(122, 163, 179, 0.55); border-radius: 12px;
+  padding: 8px 12px; font-size: 13px; color: var(--texto); max-width: 26em; line-height: 1.45;
+}
+.dc-tit { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #94b7c6; margin-bottom: 2px; }
+.dc-bono { color: var(--oro); white-space: nowrap; }
+
+/* Selector de apuesta (doblar o nada) en la intro del rival. */
+.apuesta-mesa { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; max-width: 360px; }
+.am-tit { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--oro); }
+.am-opciones { display: flex; gap: 7px; width: 100%; }
+.am-btn {
+  flex: 1; padding: 10px 4px; border-radius: 11px; font-weight: 700; font-size: 14px;
+  background: var(--humo); color: var(--texto); border: 1px solid var(--linea);
+}
+.am-btn.sel { background: linear-gradient(180deg, var(--oro-claro), var(--oro)); color: #15110a; border-color: var(--oro); }
+.am-btn:active { transform: translateY(1px); }
+.am-nota { font-size: 12px; color: var(--tenue); }
+
+/* Desglose del botín en la victoria. */
+.botin-desglose {
+  display: flex; flex-direction: column; gap: 3px; font-size: 12.5px; color: var(--tenue);
+  background: rgba(0, 0, 0, 0.28); border: 1px solid var(--linea); border-radius: 12px; padding: 9px 14px;
+}
+.bd-buena { color: var(--oro); font-weight: 700; }
+.bd-mala { color: var(--sangre-viva); }
+
+/* La apuesta perdida, en la derrota. */
+.apuesta-perdida {
+  font-size: 13px; font-weight: 700; color: #f1d6cf;
+  background: rgba(143, 45, 36, 0.3); border: 1px solid var(--sangre-viva); border-radius: 999px; padding: 7px 14px;
+}
+
+/* Recordatorio del desafío en el HUD de la mesa. */
+.hh-desafio {
+  font-size: 9px; letter-spacing: 0.8px; text-transform: uppercase; font-weight: 800;
+  background: rgba(59, 85, 99, 0.4); border: 1px solid rgba(122, 163, 179, 0.5); color: #b9dbe8;
+  padding: 2px 7px; border-radius: 999px;
+}
+
 /* ---------- Pase de calidad: juego vivo e inmersivo ---------- */
 
 /* Entrada de pantalla: todo aparece con un respiro, nada "salta" en seco. */

@@ -115,15 +115,44 @@ export function PantallaHistoria({
         <FichaRival t={t} />
         <MesaInfo t={t} />
         {t.narrativa.presentacion && <p className="hist-relato">{t.narrativa.presentacion}</p>}
-        {r.esBoss && r.habilidad && (
-          <div className="boss-habilidad">
-            <span className="bh-tit">Habilidad · {r.habilidad.nombre}</span>
+        {r.habilidad && (
+          <div className={"boss-habilidad" + (r.esBoss ? "" : " mesa-regla")}>
+            <span className="bh-tit">
+              {r.esBoss ? "Habilidad" : "Reglas de la mesa"} · {r.habilidad.nombre}
+            </span>
             {r.habilidad.desc}
+          </div>
+        )}
+        {t.desafio && (
+          <div className="desafio-chip">
+            <span className="dc-tit">Desafío de la casa · {t.desafio.nombre}</span>
+            {t.desafio.desc} <b className="dc-bono">Paga +${t.desafio.bono.toLocaleString("es-CL")}</b>
           </div>
         )}
         <p className="hist-dialogo">“{r.dialogo}”</p>
         <BarraStats t={t} />
         <Bolsa t={t} />
+        {t.apuesta && t.apuesta.opciones.length > 1 && (
+          <div className="apuesta-mesa">
+            <span className="am-tit">¿Cuánto arriesgas? (doblar o nada)</span>
+            <div className="am-opciones" role="group" aria-label="Apuesta de la mesa">
+              {t.apuesta.opciones.map((m) => (
+                <button
+                  key={m}
+                  className={"am-btn" + (t.apuesta!.elegida === m ? " sel" : "")}
+                  aria-pressed={t.apuesta!.elegida === m}
+                  onClick={() => transporte.historiaApostar?.(m)}
+                >
+                  {m === 0 ? "Nada" : `$${m.toLocaleString("es-CL")}`}
+                </button>
+              ))}
+            </div>
+            <span className="am-nota">
+              Si ganas: ${(t.apuesta.premioBase + t.apuesta.elegida).toLocaleString("es-CL")}
+              {t.apuesta.elegida > 0 && <> · si pierdes: −${t.apuesta.elegida.toLocaleString("es-CL")}</>}
+            </span>
+          </div>
+        )}
         <div className="hist-acciones">
           <button className="btn btn--apostar grande" onClick={() => transporte.historiaEmpezar?.()}>
             {t.mesa <= 2 ? "Sentarse al duelo" : "Sentarse a la mesa"}
@@ -145,8 +174,24 @@ export function PantallaHistoria({
         <FichaRival t={t} tam={84} />
         <p className="hist-dialogo">“{r.dialogo}”</p>
         <div className="hist-premio">
-          Te llevas <Plata n={r.plata ?? 0} />
+          Te llevas <Plata n={t.botin?.total ?? r.plata ?? 0} />
         </div>
+        {t.botin && (t.botin.apuestaExtra > 0 || t.botin.desafioCumplido !== null) && (
+          <div className="botin-desglose">
+            <span className="bd-linea">Premio de la mesa: ${t.botin.premioBase.toLocaleString("es-CL")}</span>
+            {t.botin.apuestaExtra > 0 && (
+              <span className="bd-linea bd-buena">Apuesta doblada: +${t.botin.apuestaExtra.toLocaleString("es-CL")}</span>
+            )}
+            {t.botin.desafioCumplido === true && (
+              <span className="bd-linea bd-buena">
+                Desafío "{t.desafio?.nombre}" cumplido: +${t.botin.bono.toLocaleString("es-CL")}
+              </span>
+            )}
+            {t.botin.desafioCumplido === false && (
+              <span className="bd-linea bd-mala">Desafío "{t.desafio?.nombre}" fallado</span>
+            )}
+          </div>
+        )}
         {t.narrativa.relato && <p className="hist-relato">{t.narrativa.relato}</p>}
         {t.narrativa.epilogo && (
           <p className={"hist-ambiente" + (t.haySecreto ? " hist-twist" : "")}>{t.narrativa.epilogo}</p>
@@ -169,6 +214,11 @@ export function PantallaHistoria({
         <h1 className="hist-titulo hist-perdio">Te limpiaron</h1>
         <FichaRival t={t} tam={84} />
         <p className="hist-dialogo">“{r.dialogo}”</p>
+        {t.apuestaPerdida > 0 && (
+          <div className="apuesta-perdida" role="status">
+            La mesa se comió tu apuesta: −${t.apuestaPerdida.toLocaleString("es-CL")}
+          </div>
+        )}
         <BarraStats t={t} />
         <div className="hist-acciones">
           <button className="btn btn--apostar grande" onClick={() => transporte.historiaReintentar?.()}>

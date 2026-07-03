@@ -61,6 +61,33 @@ const OJO_HALCON: HabilidadBoss = {
   dadoCargado: true,
 };
 
+// --- Reglas de mesa (mesas comunes con reglas propias — no sólo los jefes) ---
+const CALZO_SECO: HabilidadBoss = {
+  nombre: "Calzo seco",
+  desc: "En su mesa, calzar no devuelve dados: lo jugado, jugado está.",
+  reglas: { calzarRecuperaDado: false },
+};
+const POLVORA: HabilidadBoss = {
+  nombre: "Pólvora",
+  desc: "Dudar al que abre y perder aquí vuela 3 dados de una.",
+  reglas: { sicilianaDadosPerdidos: 3 },
+};
+const SIN_VELORIO: HabilidadBoss = {
+  nombre: "Sin velorio",
+  desc: "Aquí no hay ronda de obligado: al moribundo no se le hacen honores.",
+  reglas: { obligadoActivo: false },
+};
+const LEY_SECA: HabilidadBoss = {
+  nombre: "Ley seca",
+  desc: "El Comisario no permite calzar: o apuestas, o dudas.",
+  reglas: { calzarPermitido: false },
+};
+const SIN_ATENUANTES: HabilidadBoss = {
+  nombre: "Sin atenuantes",
+  desc: "En su tribunal el as no es comodín: cada pinta responde por sí sola.",
+  reglas: { asComodin: false },
+};
+
 // ---------------------------------------------------------------------------
 // Rivales y escenarios
 // ---------------------------------------------------------------------------
@@ -280,7 +307,7 @@ export const CAMPANA: Escenario[] = [
         presentacion: "Entre cajones de fruta podrida, El Charqui reparte mesa para cinco. 'Esto no es el puerto, cabro.' Aquí ya se juega con plata que mancha.",
         relato: "El Charqui te reconoce con un gesto seco. La Vega de noche es chica para los secretos: para cuando llegues a la próxima mesa, ya sabrán que vienes ganando.",
         dialogos: d("Cinco en la mesa, cabro. Esto no es el puerto.", "Mierda. Tienes algo, lo reconozco.", "Vuelve a tu caleta, esto te queda grande.") },
-      { id: "r-quintrala", nombre: "La Quintrala", nivel: "medio", mesa: 2, esBoss: false, plata: 38,
+      { id: "r-quintrala", nombre: "La Quintrala", nivel: "medio", mesa: 2, esBoss: false, plata: 38, habilidad: CALZO_SECO,
         presentacion: "La Quintrala te sienta a su lado con una sonrisa que corta. Mano a mano. Lindo cachito el tuyo… sería una pena perderlo con ella.",
         relato: "La Quintrala recoge sus anillos y se va sin mirar atrás. Te queda su perfume y una certeza: en La Vega, los que sonríen son los que más muerden.",
         dialogos: d("Lindo cachito… sería una pena que lo perdieras conmigo.", "Maldito seas. Nadie me lee la mano así.", "Te lo dije, lindo. Esto era mío.") },
@@ -332,7 +359,7 @@ export const CAMPANA: Escenario[] = [
         presentacion: "La Trenza manejó locomotoras toda su vida. Ahora maneja mentiras desde una silla de fierro. 'Las dos te aplastan igual.'",
         relato: "La Trenza te deja pasar entre los rieles muertos. 'Cuídate del Verdugo', murmura bajito. 'Ese no juega: ejecuta.'",
         dialogos: d("Manejé locomotoras y manejo mentiras. Las dos te aplastan igual.", "Me descarrilaste, desgraciado. Bien jugado.", "Quítenlo de la vía, que viene el tren.") },
-      { id: "r-mecha", nombre: "Mecha Corta", nivel: "experto", mesa: 4, esBoss: false, plata: 80,
+      { id: "r-mecha", nombre: "Mecha Corta", nivel: "experto", mesa: 4, esBoss: false, plata: 80, habilidad: POLVORA,
         presentacion: "Mecha Corta golpetea la mesa con los dedos. Le dicen así por algo: tienes una mano para ganarle, o estalla.",
         relato: "Mecha aguanta el bufido y, por una vez, no explota. 'Pasa nomás.' Al fondo del galpón, una sombra enorme deja un saco de género sobre la mesa.",
         dialogos: d("Tengo la paciencia justa para una mano. Apúrate o exploto.", "…contuviste la mecha. Pocos lo logran.", "Bum. Te dije que tenía la mecha corta, cabro.") },
@@ -380,7 +407,7 @@ export const CAMPANA: Escenario[] = [
         presentacion: "Pituto conoce a todos los que mandan. A ti no te conoce… todavía. Te da la mano blanda y los ojos duros.",
         relato: "Pituto te guarda en su memoria de elefante. 'Ahora sí te tengo en el radar.' Que Pituto ande pendiente de ti puede salvarte la vida… o costártela.",
         dialogos: d("Yo conozco a todos los que mandan. A ti no te conozco… todavía.", "Ya te tengo en el radar ahora, cabro.", "Nadie va a recordar tu nombre.") },
-      { id: "r-viuda", nombre: "La Viuda Alegre", nivel: "experto", mesa: 3, esBoss: false, plata: 95,
+      { id: "r-viuda", nombre: "La Viuda Alegre", nivel: "experto", mesa: 3, esBoss: false, plata: 95, habilidad: SIN_VELORIO,
         presentacion: "La Viuda Alegre enterró a tres maridos en esta misma mesa. Te corre la silla con una sonrisa negra. 'Hay sitio, lindo.'",
         relato: "La Viuda te despide con un beso al aire. 'Otro luto para mi colección.' Tras el humo, El Croata apaga su cigarro: llegó tu turno con el hielo.",
         dialogos: d("Enterré a tres maridos jugando al cacho. Siéntate, lindo, hay sitio.", "Me dejas viuda otra vez… de mi invicto. Qué hombre.", "Otro luto más para mi colección, mijito.") },
@@ -449,7 +476,7 @@ export const CAMPANA: Escenario[] = [
         presentacion: "El Turco Fino no se quita el traje ni los cachos. Elegancia hasta para robarte. 'Las dos cosas que nunca suelto.'",
         relato: "El Turco se sacude una arruga invisible. 'Me ganaste limpio, cabro.' Viniendo de un tramposo de seda, es casi un honor.",
         dialogos: d("Traje y cachos: las dos cosas que nunca me quito.", "Me arrugaste el traje, desgraciado. Bien jugado.", "Elegancia, cabro. Eso es lo que te falta.") },
-      { id: "r-comisario", nombre: "El Comisario", nivel: "experto", mesa: 4, esBoss: false, plata: 130,
+      { id: "r-comisario", nombre: "El Comisario", nivel: "experto", mesa: 4, esBoss: false, plata: 130, habilidad: LEY_SECA,
         presentacion: "De civil, pero huele a placa a un metro. El Comisario persigue al hampa de día y le gana la plata de noche. 'Conozco todos sus trucos.'",
         relato: "El Comisario te deja libre 'por esta vez'. Antes de irse, baja la voz: 'El Senador hace trampa y tiene comprado a medio Chile. Arriba ya no hay reglas.'",
         dialogos: d("De día persigo al hampa; de noche le gano la plata. Conozco todos sus trucos.", "Si fueras delincuente, serías el mejor. Lástima que eres honrado.", "Queda detenido… en el último puesto, cabro.") },
@@ -502,7 +529,7 @@ export const CAMPANA: Escenario[] = [
         presentacion: "El penthouse huele a dinero viejo. El Heredero te recibe con desprecio de cuna. 'Mi padre fue el segundo mejor de Chile. Yo seré el primero.'",
         relato: "El Heredero se hunde en su sillón de cuero. La sangre no le alcanzó. Una puerta doble se abre al fondo: del otro lado espera la Jueza, y después… el trono.",
         dialogos: d("Mi padre era el segundo mejor de Chile. Yo voy a ser el primero.", "No… ese trono era mío por sangre.", "La sangre manda, advenedizo.") },
-      { id: "r-jueza", nombre: "La Jueza", nivel: "experto", mesa: 2, esBoss: false, plata: 200,
+      { id: "r-jueza", nombre: "La Jueza", nivel: "experto", mesa: 2, esBoss: false, plata: 200, habilidad: SIN_ATENUANTES,
         presentacion: "La Jueza condenó a hombres por menos que tu ambición. Te mira por encima de sus lentes. 'A ver si me convences, forastero.'",
         relato: "La Jueza dicta su último veredicto de la noche: 'Culpable… de ser mejor que yo. Pasa.' Se hace un silencio. Tras la última puerta, treinta años de leyenda te esperan.",
         dialogos: d("He condenado a hombres por menos que tu ambición. A ver si me convences.", "Veredicto: culpable… de ser mejor que yo. Pasa.", "Sentencia firme: de vuelta al barro, sin apelación.") },
@@ -801,6 +828,52 @@ export function armarMesa(h: EstadoHistoria): {
   };
 }
 
+// ---------------------------------------------------------------------------
+// La apuesta y el desafío de la casa (riesgo y objetivos por mesa)
+// ---------------------------------------------------------------------------
+
+/** Objetivo opcional de una mesa. Si lo cumples al ganar, la casa paga el bono. */
+export interface Desafio {
+  clave: "impecable" | "calzador" | "sobrado" | "manolimpia";
+  nombre: string;
+  desc: string;
+}
+
+const DESAFIOS: Desafio[] = [
+  { clave: "impecable", nombre: "Impecable", desc: "Gana sin perder ni un solo dado." },
+  { clave: "calzador", nombre: "Calzador", desc: "Gana con al menos un calzo acertado." },
+  { clave: "sobrado", nombre: "Sobrado", desc: "Gana conservando 3 o más dados." },
+  { clave: "manolimpia", nombre: "A mano limpia", desc: "Gana sin usar items ni el poder Suerte." },
+];
+
+function hashTexto(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+/** El desafío de la casa para un rival (determinista por su id). Si la mesa no
+ *  permite calzar, "Calzador" sería imposible: cae a "Sobrado". */
+export function desafioDe(rival: RivalHistoria): Desafio {
+  let d = DESAFIOS[hashTexto(rival.id) % DESAFIOS.length]!;
+  if (d.clave === "calzador" && rival.habilidad?.reglas?.calzarPermitido === false) {
+    d = DESAFIOS.find((x) => x.clave === "sobrado")!;
+  }
+  return d;
+}
+
+/** Bono que paga el desafío: dobla el premio base del rival. */
+export function bonoDesafio(rival: RivalHistoria): number {
+  return rival.plata;
+}
+
+/** Montos de apuesta disponibles antes de sentarse (doblar o nada): nada, la
+ *  mitad del premio, el premio entero o el doble — hasta donde alcance tu plata. */
+export function opcionesApuesta(plata: number, premioBase: number): number[] {
+  const brutas = [0, Math.floor(premioBase / 2), premioBase, premioBase * 2];
+  return [...new Set(brutas.filter((m) => m === 0 || (m > 0 && m <= plata)))];
+}
+
 /** Mesa 1v1 contra el jefe final SECRETO (final verdadero). */
 export function armarMesaSecreta(nombre: string): {
   jugadores: { id: string; nombre: string }[];
@@ -928,4 +1001,12 @@ export interface VistaHistoria {
   finalTipo: TipoFinal | null;
   /** En la victoria del Rey "público", se desbloqueó el jefe secreto. */
   haySecreto: boolean;
+  /** La apuesta de la mesa (en la intro): monto elegido y opciones. */
+  apuesta: { elegida: number; opciones: number[]; premioBase: number } | null;
+  /** El desafío de la casa de esta mesa (intro, mesa y victoria). */
+  desafio: { nombre: string; desc: string; bono: number } | null;
+  /** Desglose del botín (en victoria): base + apuesta doblada + bono. */
+  botin: { premioBase: number; apuestaExtra: number; bono: number; desafioCumplido: boolean | null; total: number } | null;
+  /** Plata que se comió la mesa (en derrota, si había apuesta). */
+  apuestaPerdida: number;
 }

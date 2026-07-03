@@ -24,6 +24,9 @@ import {
   itemMeta,
   tipoFinal,
   armarMesaSecreta,
+  desafioDe,
+  bonoDesafio,
+  opcionesApuesta,
   ATRIBUTOS,
   ITEMS,
   CAMPANA,
@@ -71,6 +74,11 @@ export class TransporteHistoria implements Transporte {
   private secretoActivo = false;
   /** Qué final mostrar (en fase "final"). */
   private finalTipo: TipoFinal | null = null;
+  /** La apuesta de la mesa en curso (doblar o nada) y el botín de la victoria. */
+  private apuestaMonto = 0;
+  private suerteUsadaEnMesa = false;
+  private botin: VistaHistoria["botin"] = null;
+  private apuestaPerdida = 0;
 
   constructor(estado: EstadoHistoria) {
     this.h = normalizar(estado);
@@ -112,8 +120,13 @@ export class TransporteHistoria implements Transporte {
     this.dadoCargadoId = mesa.dadoCargadoId;
     this.suerteUsos = this.h.atributos.suerte;
     this.soplonActivo = false;
+    this.suerteUsadaEnMesa = false;
     this.itemsGastados = { cargado: 0, marcado: 0, soplon: 0 };
     this.eventoEnCurso = null;
+    this.botin = null;
+    this.apuestaPerdida = 0;
+    // La apuesta no puede superar la plata en mano (p.ej. tras una derrota cara).
+    this.apuestaMonto = Math.min(this.apuestaMonto, this.h.plata);
 
     // Efecto pendiente (de una lectura o pelea): se consume en esta mesa.
     const ef = this.h.efectoPendiente ?? null;
@@ -144,24 +157,66 @@ export class TransporteHistoria implements Transporte {
     if (this.dadoCargadoId && this.inner) this.inner.cargarMano(this.dadoCargadoId);
   }
 
+  /** ¿Se cumplió el desafío de la casa? (se evalúa sobre la mesa ya ganada) */
+  private evaluarDesafio(pub: NonNullable<Instantanea["publico"]>): boolean | null {
+    if (this.secretoActivo) return null; // con el Patrón no hay desafíos: es a muerte
+    const d = desafioDe(rivalActual(this.h));
+    const yo = pub.jugadores.find((j) => j.id === HUMANO_ID);
+    if (!yo) return null;
+    switch (d.clave) {
+      case "impecable":
+        return yo.stats.dadosPerdidos === 0;
+      case "calzador":
+        return yo.stats.calzosAcertados >= 1;
+      case "sobrado":
+        return yo.cantidadDados >= 3;
+      case "manolimpia":
+        return (
+          !this.suerteUsadaEnMesa &&
+          this.itemsGastados.cargado + this.itemsGastados.marcado + this.itemsGastados.soplon === 0
+        );
+    }
+  }
+
   private onInner() {
     if (this.detenido || !this.inner) return;
     const pub = this.inner.instantanea().publico;
     if (this.fase === "mesa" && pub && pub.fase === "FIN_JUEGO") {
       if (pub.ganadorId === HUMANO_ID) {
+        const desafioCumplido = this.evaluarDesafio(pub);
         // Sólo al ganar se descuentan de verdad los items usados.
         for (const id of ["cargado", "marcado", "soplon"] as ItemId[]) {
           this.h.inventario[id] = Math.max(0, this.h.inventario[id] - this.itemsGastados[id]);
         }
         this.itemsGastados = { cargado: 0, marcado: 0, soplon: 0 };
-        this.h.plata += this.rivalEnCurso().plata;
+        // El botín: premio base + la apuesta doblada + el bono del desafío.
+        const rival = this.rivalEnCurso();
+        const bono = desafioCumplido ? bonoDesafio(rival) : 0;
+        const total = rival.plata + this.apuestaMonto + bono;
+        this.botin = { premioBase: rival.plata, apuestaExtra: this.apuestaMonto, bono, desafioCumplido, total };
+        this.h.plata += total;
         this.guardar();
         this.fase = "victoria";
       } else {
-        // Al perder, los items usados se recuperan (no se confirmó la baja).
+        // Al perder, los items usados se recuperan (no se confirmó la baja)…
+        // pero la apuesta se la queda la mesa. Perder ahora duele.
+        this.apuestaPerdida = Math.min(this.apuestaMonto, this.h.plata);
+        if (this.apuestaPerdida > 0) {
+          this.h.plata -= this.apuestaPerdida;
+          this.guardar();
+        }
         this.fase = "derrota";
       }
     }
+    this.emitir();
+  }
+
+  /** Fija la apuesta de la mesa (sólo en la intro, dentro de las opciones). */
+  historiaApostar(monto: number) {
+    if (this.fase !== "intro") return;
+    const base = this.rivalEnCurso().plata;
+    if (!opcionesApuesta(this.h.plata, base).includes(monto)) return;
+    this.apuestaMonto = monto;
     this.emitir();
   }
 
@@ -239,6 +294,9 @@ export class TransporteHistoria implements Transporte {
       return;
     }
     if (this.fase === "victoria") {
+      // La mesa quedó atrás: la apuesta y el botín se limpian para la próxima.
+      this.apuestaMonto = 0;
+      this.botin = null;
       if (this.secretoActivo) {
         // Cayó el jefe SECRETO: final verdadero.
         this.h.completado = true;
@@ -323,6 +381,7 @@ export class TransporteHistoria implements Transporte {
     if (this.fase !== "mesa" || this.suerteUsos <= 0 || !this.inner) return;
     if (this.inner.rerollarMano(HUMANO_ID)) {
       this.suerteUsos -= 1;
+      this.suerteUsadaEnMesa = true; // rompe el desafío "A mano limpia"
       this.emitir();
     }
   }
@@ -460,6 +519,19 @@ export class TransporteHistoria implements Transporte {
       marcas: [...this.h.marcas],
       finalTipo: this.fase === "final" ? this.finalTipo : null,
       haySecreto,
+      apuesta:
+        this.fase === "intro"
+          ? { elegida: this.apuestaMonto, opciones: opcionesApuesta(this.h.plata, rival.plata), premioBase: rival.plata }
+          : null,
+      desafio:
+        !this.secretoActivo && (this.fase === "intro" || this.fase === "mesa" || this.fase === "victoria")
+          ? (() => {
+              const d = desafioDe(rival);
+              return { nombre: d.nombre, desc: d.desc, bono: bonoDesafio(rival) };
+            })()
+          : null,
+      botin: this.fase === "victoria" ? this.botin : null,
+      apuestaPerdida: this.fase === "derrota" ? this.apuestaPerdida : 0,
     };
   }
 

@@ -8,6 +8,8 @@ import {
   armarMesa,
   eventoActual,
   tipoFinal,
+  desafioDe,
+  opcionesApuesta,
   REY_VERDADERO,
   FINALES,
   type EstadoHistoria,
@@ -78,6 +80,69 @@ describe("campaña", () => {
         expect(fuentes.some((idx) => idx < ei), `la marca ${pe.requiere} se obtiene antes del cap. ${ei}`).toBe(true);
       }),
     );
+  });
+
+  it("las reglas de mesa de rivales comunes llegan al motor", () => {
+    const buscar = (id: string) => {
+      for (let ei = 0; ei < CAMPANA.length; ei++) {
+        const ri = CAMPANA[ei]!.rivales.findIndex((r) => r.id === id);
+        if (ri >= 0) return { ei, ri };
+      }
+      throw new Error("no está " + id);
+    };
+    const reglasDe = (id: string) => {
+      const { ei, ri } = buscar(id);
+      const h = historiaNueva("X");
+      h.escenarioIdx = ei;
+      h.rivalIdx = ri;
+      return armarMesa(h).reglas;
+    };
+    expect(reglasDe("r-comisario").calzarPermitido).toBe(false); // Ley seca
+    expect(reglasDe("r-jueza").asComodin).toBe(false); // Sin atenuantes
+    expect(reglasDe("r-viuda").obligadoActivo).toBe(false); // Sin velorio
+    expect(reglasDe("r-quintrala").calzarRecuperaDado).toBe(false); // Calzo seco
+    expect(reglasDe("r-mecha").sicilianaDadosPerdidos).toBe(3); // Pólvora
+  });
+
+  it("el desafío es determinista y esquiva 'Calzador' donde no se puede calzar", () => {
+    for (const e of CAMPANA) {
+      for (const r of e.rivales) {
+        const d = desafioDe(r);
+        expect(d).toEqual(desafioDe(r)); // determinista
+        if (r.habilidad?.reglas?.calzarPermitido === false) {
+          expect(d.clave).not.toBe("calzador"); // imposible en esa mesa
+        }
+      }
+    }
+  });
+
+  it("opcionesApuesta ofrece nada/mitad/entera/doble hasta donde alcanza la plata", () => {
+    expect(opcionesApuesta(1000, 100)).toEqual([0, 50, 100, 200]);
+    expect(opcionesApuesta(120, 100)).toEqual([0, 50, 100]); // el doble no alcanza
+    expect(opcionesApuesta(0, 100)).toEqual([0]); // sin plata, sin riesgo
+  });
+
+  it("historiaApostar fija la apuesta sólo en la intro y dentro de las opciones", () => {
+    const h = historiaNueva("Tahur");
+    h.plata = 100;
+    h.dilemasResueltos = ["pocilga-cabro"];
+    const th = new TransporteHistoria(h);
+    let v = th.instantanea().historia!;
+    expect(v.apuesta).toBeTruthy();
+    expect(v.apuesta!.premioBase).toBe(20); // El Pulguita
+    expect(v.apuesta!.opciones).toEqual([0, 10, 20, 40]);
+
+    th.historiaApostar!(40);
+    v = th.instantanea().historia!;
+    expect(v.apuesta!.elegida).toBe(40);
+
+    th.historiaApostar!(33); // monto inválido: se ignora
+    expect(th.instantanea().historia!.apuesta!.elegida).toBe(40);
+
+    th.historiaEmpezar!(); // ya en la mesa no se cambia
+    th.historiaApostar!(0);
+    expect(th.instantanea().historia!.faseHistoria).toBe("mesa");
+    th.detener();
   });
 
   it("hay tres finales y un jefe final secreto", () => {

@@ -222,6 +222,11 @@ export function Mesa({
           <span className="hh-rival">
             {snap.historia.rival.esBoss && <span className="hh-boss">JEFE</span>}
             {snap.historia.rival.nombre}
+            {snap.historia.desafio && (
+              <span className="hh-desafio" title={snap.historia.desafio.desc}>
+                {snap.historia.desafio.nombre}
+              </span>
+            )}
           </span>
           {p.fase === "EN_RONDA" && (
             <div className="hh-poderes">

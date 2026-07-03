@@ -88,6 +88,8 @@ export interface Transporte {
   historiaComprarItem?(id: string): void;
   /** Usa un item desde la mesa (cargar tu mano, marcar al rival, soplón). */
   historiaUsarItem?(id: string): void;
+  /** Fija la apuesta de la mesa (doblar o nada), desde la intro del rival. */
+  historiaApostar?(monto: number): void;
   /** Resuelve un evento de decisión (dilema/pelea) eligiendo una opción. */
   historiaElegir?(opcionIdx: number): void;
   /** Da vuelta una carta en una lectura de suerte. */
