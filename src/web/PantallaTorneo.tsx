@@ -1,8 +1,10 @@
 // Pantallas del torneo alrededor del CUADRO de duelos: presentación (antes de
 // empezar), entre rondas, campeón y eliminado. El cuadro se va llenando solo.
+import { useEffect, useRef } from "react";
 import { Avatar } from "./Avatar";
 import { MapaDuelos } from "./MapaTorneo";
 import { Emblema } from "./Iconos";
+import { registrarCopa } from "./palmares";
 import type { Instantanea, Transporte } from "./transporte";
 import type { MapaMesa, VistaTorneo } from "./torneo";
 
@@ -45,6 +47,15 @@ export function PantallaTorneo({
   const t = snap.torneo!;
   const nivel = ETIQUETA_NIVEL[t.nivelRonda] ?? t.nivelRonda;
   const miMesa = miMesaActual(t);
+
+  // Palmarés: la copa se anota una sola vez al coronarse.
+  const copaRegistrada = useRef(false);
+  useEffect(() => {
+    if (t.faseTorneo === "campeon" && !copaRegistrada.current) {
+      copaRegistrada.current = true;
+      registrarCopa();
+    }
+  }, [t.faseTorneo]);
 
   // --- Presentación: el cuadro antes de empezar ---
   if (t.faseTorneo === "presentacion") {

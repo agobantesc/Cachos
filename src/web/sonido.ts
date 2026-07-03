@@ -158,8 +158,62 @@ function rattle(c: AudioContext, t0: number): void {
   }
 }
 
+// Vibración háptica (Android; en iOS es un no-op silencioso). Ligada al mismo
+// interruptor del sonido para que "silenciar" calle también al motor.
+export function vibrar(patron: number | number[]): void {
+  if (!activado) return;
+  try {
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate(patron);
+  } catch {
+    /* sin háptica */
+  }
+}
+
+// Golpe seco de tambor + cuerpo grave: el redoble de la revelación.
+function golpeReveal(c: AudioContext, t0: number): void {
+  const dur = 0.09;
+  const buffer = c.createBuffer(1, Math.max(1, Math.floor(c.sampleRate * dur)), c.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let s = 0; s < data.length; s++) data[s] = Math.random() * 2 - 1;
+  const src = c.createBufferSource();
+  src.buffer = buffer;
+  const bp = c.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.frequency.value = 1400;
+  bp.Q.value = 0.8;
+  const g = c.createGain();
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(0.3, t0 + 0.006);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  src.connect(bp).connect(g).connect(c.destination);
+  src.start(t0);
+  src.stop(t0 + dur);
+  tono(c, t0 + 0.01, 96, 0.22, "sine", 0.22);
+}
+
 export const Sonidos = {
   dados: () => reproducir(rattle),
+  // Redoble de la revelación (se destapan los vasos).
+  revelar: () => reproducir((c, t) => golpeReveal(c, t)),
+  // Carta que se da vuelta (lectura de suerte): un soplido corto.
+  carta: () =>
+    reproducir((c, t) => {
+      tono(c, t, 1150, 0.05, "triangle", 0.08);
+      tono(c, t + 0.045, 760, 0.09, "triangle", 0.1);
+    }),
+  // Sting de EVENTO de calle: dos notas bajas, misteriosas.
+  evento: () =>
+    reproducir((c, t) => {
+      tono(c, t, 196, 0.32, "sine", 0.14);
+      tono(c, t + 0.16, 233, 0.4, "sine", 0.12);
+    }),
+  // Sting de JEFE: tritono grave, amenaza pura.
+  boss: () =>
+    reproducir((c, t) => {
+      tono(c, t, 110, 0.5, "sawtooth", 0.12);
+      tono(c, t + 0.02, 156, 0.5, "sine", 0.14);
+      tono(c, t + 0.3, 104, 0.6, "sine", 0.16);
+    }),
   apostar: () => reproducir((c, t) => tono(c, t, 660, 0.09, "triangle", 0.15)),
   // Te toca a TI: campanilla ascendente, clara y distinta, para que no te pierdas
   // tu turno aunque estés mirando para otro lado (sobre todo jugando en línea).

@@ -1,8 +1,11 @@
 // Pantallas del modo historia alrededor de la mesa: intro del rival, victoria,
 // derrota, la tienda (subir atributos) y el final de la campaña.
+import { useEffect, useRef } from "react";
 import { Avatar } from "./Avatar";
 import { Escena } from "./Escena";
 import { FINALES } from "./historia";
+import { Sonidos, vibrar } from "./sonido";
+import { registrarFinal } from "./palmares";
 import type { Instantanea, Transporte } from "./transporte";
 import type { VistaHistoria } from "./historia";
 
@@ -78,6 +81,26 @@ export function PantallaHistoria({
 }) {
   const t = snap.historia!;
   const r = t.rival;
+
+  // Ambiente sonoro de la campaña: sting de evento, sting de jefe, y el final
+  // (que además queda registrado en el palmarés). Una vez por pantalla.
+  const escenaPrev = useRef("");
+  useEffect(() => {
+    const clave = `${t.faseHistoria}:${t.evento?.titulo ?? r.id}:${t.finalTipo ?? ""}`;
+    if (escenaPrev.current === clave) return;
+    escenaPrev.current = clave;
+    if (t.faseHistoria === "evento") {
+      Sonidos.evento();
+    } else if (t.faseHistoria === "intro" && r.esBoss) {
+      Sonidos.boss();
+      vibrar([40, 80, 40]);
+    } else if (t.faseHistoria === "final") {
+      registrarFinal(t.finalTipo ?? "estandar");
+      if (t.finalTipo === "malo") Sonidos.perder();
+      else Sonidos.ganar();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [t.faseHistoria, t.evento?.titulo, r.id, r.esBoss, t.finalTipo]);
 
   // --- INTRO: el lugar y el rival ---
   if (t.faseHistoria === "intro") {
@@ -204,7 +227,11 @@ export function PantallaHistoria({
                 <button
                   key={i}
                   className="carta carta--dorso"
-                  onClick={() => transporte.historiaSacarCarta?.(i)}
+                  onClick={() => {
+                    Sonidos.carta();
+                    vibrar(15);
+                    transporte.historiaSacarCarta?.(i);
+                  }}
                   aria-label={`Dar vuelta la carta ${i + 1}`}
                 >
                   <span className="carta-marca" aria-hidden="true" />

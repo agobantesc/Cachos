@@ -5,8 +5,59 @@ import { Avatar } from "./Avatar";
 import { IconoDado, IconoSonido } from "./Iconos";
 import { BarraAcciones } from "./BarraAcciones";
 import { nombrarApuesta, PLURAL_PINTA } from "./util";
-import { Sonidos, sonidoActivado, alternarSonido } from "./sonido";
+import { Sonidos, sonidoActivado, alternarSonido, vibrar } from "./sonido";
+import { registrarPartida } from "./palmares";
 import type { Instantanea, Transporte } from "./transporte";
+
+/** true si el usuario pidió menos movimiento (se salta la agitada de dados). */
+function prefiereQuieto(): boolean {
+  return typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+}
+
+/**
+ * TU MANO, con la agitada del cacho: al empezar la ronda (o al re-tirar con
+ * Suerte) los dados bailan caras al azar unos instantes y recién ahí se
+ * asientan en la mano real. Es EL gesto del cacho — se juega agitando.
+ */
+function ManoAgitada({ caras, tam }: { caras: Pinta[]; tam?: number }) {
+  const clave = caras.join(",");
+  const [mostradas, setMostradas] = useState<Pinta[]>(caras);
+  const [agitando, setAgitando] = useState(false);
+  const clavePrev = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (clavePrev.current === clave) return;
+    clavePrev.current = clave;
+    if (prefiereQuieto()) {
+      setMostradas(caras);
+      return;
+    }
+    setAgitando(true);
+    const azar = () => caras.map(() => (1 + Math.floor(Math.random() * 6)) as Pinta);
+    setMostradas(azar());
+    const iv = setInterval(() => setMostradas(azar()), 85);
+    const fin = setTimeout(() => {
+      clearInterval(iv);
+      setMostradas(caras);
+      setAgitando(false);
+    }, 560);
+    return () => {
+      clearInterval(iv);
+      clearTimeout(fin);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clave]);
+
+  return (
+    <div className={"mano-dados" + (agitando ? " mano--agitando" : "")}>
+      {(agitando ? mostradas : caras).map((c, i) => (
+        <span key={i} className="dado-slot" style={agitando ? { animationDelay: `${i * 45}ms` } : undefined}>
+          <Dado cara={c} {...(tam !== undefined ? { tam } : {})} />
+        </span>
+      ))}
+    </div>
+  );
+}
 
 export function Mesa({
   snap,
@@ -34,16 +85,31 @@ export function Mesa({
   };
 
   // Sonido por evento: dados al empezar ronda; ganar/perder en la resolución.
+  const finRegistrado = useRef(false);
   useEffect(() => {
     if (p.fase === "EN_RONDA") {
+      finRegistrado.current = false; // mesa en curso (Mesa no se re-monta entre partidas)
       Sonidos.dados();
     } else if (p.fase === "FIN_RONDA" && p.ultimaResolucion) {
-      if (p.ultimaResolucion.perdedorId === snap.miId) Sonidos.perder();
-      else Sonidos.ganar();
+      if (p.ultimaResolucion.perdedorId === snap.miId) {
+        Sonidos.perder();
+        vibrar(70);
+      } else {
+        Sonidos.ganar();
+      }
     } else if (p.fase === "FIN_JUEGO") {
       // Si ganó, suena la fanfarria; si perdió, ya sonó "perder" al ser
       // eliminado, así que no se repite.
-      if (p.ganadorId === snap.miId) Sonidos.ganar();
+      const gane = p.ganadorId === snap.miId;
+      if (gane) {
+        Sonidos.ganar();
+        vibrar([25, 60, 45]);
+      }
+      // Palmarés: una vez por mesa, sólo con perspectiva fija (solitario/online).
+      if (!finRegistrado.current && (snap.esSolo || !snap.esLocal)) {
+        finRegistrado.current = true;
+        registrarPartida(gane);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p.fase, p.numeroRonda]);
@@ -60,8 +126,10 @@ export function Mesa({
       const turno = p.turnoJugadorId;
       const nuevaRonda = p.numeroRonda !== rondaPrev.current;
       if (turno !== turnoPrev.current || nuevaRonda) {
-        if (turno === snap.miId) Sonidos.tuTurno();
-        else if (!nuevaRonda && turnoPrev.current !== null) Sonidos.tic();
+        if (turno === snap.miId) {
+          Sonidos.tuTurno();
+          vibrar(30);
+        } else if (!nuevaRonda && turnoPrev.current !== null) Sonidos.tic();
       }
       turnoPrev.current = turno;
     }
@@ -266,7 +334,10 @@ export function Mesa({
         {p.apuestaActual ? (
           <div className="apuesta-grande">
             <span className="quien">{nombre(p.apuestaActualJugadorId)} apostó</span>
-            <strong>{nombrarApuesta(p.apuestaActual)}</strong>
+            {/* key: al cambiar la apuesta, el texto entra con un "pop" */}
+            <strong key={`${p.apuestaActual.cantidad}-${p.apuestaActual.pinta}`} className="apuesta-pop">
+              {nombrarApuesta(p.apuestaActual)}
+            </strong>
           </div>
         ) : (
           <div className="apuesta-grande">
@@ -278,7 +349,7 @@ export function Mesa({
       <section className="mi-mano">
         <div className="mi-mano-titulo">Tu mano</div>
         {snap.miMano ? (
-          <ManoDados caras={snap.miMano} tam={46} />
+          <ManoAgitada caras={snap.miMano} tam={46} />
         ) : (
           <div className="a-ciegas">A ciegas · ronda cerrada</div>
         )}
@@ -315,8 +386,15 @@ function Revelacion({
 }) {
   const nombre = (id: string | null) => publico.jugadores.find((j) => j.id === id)?.nombre ?? "—";
   const esPaso = res.tipo === "PASO";
-  const cuenta = (caras: Pinta[]) =>
-    caras.filter((c) => c === res.pinta || (res.asesComoComodin && res.pinta !== 1 && c === 1)).length;
+  const esMatch = (c: Pinta) => c === res.pinta || (res.asesComoComodin && res.pinta !== 1 && c === 1);
+  const cuenta = (caras: Pinta[]) => caras.filter(esMatch).length;
+
+  // Redoble + háptica al destaparse los vasos (una vez por revelación).
+  useEffect(() => {
+    Sonidos.revelar();
+    vibrar([12, 50, 12]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const razonPaso = (caras: Pinta[]): string => {
     const m = new Map<number, number>();
@@ -350,15 +428,29 @@ function Revelacion({
           <p className="siciliana">{razonPaso(res.dadosRevelados[res.pasadorId] ?? [])}</p>
         )}
         <div className="reveal-grid">
-          {Object.entries(res.dadosRevelados).map(([id, caras]) => (
-            <div key={id} className="reveal-fila">
-              <span className="reveal-nombre">{nombre(id)}</span>
+          {Object.entries(res.dadosRevelados).map(([id, caras], fila) => (
+            <div
+              key={id}
+              className={"reveal-fila" + (id === res.perdedorId ? " reveal-fila--perdedor" : "")}
+              style={{ animationDelay: `${fila * 110}ms` }}
+            >
+              <span className="reveal-nombre">
+                {nombre(id)}
+                {id === snap.miId && <span className="yo"> (tú)</span>}
+              </span>
               <div className="reveal-dados">
                 {caras.map((c, i) => (
-                  <Dado key={i} cara={c} tam={30} />
+                  // Los dados que cuentan para la apuesta brillan; el resto se apaga.
+                  <span key={i} className={esPaso ? "" : esMatch(c) ? "dado-cuenta" : "dado-fuera"}>
+                    <Dado cara={c} tam={30} />
+                  </span>
                 ))}
               </div>
-              {!esPaso && <span className="reveal-cuenta">cuenta {cuenta(caras)}</span>}
+              {!esPaso && (
+                <span className={"reveal-cuenta" + (cuenta(caras) > 0 ? " reveal-cuenta--con" : "")}>
+                  cuenta {cuenta(caras)}
+                </span>
+              )}
             </div>
           ))}
         </div>

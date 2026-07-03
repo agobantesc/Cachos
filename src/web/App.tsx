@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { leerPalmares } from "./palmares";
 import { Mesa } from "./Mesa";
 import { PantallaTorneo } from "./PantallaTorneo";
 import { PantallaHistoria } from "./PantallaHistoria";
@@ -159,6 +160,12 @@ function Inicio({ onListo }: { onListo: (t: Transporte) => void }) {
 
   return (
     <div className="pantalla home">
+      {/* Humo de taberna: tres jirones que suben lentos tras el contenido. */}
+      <div className="humo-amb" aria-hidden="true">
+        <i></i>
+        <i></i>
+        <i></i>
+      </div>
       <div className="logo">
         <Emblema />
       </div>
@@ -219,9 +226,40 @@ function Inicio({ onListo }: { onListo: (t: Transporte) => void }) {
         </button>
       </div>
 
+      <Palmares />
+
       <button className="btn-link" onClick={() => setVista("reglas")}>
         Reglas de la Asociación
       </button>
+    </div>
+  );
+}
+
+/** El palmarés del socio: sus récords, discretos al pie del salón. */
+function Palmares() {
+  const [p] = useState(() => leerPalmares());
+  if (p.jugadas === 0) return null;
+  return (
+    <div className="palmares" aria-label="Tu palmarés">
+      <span className="pal-dato">
+        <b>{p.ganadas}</b> victorias <i>/ {p.jugadas} mesas</i>
+      </span>
+      {p.mejorRacha >= 2 && (
+        <span className="pal-dato">
+          racha <b>{p.mejorRacha}</b>
+        </span>
+      )}
+      {p.copas > 0 && (
+        <span className="pal-dato">
+          <b>{p.copas}</b> {p.copas === 1 ? "copa" : "copas"}
+        </span>
+      )}
+      {p.finales.length > 0 && (
+        <span className="pal-dato">
+          finales <b>{p.finales.length}</b>
+          <i>/3</i>
+        </span>
+      )}
     </div>
   );
 }
