@@ -12,7 +12,12 @@ import {
   opcionesApuesta,
   REY_VERDADERO,
   FINALES,
+  SECRETOS,
+  MARCAS_INFO,
+  escenaCapitulo,
+  escenaFinal,
   type EstadoHistoria,
+  type TipoFinal,
 } from "../historia";
 import { TransporteHistoria } from "../transporteHistoria";
 import { TransporteLocal } from "../transporte";
@@ -404,5 +409,127 @@ describe("trampas de dados (TransporteLocal)", () => {
     expect(concentracion(despues)).toBeGreaterThanOrEqual(concentracion(antes));
     expect(tl.descargarMano("b")).toBe(true);
     tl.detener();
+  });
+});
+
+// Los ACERTIJOS (candados de cifra): secretos opcionales por barrio, sin
+// castigo al fallar, con premio de una sola vez. Y el Cuaderno del Tahúr.
+describe("acertijos (candados de cifra)", () => {
+  it("los candados: soluciones con pintas 1..6, claves únicas y ficha en el cuaderno", () => {
+    const acertijos = CAMPANA.flatMap((e) => (e.acertijo ? [e.acertijo] : []));
+    expect(acertijos.length).toBe(3);
+    const claves = acertijos.map((a) => a.clave);
+    expect(new Set(claves).size).toBe(claves.length);
+    for (const a of acertijos) {
+      expect(a.solucion.length).toBe(3);
+      for (const n of a.solucion) {
+        expect(n).toBeGreaterThanOrEqual(1);
+        expect(n).toBeLessThanOrEqual(6);
+      }
+      expect(a.texto, `${a.clave} texto`).toBeTruthy();
+      expect(a.fallo, `${a.clave} fallo`).toBeTruthy();
+      expect(a.desenlace, `${a.clave} desenlace`).toBeTruthy();
+      expect(SECRETOS.some((s) => s.clave === a.clave), `${a.clave} en SECRETOS`).toBe(true);
+    }
+    expect(SECRETOS.length).toBe(acertijos.length);
+  });
+
+  it("toda marca que reparte la campaña tiene ficha en MARCAS_INFO", () => {
+    const marcas = new Set<string>();
+    for (const e of CAMPANA) {
+      for (const ev of e.eventos ?? []) {
+        const premios = ev.evento.tipo === "lectura" ? ev.evento.cartas : ev.evento.opciones;
+        for (const op of premios) {
+          if (op.marca) marcas.add(op.marca);
+        }
+      }
+    }
+    expect(marcas.size).toBeGreaterThan(0);
+    for (const m of marcas) {
+      expect(MARCAS_INFO[m], `marca ${m} sin ficha`).toBeTruthy();
+    }
+  });
+
+  it("cada capítulo y cada final tienen su estampa (Escena)", () => {
+    const vistas = new Set<string>();
+    for (let i = 0; i < CAMPANA.length; i++) {
+      const e = escenaCapitulo(i);
+      expect(e).toBeTruthy();
+      vistas.add(e);
+    }
+    expect(vistas.size).toBe(CAMPANA.length); // ninguna repetida
+    for (const tf of ["estandar", "malo", "verdadero"] as TipoFinal[]) {
+      expect(escenaFinal(tf)).toBeTruthy();
+    }
+    expect(new Set([escenaFinal("estandar"), escenaFinal("malo"), escenaFinal("verdadero")]).size).toBe(3);
+  });
+
+  it("abrir el candado: fallar no castiga, acertar premia una sola vez y el secreto se cierra", () => {
+    const h = historiaNueva("Curioso");
+    h.escenarioIdx = 1; // La Vega: el candado del Charqui [4,3,3]
+    const th = new TransporteHistoria(h);
+    let v = th.instantanea().historia!;
+    expect(v.faseHistoria).toBe("intro");
+    expect(v.acertijoDisponible).toBeTruthy();
+
+    th.historiaAbrirAcertijo!();
+    v = th.instantanea().historia!;
+    expect(v.faseHistoria).toBe("acertijo");
+    expect(v.acertijo!.desenlace).toBeNull();
+    const plataAntes = v.plata;
+
+    // Cifra equivocada: burla, sin castigo, se puede volver a intentar.
+    th.historiaProbarCifra!([1, 1, 1]);
+    v = th.instantanea().historia!;
+    expect(v.faseHistoria).toBe("acertijo");
+    expect(v.acertijo!.fallo).toBeTruthy();
+    expect(v.acertijo!.desenlace).toBeNull();
+    expect(v.plata).toBe(plataAntes);
+
+    // La cifra correcta abre el cofre: desenlace + premio.
+    th.historiaProbarCifra!([4, 3, 3]);
+    v = th.instantanea().historia!;
+    expect(v.acertijo!.desenlace).toBeTruthy();
+    expect(v.plata).toBe(plataAntes + 100);
+    expect(v.itemsEnMano.some((it) => it.id === "marcado" && it.cantidad === 1)).toBe(true);
+
+    // Probar de nuevo con el cofre abierto no duplica el premio.
+    th.historiaProbarCifra!([4, 3, 3]);
+    expect(th.instantanea().historia!.plata).toBe(plataAntes + 100);
+
+    // Continuar vuelve a la puerta del barrio, y el secreto ya no se ofrece.
+    th.historiaContinuar!();
+    v = th.instantanea().historia!;
+    expect(v.faseHistoria).toBe("intro");
+    expect(v.acertijoDisponible).toBeNull();
+    th.detener();
+  });
+
+  it("el candado sólo se abre desde la puerta del barrio (guard de fase)", () => {
+    const h = historiaNueva("Apurado");
+    h.escenarioIdx = 1;
+    const th = new TransporteHistoria(h);
+    th.historiaEmpezar(); // deja atrás la intro
+    const fase = th.instantanea().historia!.faseHistoria;
+    expect(fase).not.toBe("intro");
+    th.historiaAbrirAcertijo!();
+    expect(th.instantanea().historia!.faseHistoria).toBe(fase);
+    th.detener();
+  });
+
+  it("un secreto ya resuelto (guardado en dilemasResueltos) no vuelve a ofrecerse", () => {
+    const h = historiaNueva("Memorioso");
+    h.escenarioIdx = 1;
+    h.dilemasResueltos = ["sec-charqui"];
+    const th = new TransporteHistoria(h);
+    expect(th.instantanea().historia!.faseHistoria).toBe("intro");
+    expect(th.instantanea().historia!.acertijoDisponible).toBeNull();
+    th.detener();
+  });
+
+  it("los barrios sin candado no ofrecen secreto (La Pocilga)", () => {
+    const th = new TransporteHistoria(historiaNueva("Turista"));
+    expect(th.instantanea().historia!.acertijoDisponible).toBeNull();
+    th.detener();
   });
 });

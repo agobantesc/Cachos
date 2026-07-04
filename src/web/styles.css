@@ -876,3 +876,79 @@ button { touch-action: manipulation; }
   position: fixed; bottom: 4px; right: 7px; z-index: 50; pointer-events: none;
   font-size: 10px; letter-spacing: 0.5px; color: rgba(217, 213, 201, 0.35);
 }
+
+/* ============================================================
+   EL ÚLTIMO SALTO: tinte de capítulo, secretos y el Cuaderno.
+   ============================================================ */
+
+/* Cada capítulo tiñe la pantalla con su propia luz (var puesta por React). */
+.historia-pantalla {
+  background: radial-gradient(120% 85% at 50% 0%, var(--cap-tinte, transparent), transparent 70%);
+}
+
+/* El jefe del barrio arde: una brasa que respira tras su ficha. */
+.rival-ficha--boss { position: relative; overflow: hidden; }
+.rival-ficha--boss::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+  background: radial-gradient(80% 120% at 15% 50%, rgba(178, 58, 46, 0.28), transparent 70%);
+  animation: brasa 3.2s ease-in-out infinite;
+}
+@keyframes brasa {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.9; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rival-ficha--boss::after { animation: none; }
+}
+
+/* La píldora del secreto: una invitación discreta en la puerta del barrio. */
+.secreto-pill {
+  display: flex; align-items: center; gap: 10px; width: 100%; max-width: 360px;
+  padding: 10px 14px; text-align: left; cursor: pointer;
+  font-size: 13.5px; line-height: 1.4; color: var(--oro-claro); font-style: italic;
+  background: linear-gradient(180deg, rgba(200, 162, 74, 0.09), rgba(21, 22, 27, 0.85));
+  border: 1px dashed rgba(200, 162, 74, 0.45); border-radius: 12px;
+}
+.secreto-pill:active { transform: translateY(1px); }
+.sp-glifo {
+  flex: none; width: 26px; height: 26px; display: grid; place-items: center;
+  border: 1px solid var(--oro); border-radius: 50%;
+  color: var(--oro); font-family: var(--display); font-style: normal; font-size: 15px;
+}
+
+/* El candado de cifra: tres dados que giran hasta dar con la combinación. */
+.cifra { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; max-width: 360px; }
+.cifra-dados { display: flex; gap: 14px; }
+.cifra-dado {
+  padding: 7px; cursor: pointer; line-height: 0;
+  background: var(--humo); border: 1px solid var(--linea); border-radius: 16px;
+  transition: transform 0.08s ease;
+}
+.cifra-dado:active { transform: translateY(2px) scale(0.97); }
+.cifra-ayuda { font-size: 12px; color: var(--tenue); font-style: italic; }
+.cifra-fallo {
+  font-style: italic; color: #e8a99a; font-size: 14px; line-height: 1.5; max-width: 24em;
+  padding: 8px 12px; border-left: 2px solid var(--sangre-viva); border-radius: 0 10px 10px 0;
+  background: linear-gradient(180deg, rgba(143, 45, 36, 0.12), transparent);
+}
+
+/* El Cuaderno del Tahúr: la bitácora del socio, con letra chueca. */
+.cuaderno { gap: 10px; padding-bottom: 40px; }
+.cua-seccion {
+  width: 100%; max-width: 400px; margin: 4px auto 0;
+  background: var(--humo); border: 1px solid var(--linea); border-radius: 14px;
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 9px;
+}
+.cua-titulo {
+  margin: 0; font-family: var(--display); font-size: 17px; color: var(--oro);
+  letter-spacing: 0.5px; border-bottom: 1px solid var(--linea); padding-bottom: 7px;
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.cua-cuenta { font-size: 12px; color: var(--tenue); font-family: var(--display); }
+.cua-item { display: flex; gap: 10px; align-items: baseline; text-align: left; }
+.cua-item--incognita { opacity: 0.5; }
+.cua-glifo { flex: none; width: 18px; text-align: center; color: var(--oro); font-size: 13px; }
+.cua-cuerpo { display: flex; flex-direction: column; gap: 1px; }
+.cua-cuerpo b { font-family: var(--display); font-size: 15px; color: var(--hueso); font-weight: 600; letter-spacing: 0.3px; }
+.cua-cuerpo i { font-size: 12.5px; color: var(--tenue); font-style: italic; line-height: 1.45; }
+.cua-vacio { margin: 0; font-size: 13px; color: var(--tenue); font-style: italic; line-height: 1.5; }

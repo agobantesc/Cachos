@@ -215,6 +215,23 @@ export interface EventoProgramado {
   vetadoPor?: string;
 }
 
+/** Un SECRETO del barrio: un candado que se abre marcando la cifra correcta
+ *  en tres dados. Las pistas viven en la propia historia (personajes, reglas,
+ *  detalles que el jugador atento ya conoce). Es opcional y se puede volver. */
+export interface Acertijo {
+  clave: string;
+  titulo: string;
+  /** El acertijo en sí (las tres pistas, en orden). */
+  texto: string;
+  /** La cifra correcta (tres pintas, en orden). */
+  solucion: [number, number, number];
+  /** Burla al fallar (sin castigo: se puede volver a intentar). */
+  fallo: string;
+  /** Narración + premio al abrirlo. */
+  desenlace: string;
+  premio: PremioEvento;
+}
+
 export interface Escenario {
   clave: string;
   nombre: string;
@@ -226,6 +243,8 @@ export interface Escenario {
   epilogo: string;
   /** Eventos de calle (decisiones, peleas, lecturas y consecuencias). */
   eventos?: EventoProgramado[];
+  /** Secreto del barrio (candado de cifra), si lo hay. */
+  acertijo?: Acertijo;
   rivales: RivalHistoria[]; // termina en el boss
 }
 
@@ -302,6 +321,16 @@ export const CAMPANA: Escenario[] = [
         ],
       } },
     ],
+    acertijo: {
+      clave: "sec-charqui",
+      titulo: "El candado del Charqui",
+      texto:
+        "Bajo el puesto del Charqui hay un cofre con tres dados por cerradura y un papel grasiento: 'Pa'l que mira y escucha: las patas de la vaca que despresa el jefe, los dados que te cuesta dudarle cuando abre, y las cartas que tiende la vieja ciega.'",
+      solucion: [4, 3, 3],
+      fallo: "El candado ni se mueve. Desde su puesto, El Charqui se ríe sin mirar: 'Ese cofre lleva años burlándose de los apurados, cabro.'",
+      desenlace: "Clac. El cofre se abre: adentro hay un par de dados marcados envueltos en un pañuelo y un fajo chico. Arriba del pañuelo, una nota: 'Bien mirado, cabro.'",
+      premio: { item: "marcado", plata: 100 },
+    },
     rivales: [
       { id: "r-charqui", nombre: "El Charqui", nivel: "medio", mesa: 5, esBoss: false, plata: 32,
         presentacion: "Entre cajones de fruta podrida, El Charqui reparte mesa para cinco. 'Esto no es el puerto, cabro.' Aquí ya se juega con plata que mancha.",
@@ -398,6 +427,16 @@ export const CAMPANA: Escenario[] = [
         ],
       } },
     ],
+    acertijo: {
+      clave: "sec-notario",
+      titulo: "La caja del Notario",
+      texto:
+        "Tras el estante hay una caja de fierro con tres dados y una ficha escrita con letra de escribano: 'Sólo abre para quien lleva la cuenta: los maridos que enterró la Viuda, los dados con que parte cada socio, y el vidrio con que leo la letra chica.'",
+      solucion: [3, 5, 1],
+      fallo: "La caja no cede. Te parece oír al Notario, desde alguna parte: 'La memoria, joven. En este oficio, la memoria lo es todo.'",
+      desenlace: "La caja suelta un suspiro de fierro viejo y se abre: un fajo gordo, ordenado con prolijidad de escribano. Sin nota. El Notario no deja constancia de sus derrotas.",
+      premio: { plata: 250 },
+    },
     rivales: [
       { id: "r-notario", nombre: "El Notario", nivel: "avanzado", mesa: 3, esBoss: false, plata: 70,
         presentacion: "Bajo el foco amarillo, El Notario anota cada jugada en una libreta grasienta. 'Todo queda registrado, joven. Hasta su derrota de hoy.'",
@@ -467,6 +506,16 @@ export const CAMPANA: Escenario[] = [
         ],
       } },
     ],
+    acertijo: {
+      clave: "sec-madame",
+      titulo: "El cofre de Madame",
+      texto:
+        "En el reservado hay un cofre de terciopelo con tres dados por cerradura. La tarjeta perfumada dice: 'Para el que entiende esta casa: las sillas de mi mesa, los reyes que de verdad reparten en Chile, y lo que vende el fiador para hacerte más fuerte.'",
+      solucion: [6, 1, 3],
+      fallo: "El cofre ronronea y no se abre. Madame, de lejos, alza su copa: 'Casi, querido. Casi.'",
+      desenlace: "El cofre se abre con un clic sedoso: un cacho cargado de marfil y un fajo atado con cinta roja. 'Los secretos son de quien los entiende', dice la tarjeta.",
+      premio: { item: "cargado", plata: 150 },
+    },
     rivales: [
       { id: "r-madame", nombre: "Madame Ruiz", nivel: "experto", mesa: 6, esBoss: false, plata: 90,
         presentacion: "Terciopelo gastado y seis sillas. Madame Ruiz preside lo profundo con anillos que valen más que toda la mesa. 'Pocos llegan tan abajo, querido.'",
@@ -773,6 +822,43 @@ const ESCENA_EVENTO: Record<string, string> = {
   "cumbre-huerfano": "huerfano",
   "cumbre-aliado": "manoamiga",
 };
+/** Estampa de ambiente de cada capítulo (por índice). Ver Escena.tsx. */
+const ESCENA_CAPITULO = ["cap-muelle", "cap-vega", "cap-maestranza", "cap-trastienda", "cap-club", "cap-cumbre"];
+export function escenaCapitulo(idx: number): string {
+  return ESCENA_CAPITULO[Math.max(0, Math.min(idx, ESCENA_CAPITULO.length - 1))]!;
+}
+
+/** Estampa de cada final. Ver Escena.tsx. */
+export function escenaFinal(tipo: TipoFinal): string {
+  return tipo === "malo" ? "fin-traicion" : tipo === "verdadero" ? "fin-amanecer" : "fin-trono";
+}
+
+/** El secreto del capítulo actual, si existe y sigue cerrado. */
+export function acertijoPendiente(h: EstadoHistoria): Acertijo | null {
+  const a = escenarioActual(h).acertijo;
+  if (!a || h.dilemasResueltos.includes(a.clave)) return null;
+  return a;
+}
+
+/** Nombres y sabor de las MARCAS, para el Cuaderno del Tahúr. */
+export const MARCAS_INFO: Record<string, { nombre: string; desc: string }> = {
+  honrado: { nombre: "Honrado", desc: "Respetaste a los muertos de La Vega. Alguien lo recordará." },
+  saqueador: { nombre: "Saqueador", desc: "Le vaciaste los bolsillos a un finado. Alguien lo vio." },
+  "sangre-fria": { nombre: "Sangre fría", desc: "Echaste a un hombre a los fierros y no miraste atrás." },
+  delator: { nombre: "Delator", desc: "Señalaste a un inocente. El puente se lo llevó." },
+  asesino: { nombre: "Asesino", desc: "Al hermano del finado lo callaste para siempre." },
+  "sin-alma": { nombre: "Sin alma", desc: "Le sostuviste la mirada al huérfano sin pestañear." },
+  aliado: { nombre: "Aliado del Carnicero", desc: "Hay una mano dura de tu lado en el bajo mundo." },
+  verdad: { nombre: "La Verdad", desc: "Sabes que el Rey de la vitrina no es el que reparte." },
+};
+
+/** Los SECRETOS del bajo mundo (candados de cifra), para el Cuaderno. */
+export const SECRETOS: { clave: string; nombre: string; pista: string }[] = [
+  { clave: "sec-charqui", nombre: "El candado del Charqui", pista: "Un cofre bajo un puesto de La Vega." },
+  { clave: "sec-notario", nombre: "La caja del Notario", pista: "Fierro viejo tras un estante de San Diego." },
+  { clave: "sec-madame", nombre: "El cofre de Madame", pista: "Terciopelo con cerradura, bajo el río." },
+];
+
 export function escenaDe(clave: string): string {
   return ESCENA_EVENTO[clave] ?? "generico";
 }
@@ -910,7 +996,7 @@ export function armarMesaSecreta(nombre: string): {
 // Vista para la UI
 // ---------------------------------------------------------------------------
 
-export type FaseHistoria = "intro" | "evento" | "mesa" | "victoria" | "derrota" | "tienda" | "final";
+export type FaseHistoria = "intro" | "evento" | "acertijo" | "mesa" | "victoria" | "derrota" | "tienda" | "final";
 
 export interface MejoraVista {
   clave: ClaveAtributo;
@@ -1008,6 +1094,10 @@ export interface VistaHistoria {
   itemsEnMano: ItemManoVista[];
   /** Evento de calle (decisión, pelea o lectura de suerte), si toca. */
   evento: EventoVista | null;
+  /** En la intro: hay un secreto sin abrir en este barrio. */
+  acertijoDisponible: { titulo: string } | null;
+  /** El candado abierto en pantalla (fase "acertijo"). */
+  acertijo: { titulo: string; texto: string; desenlace: string | null; fallo: string | null } | null;
   /** Marcas de tu pasado (lo que tus decisiones dejaron escrito). */
   marcas: string[];
   /** Qué final se está mostrando (fase "final"). */

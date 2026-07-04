@@ -333,6 +333,317 @@ function Escenas({ escena }: { escena: string }) {
         </g>
       );
 
+    // ---- Ambiente de cada capítulo (la llegada al barrio) ----
+
+    // Muelle de Valparaíso: pilotes, agua negra, la ventana de la pocilga.
+    case "cap-muelle":
+      return (
+        <g>
+          {/* luna velada */}
+          <circle cx="258" cy="30" r="14" fill="#e9e3d2" opacity="0.5" />
+          <circle cx="252" cy="27" r="13" fill="#13111b" opacity="0.85" />
+          {/* agua */}
+          <rect x="0" y="92" width="320" height="48" fill="#0b0e14" />
+          <g stroke="#3a4a5a" strokeWidth="1" opacity="0.5">
+            <path d="M18 104 h34 M70 112 h26 M130 100 h40 M210 116 h30 M262 104 h34" />
+          </g>
+          <path d="M236 96 h44 l-4 6 h-36 z" fill={NEGRO} />
+          {/* muelle en perspectiva */}
+          <path d="M0 92 L190 92 L150 140 L0 140 Z" fill="#181420" />
+          <g fill={NEGRO}>
+            <rect x="24" y="92" width="7" height="36" />
+            <rect x="74" y="92" width="7" height="42" />
+            <rect x="124" y="92" width="7" height="48" />
+          </g>
+          {/* taberna con ventana encendida */}
+          <path d="M8 30 h96 v62 H8 z" fill={NEGRO} />
+          <path d="M4 30 L56 12 L108 30 Z" fill="#070609" />
+          <rect x="26" y="46" width="22" height="26" fill={ORO} opacity="0.55" />
+          <rect x="30" y="50" width="6" height="8" fill={NEGRO} opacity="0.6" />
+          <path d="M26 72 l60 22" stroke={ORO} strokeOpacity="0.14" strokeWidth="10" />
+          {/* gaviota lejana */}
+          <path d="M196 44 q4 -4 8 0 M204 44 q4 -4 8 0" stroke="#8b8678" strokeWidth="1.2" fill="none" opacity="0.6" />
+        </g>
+      );
+
+    // La Vega de noche: toldos, cajones apilados, un farol.
+    case "cap-vega":
+      return (
+        <g>
+          <Suelo />
+          {/* toldo */}
+          <path d="M0 26 L150 20 L150 44 Q112 34 75 44 Q38 54 0 44 Z" fill="#241016" />
+          <path d="M0 44 Q38 54 75 44 Q112 34 150 44" stroke={SANGRE} strokeOpacity="0.5" strokeWidth="1.4" fill="none" />
+          {/* pilas de cajones */}
+          <g fill="#1c160f" stroke="#4a3c22" strokeWidth="1.1">
+            <rect x="16" y="84" width="46" height="30" />
+            <rect x="22" y="56" width="42" height="28" />
+            <rect x="196" y="90" width="52" height="28" />
+            <rect x="206" y="64" width="44" height="26" />
+            <rect x="214" y="40" width="36" height="24" />
+          </g>
+          <g stroke="#4a3c22" strokeWidth="1"><path d="M16 98 h46 M22 68 h42 M196 104 h52 M206 76 h44 M214 52 h36" /></g>
+          {/* fruta caída */}
+          <circle cx="84" cy="118" r="5" fill="#5a2d2a" />
+          <circle cx="96" cy="122" r="4" fill="#6e3a22" />
+          {/* farol colgante */}
+          <line x1="160" y1="0" x2="160" y2="34" stroke={NEGRO} strokeWidth="2.4" />
+          <circle cx="160" cy="40" r="7" fill={ORO} opacity="0.85" />
+          <circle cx="160" cy="40" r="16" fill={ORO} opacity="0.14" />
+          <path d="M160 48 L128 132 L192 132 Z" fill={ORO} opacity="0.07" />
+        </g>
+      );
+
+    // La Maestranza: locomotora muerta, vigas, chispas de soldadura.
+    case "cap-maestranza":
+      return (
+        <g>
+          <Suelo />
+          {/* vigas del galpón */}
+          <g stroke="#34303c" strokeWidth="5">
+            <line x1="30" y1="0" x2="30" y2="52" />
+            <line x1="290" y1="0" x2="290" y2="52" />
+            <line x1="0" y1="16" x2="320" y2="16" />
+          </g>
+          <g stroke="#211d29" strokeWidth="2"><path d="M30 16 L80 52 M290 16 L240 52" /></g>
+          {/* locomotora en silueta */}
+          <g fill={NEGRO}>
+            <rect x="58" y="62" width="150" height="46" rx="4" />
+            <rect x="188" y="46" width="52" height="62" rx="3" />
+            <rect x="70" y="46" width="22" height="18" />
+            <circle cx="88" cy="112" r="12" />
+            <circle cx="128" cy="112" r="12" />
+            <circle cx="168" cy="112" r="12" />
+            <circle cx="216" cy="112" r="12" />
+          </g>
+          <circle cx="88" cy="112" r="5" fill="#211d29" />
+          <circle cx="168" cy="112" r="5" fill="#211d29" />
+          {/* farol delantero apagado y chispas al fondo */}
+          <circle cx="240" cy="58" r="5" fill="#3a3038" stroke={ORO} strokeOpacity="0.4" />
+          <g fill={ORO}>
+            <circle cx="277" cy="86" r="1.6" opacity="0.9" />
+            <circle cx="284" cy="94" r="1.1" opacity="0.7" />
+            <circle cx="271" cy="96" r="1" opacity="0.6" />
+            <circle cx="288" cy="82" r="0.9" opacity="0.5" />
+          </g>
+          <path d="M276 100 q6 8 2 18" stroke={ORO} strokeOpacity="0.25" strokeWidth="1.2" fill="none" />
+        </g>
+      );
+
+    // La Trastienda: foco sobre el paño verde, botellas al fondo.
+    case "cap-trastienda":
+      return (
+        <g>
+          {/* estante de botellas */}
+          <rect x="18" y="26" width="120" height="4" fill="#211d29" />
+          <g fill={NEGRO}>
+            <path d="M30 8 h8 v6 l3 4 v8 h-14 v-8 l3 -4 z" />
+            <path d="M56 4 h7 v8 l3 4 v10 h-13 v-10 l3 -4 z" />
+            <path d="M84 10 h8 v5 l3 3 v8 h-14 v-8 l3 -3 z" />
+            <path d="M112 6 h7 v7 l3 4 v9 h-13 v-9 l3 -4 z" />
+          </g>
+          {/* foco colgante */}
+          <line x1="200" y1="0" x2="200" y2="30" stroke={NEGRO} strokeWidth="2.5" />
+          <path d="M192 30 h16 l-3 8 h-10 z" fill={NEGRO} />
+          <circle cx="200" cy="44" r="6" fill={ORO} opacity="0.95" />
+          <path d="M200 50 L146 128 L254 128 Z" fill={ORO} opacity="0.1" />
+          {/* mesa de paño */}
+          <ellipse cx="200" cy="112" rx="86" ry="20" fill="#15251a" />
+          <ellipse cx="200" cy="108" rx="86" ry="20" fill="#1c3323" />
+          <ellipse cx="200" cy="108" rx="86" ry="20" fill="none" stroke={ORO} strokeOpacity="0.25" />
+          {/* cacho y dados sobre el paño */}
+          <path d="M180 96 l10 -4 8 4 -2 10 -8 3 -8 -4 z" fill="#241a12" stroke={ORO} strokeOpacity="0.5" />
+          <rect x="212" y="100" width="9" height="9" rx="2" fill="#e9e3d2" />
+          <rect x="226" y="104" width="9" height="9" rx="2" fill="#e9e3d2" transform="rotate(14 230 108)" />
+          <circle cx="216.5" cy="104.5" r="1.2" fill="#15110a" />
+          {/* humo */}
+          <path d="M70 118 q10 -14 2 -28 q-8 -12 2 -24" stroke="#7a7484" strokeWidth="2" fill="none" opacity="0.35" strokeLinecap="round" />
+        </g>
+      );
+
+    // El Subterráneo: cortinas de terciopelo, lámpara, mesa redonda.
+    case "cap-club":
+      return (
+        <g>
+          {/* cortinas */}
+          <path d="M0 0 h74 q-10 70 8 140 h-82 z" fill="#2a0f12" />
+          <path d="M320 0 h-74 q10 70 -8 140 h82 z" fill="#2a0f12" />
+          <g stroke="#180a0c" strokeWidth="3" opacity="0.8">
+            <path d="M22 0 q-4 70 6 140 M48 0 q-6 70 4 140 M298 0 q4 70 -6 140 M272 0 q6 70 -4 140" />
+          </g>
+          <path d="M74 0 q-10 70 8 140" stroke={ORO} strokeOpacity="0.3" fill="none" />
+          <path d="M246 0 q10 70 -8 140" stroke={ORO} strokeOpacity="0.3" fill="none" />
+          {/* lámpara de tres brazos */}
+          <line x1="160" y1="0" x2="160" y2="22" stroke={NEGRO} strokeWidth="2.4" />
+          <path d="M136 30 q24 -16 48 0" stroke={NEGRO} strokeWidth="3" fill="none" />
+          <circle cx="136" cy="33" r="3.6" fill={ORO} opacity="0.9" />
+          <circle cx="160" cy="26" r="3.6" fill={ORO} opacity="0.9" />
+          <circle cx="184" cy="33" r="3.6" fill={ORO} opacity="0.9" />
+          <path d="M160 36 L108 128 L212 128 Z" fill={ORO} opacity="0.08" />
+          {/* mesa redonda con copas */}
+          <ellipse cx="160" cy="110" rx="64" ry="16" fill="#241016" />
+          <ellipse cx="160" cy="106" rx="64" ry="16" fill="#33161b" />
+          <ellipse cx="160" cy="106" rx="64" ry="16" fill="none" stroke={ORO} strokeOpacity="0.3" />
+          <g stroke="#e9e3d2" strokeWidth="1.4" opacity="0.7" fill="none">
+            <path d="M134 98 v-8 m-4 -3 h8 m-4 0 v3" />
+            <path d="M186 100 v-8 m-4 -3 h8 m-4 0 v3" />
+          </g>
+        </g>
+      );
+
+    // La Cumbre: el skyline por el ventanal del penthouse.
+    case "cap-cumbre":
+      return (
+        <g>
+          {/* cielo nocturno */}
+          <rect x="16" y="10" width="288" height="104" fill="#0b1018" />
+          <circle cx="270" cy="26" r="9" fill="#e9e3d2" opacity="0.4" />
+          {/* cordillera al fondo */}
+          <path d="M16 58 L70 34 L120 54 L170 30 L220 52 L270 38 L304 50 V114 H16 Z" fill="#10151d" />
+          {/* skyline encendido */}
+          <g fill={ORO} opacity="0.65">
+            {Array.from({ length: 24 }).map((_, i) => (
+              <rect key={i} x={22 + i * 12} y={96 - ((i * 41) % 34)} width="7" height={((i * 41) % 34) + 18} opacity={0.25 + ((i * 17) % 6) / 10} />
+            ))}
+          </g>
+          {/* marco del ventanal */}
+          <rect x="16" y="10" width="288" height="104" fill="none" stroke="#0a0810" strokeWidth="7" />
+          <line x1="160" y1="10" x2="160" y2="114" stroke="#0a0810" strokeWidth="5" />
+          <line x1="16" y1="62" x2="304" y2="62" stroke="#0a0810" strokeWidth="3" />
+          {/* copa en el alféizar */}
+          <g stroke="#e9e3d2" strokeWidth="1.4" opacity="0.85" fill="none">
+            <path d="M37 111 h10 l-3 8 h-4 Z M42 119 v8 M38.5 127 h7" />
+          </g>
+        </g>
+      );
+
+    // ---- Los tres finales ----
+
+    // Final estándar: el trono vacío y el cacho sobre el brazo.
+    case "fin-trono":
+      return (
+        <g>
+          <Suelo />
+          {/* ventanal tenue */}
+          <rect x="200" y="14" width="104" height="86" fill="#0b1018" />
+          <g fill={ORO} opacity="0.4">
+            {Array.from({ length: 9 }).map((_, i) => (
+              <rect key={i} x={206 + i * 11} y={78 - ((i * 29) % 24)} width="6" height={((i * 29) % 24) + 10} />
+            ))}
+          </g>
+          <rect x="200" y="14" width="104" height="86" fill="none" stroke="#0a0810" strokeWidth="6" />
+          {/* sillón-trono */}
+          <g fill={NEGRO}>
+            <rect x="66" y="30" width="76" height="78" rx="10" />
+            <rect x="52" y="72" width="20" height="40" rx="6" />
+            <rect x="136" y="72" width="20" height="40" rx="6" />
+            <rect x="58" y="106" width="94" height="14" rx="4" />
+          </g>
+          <path d="M70 36 q34 -12 68 0" stroke={ORO} strokeOpacity="0.5" strokeWidth="1.6" fill="none" />
+          {/* cacho y dados en el brazo */}
+          <path d="M54 66 l8 -3 7 3 -2 8 -6 2 -6 -3 z" fill="#241a12" stroke={ORO} strokeOpacity="0.6" />
+          <rect x="140" y="64" width="8" height="8" rx="1.8" fill="#e9e3d2" />
+          <circle cx="144" cy="68" r="1.1" fill={SANGRE} />
+          {/* humo de un cigarro dejado */}
+          <path d="M160 120 q8 -12 2 -24 q-6 -10 2 -20" stroke="#7a7484" strokeWidth="1.8" fill="none" opacity="0.4" strokeLinecap="round" />
+        </g>
+      );
+
+    // Final malo: la copa envenenada volcada y la mano caída.
+    case "fin-traicion":
+      return (
+        <g>
+          {/* ventanal con la ciudad, torcido levemente */}
+          <rect x="176" y="12" width="128" height="92" fill="#0b1018" />
+          <g fill={ORO} opacity="0.35">
+            {Array.from({ length: 11 }).map((_, i) => (
+              <rect key={i} x={182 + i * 11} y={84 - ((i * 31) % 26)} width="6" height={((i * 31) % 26) + 10} />
+            ))}
+          </g>
+          <rect x="176" y="12" width="128" height="92" fill="none" stroke="#0a0810" strokeWidth="6" />
+          {/* piso */}
+          <rect x="0" y="108" width="320" height="32" fill="#0d0b11" />
+          {/* copa volcada, vino derramado */}
+          <g transform="rotate(-72 96 108)">
+            <path d="M96 108 l-8 -14 h16 z" fill="#1a1622" stroke="#e9e3d2" strokeOpacity="0.7" />
+            <line x1="96" y1="108" x2="96" y2="118" stroke="#e9e3d2" strokeOpacity="0.7" strokeWidth="1.6" />
+          </g>
+          <path d="M100 112 q28 4 44 12 q10 5 2 8 q-24 -8 -48 -14 z" fill={SANGRE} opacity="0.55" />
+          {/* mano caída desde fuera de cuadro */}
+          <g fill={PIEL}>
+            <path d="M0 116 q22 -6 40 -2 q6 4 0 8 q-14 -1 -24 2 q-10 2 -16 -2 z" />
+            <path d="M40 114 q6 4 5 12 M33 115 q5 5 3 12 M26 116 q4 5 2 11" stroke={PIEL} strokeWidth="2.6" fill="none" strokeLinecap="round" />
+          </g>
+          {/* el anillo de la Asociación rodó lejos */}
+          <circle cx="70" cy="128" r="4" fill="none" stroke={ORO} strokeWidth="1.6" />
+        </g>
+      );
+
+    // Final verdadero: amanecer sobre el río, el tahúr se va caminando.
+    case "fin-amanecer":
+      return (
+        <g>
+          {/* cielo que clarea */}
+          <rect x="0" y="0" width="320" height="96" fill="#1a1520" />
+          <rect x="0" y="40" width="320" height="56" fill="#2a1d1a" opacity="0.8" />
+          <circle cx="160" cy="92" r="26" fill={ORO} opacity="0.75" />
+          <circle cx="160" cy="92" r="44" fill={ORO} opacity="0.16" />
+          {/* el río */}
+          <rect x="0" y="92" width="320" height="24" fill="#141019" />
+          <g stroke={ORO} strokeOpacity="0.4" strokeWidth="1.2">
+            <path d="M120 100 h80 M136 106 h48 M148 112 h24" />
+          </g>
+          {/* puente lejano */}
+          <path d="M0 92 h60 M260 92 h60" stroke={NEGRO} strokeWidth="4" />
+          <path d="M20 92 q20 -14 40 0 M260 92 q20 -14 40 0" stroke={NEGRO} strokeWidth="3" fill="none" />
+          {/* orilla y el tahúr alejándose */}
+          <rect x="0" y="112" width="320" height="28" fill="#0d0b11" />
+          <g fill={NEGRO}>
+            <circle cx="160" cy="96" r="7" opacity="0" />
+            <g>
+              <circle cx="160" cy="84" r="8" />
+              <path d="M146 94 q14 -7 28 0 l4 34 h-36 z" />
+              <path d="M150 78 q10 -5 20 0 l-3 -6 q-7 -3 -14 0 z" />
+              <rect x="147" y="76" width="26" height="4" rx="2" />
+            </g>
+          </g>
+          <path d="M160 128 h0" stroke="none" />
+          <ellipse cx="160" cy="130" rx="26" ry="4" fill="#000" opacity="0.4" />
+        </g>
+      );
+
+    // El candado de la cifra: un cofre con tres dados por marcar.
+    case "cifra":
+      return (
+        <g>
+          <Suelo />
+          <ellipse cx="160" cy="50" rx="70" ry="40" fill={ORO} opacity="0.07" />
+          {/* cofre */}
+          <g>
+            <rect x="96" y="58" width="128" height="58" rx="6" fill="#241a12" stroke="#4a3c22" strokeWidth="1.6" />
+            <path d="M96 76 h128" stroke="#4a3c22" strokeWidth="1.6" />
+            <rect x="96" y="52" width="128" height="12" rx="6" fill="#2e2117" stroke="#4a3c22" strokeWidth="1.4" />
+            <g stroke={ORO} strokeOpacity="0.65" strokeWidth="1.4">
+              <path d="M108 58 v58 M212 58 v58" />
+            </g>
+          </g>
+          {/* los tres dados-cerradura */}
+          <g>
+            <rect x="124" y="82" width="20" height="20" rx="4" fill="#15110a" stroke={ORO} />
+            <rect x="150" y="82" width="20" height="20" rx="4" fill="#15110a" stroke={ORO} />
+            <rect x="176" y="82" width="20" height="20" rx="4" fill="#15110a" stroke={ORO} />
+            <text x="134" y="97" textAnchor="middle" fill={ORO} fontSize="13" fontFamily="Georgia, serif">?</text>
+            <text x="160" y="97" textAnchor="middle" fill={ORO} fontSize="13" fontFamily="Georgia, serif">?</text>
+            <text x="186" y="97" textAnchor="middle" fill={ORO} fontSize="13" fontFamily="Georgia, serif">?</text>
+          </g>
+          {/* candado colgando */}
+          <g transform="rotate(8 160 116)">
+            <rect x="152" y="108" width="16" height="14" rx="3" fill="#1a1420" stroke={ORO} strokeWidth="1.4" />
+            <path d="M155 108 v-5 q5 -6 10 0 v5" stroke={ORO} strokeWidth="1.6" fill="none" />
+          </g>
+        </g>
+      );
+
     // Genérico: una silueta bajo un farol, humo de cigarro.
     default:
       return (

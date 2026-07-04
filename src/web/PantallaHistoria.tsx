@@ -1,9 +1,11 @@
 // Pantallas del modo historia alrededor de la mesa: intro del rival, victoria,
 // derrota, la tienda (subir atributos) y el final de la campaña.
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Avatar } from "./Avatar";
+import { Dado } from "./Dado";
 import { Escena } from "./Escena";
-import { FINALES } from "./historia";
+import { FINALES, escenaCapitulo, escenaFinal } from "./historia";
+import type { Pinta } from "../engine";
 import { Sonidos, vibrar } from "./sonido";
 import { registrarFinal } from "./palmares";
 import type { Instantanea, Transporte } from "./transporte";
@@ -12,6 +14,48 @@ import type { VistaHistoria } from "./historia";
 const ETIQUETA_NIVEL: Record<string, string> = {
   facil: "Novato", medio: "Curtido", avanzado: "Veterano", experto: "Leyenda",
 };
+
+// El color de cada barrio: tiñe sutilmente el fondo de las pantallas de la
+// campaña (puerto frío, mercado sangre, fierro oxidado, ámbar de trastienda,
+// púrpura del club, oro frío de la cumbre).
+const TINTE_CAPITULO = [
+  "rgba(58, 90, 110, 0.16)",
+  "rgba(143, 45, 36, 0.15)",
+  "rgba(150, 85, 40, 0.14)",
+  "rgba(170, 130, 60, 0.12)",
+  "rgba(96, 52, 110, 0.14)",
+  "rgba(200, 162, 74, 0.13)",
+];
+function estiloCapitulo(idx: number): React.CSSProperties {
+  return { "--cap-tinte": TINTE_CAPITULO[Math.max(0, Math.min(idx, TINTE_CAPITULO.length - 1))] } as React.CSSProperties;
+}
+
+/** El candado de cifra: tres dados que giran al tocarlos, y probar. */
+function CifraCandado({ onProbar }: { onProbar: (cifra: number[]) => void }) {
+  const [cifra, setCifra] = useState<[Pinta, Pinta, Pinta]>([1, 1, 1]);
+  const girar = (i: number) =>
+    setCifra((c) => {
+      const n = [...c] as [Pinta, Pinta, Pinta];
+      const v = n[i] ?? 1;
+      n[i] = (v === 6 ? 1 : v + 1) as Pinta;
+      return n;
+    });
+  return (
+    <div className="cifra">
+      <div className="cifra-dados">
+        {cifra.map((v, i) => (
+          <button key={i} className="cifra-dado" onClick={() => girar(i)} aria-label={`Dado ${i + 1}: ${v}. Tocar para girar`}>
+            <Dado cara={v} tam={64} />
+          </button>
+        ))}
+      </div>
+      <span className="cifra-ayuda">Toca cada dado para girarlo</span>
+      <button className="btn btn--apostar grande" onClick={() => onProbar(cifra)}>
+        Probar la cifra
+      </button>
+    </div>
+  );
+}
 
 function Plata({ n }: { n: number }) {
   return <span className="plata">${n.toLocaleString("es-CL")}</span>;
@@ -89,7 +133,7 @@ export function PantallaHistoria({
     const clave = `${t.faseHistoria}:${t.evento?.titulo ?? r.id}:${t.finalTipo ?? ""}`;
     if (escenaPrev.current === clave) return;
     escenaPrev.current = clave;
-    if (t.faseHistoria === "evento") {
+    if (t.faseHistoria === "evento" || t.faseHistoria === "acertijo") {
       Sonidos.evento();
     } else if (t.faseHistoria === "intro" && r.esBoss) {
       Sonidos.boss();
@@ -105,12 +149,13 @@ export function PantallaHistoria({
   // --- INTRO: el lugar y el rival ---
   if (t.faseHistoria === "intro") {
     return (
-      <div className="pantalla historia-pantalla">
+      <div className="pantalla historia-pantalla" style={estiloCapitulo(t.escenario.idx)}>
         {t.narrativa.prologo && <p className="hist-prologo">{t.narrativa.prologo}</p>}
         <span className="hist-kicker">
           {t.escenario.lugar} · Cap. {t.escenario.idx + 1}/{t.escenario.total}
         </span>
         <h1 className="hist-titulo">{t.escenario.nombre}</h1>
+        {t.narrativa.intro && <Escena escena={escenaCapitulo(t.escenario.idx)} />}
         {t.narrativa.intro && <p className="hist-ambiente">{t.narrativa.intro}</p>}
         <FichaRival t={t} />
         <MesaInfo t={t} />
@@ -132,6 +177,12 @@ export function PantallaHistoria({
         <p className="hist-dialogo">“{r.dialogo}”</p>
         <BarraStats t={t} />
         <Bolsa t={t} />
+        {t.acertijoDisponible && (
+          <button className="secreto-pill" onClick={() => transporte.historiaAbrirAcertijo?.()}>
+            <span className="sp-glifo" aria-hidden="true">?</span>
+            Hay algo escondido en este barrio: {t.acertijoDisponible.titulo}
+          </button>
+        )}
         {t.apuesta && t.apuesta.opciones.length > 1 && (
           <div className="apuesta-mesa">
             <span className="am-tit">¿Cuánto arriesgas? (doblar o nada)</span>
@@ -168,7 +219,7 @@ export function PantallaHistoria({
   // --- VICTORIA ---
   if (t.faseHistoria === "victoria") {
     return (
-      <div className={"pantalla historia-pantalla" + (r.esBoss ? " hist-boss-caido" : "")}>
+      <div className={"pantalla historia-pantalla" + (r.esBoss ? " hist-boss-caido" : "")} style={estiloCapitulo(t.escenario.idx)}>
         <span className="hist-kicker">{t.escenario.nombre}</span>
         <h1 className="hist-titulo hist-gano">{r.esBoss ? "Cayó el jefe" : "Le ganaste a " + r.nombre}</h1>
         <FichaRival t={t} tam={84} />
@@ -209,7 +260,7 @@ export function PantallaHistoria({
   // --- DERROTA ---
   if (t.faseHistoria === "derrota") {
     return (
-      <div className="pantalla historia-pantalla">
+      <div className="pantalla historia-pantalla" style={estiloCapitulo(t.escenario.idx)}>
         <span className="hist-kicker">{t.escenario.nombre}</span>
         <h1 className="hist-titulo hist-perdio">Te limpiaron</h1>
         <FichaRival t={t} tam={84} />
@@ -232,6 +283,44 @@ export function PantallaHistoria({
     );
   }
 
+  // --- ACERTIJO: el candado de cifra (un secreto del barrio) ---
+  if (t.faseHistoria === "acertijo" && t.acertijo) {
+    const a = t.acertijo;
+    return (
+      <div className="pantalla historia-pantalla" style={estiloCapitulo(t.escenario.idx)}>
+        <span className="hist-kicker">Un secreto del bajo mundo</span>
+        <h1 className="hist-titulo">{a.titulo}</h1>
+        <Escena escena="cifra" />
+        {a.desenlace ? (
+          <>
+            <div className="dilema-desenlace">{a.desenlace}</div>
+            <BarraStats t={t} />
+            <div className="hist-acciones">
+              <button className="btn btn--apostar grande" onClick={() => transporte.historiaContinuar?.()}>
+                Guardar el botín
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="hist-dialogo dilema-texto">{a.texto}</p>
+            <CifraCandado onProbar={(c) => transporte.historiaProbarCifra?.(c)} />
+            {a.fallo && (
+              <div className="cifra-fallo" role="status">
+                {a.fallo}
+              </div>
+            )}
+            <div className="hist-acciones">
+              <button className="btn-link" onClick={() => transporte.historiaContinuar?.()}>
+                Dejarlo por ahora
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
   // --- EVENTO de calle: decisión (dilema/pelea) o lectura de suerte ---
   if (t.faseHistoria === "evento" && t.evento) {
     const ev = t.evento;
@@ -239,7 +328,7 @@ export function PantallaHistoria({
     const esLectura = ev.tipo === "lectura";
     const kicker = esPelea ? "Bronca en el bajo mundo" : esLectura ? "Lectura de suerte" : t.escenario.lugar;
     return (
-      <div className={"pantalla historia-pantalla" + (esPelea ? " hist-pelea" : "")}>
+      <div className={"pantalla historia-pantalla" + (esPelea ? " hist-pelea" : "")} style={estiloCapitulo(t.escenario.idx)}>
         <span className="hist-kicker">{kicker}</span>
         <h1 className="hist-titulo">{ev.titulo}</h1>
         <Escena escena={ev.imagen} />
@@ -305,7 +394,7 @@ export function PantallaHistoria({
   // --- TIENDA: subir atributos con plata ---
   if (t.faseHistoria === "tienda") {
     return (
-      <div className="pantalla historia-pantalla">
+      <div className="pantalla historia-pantalla" style={estiloCapitulo(t.escenario.idx)}>
         <span className="hist-kicker">La Trastienda</span>
         <h1 className="hist-titulo">El fiador</h1>
         <p className="hist-ambiente">
@@ -379,9 +468,10 @@ export function PantallaHistoria({
   const fin = FINALES[tipo];
   const esMalo = tipo === "malo";
   return (
-    <div className={"pantalla historia-pantalla hist-final" + (esMalo ? " hist-final-malo" : "")}>
+    <div className={"pantalla historia-pantalla hist-final" + (esMalo ? " hist-final-malo" : "")} style={estiloCapitulo(t.escenario.idx)}>
       <span className="hist-kicker">{esMalo ? "Penthouse, lo más alto de Santiago" : t.escenario.lugar}</span>
       <h1 className={"hist-titulo " + (esMalo ? "hist-perdio" : "hist-gano")}>{fin.titulo}</h1>
+      <Escena escena={escenaFinal(tipo)} />
       <p className="hist-ambiente">{fin.texto}</p>
       <BarraStats t={t} />
       <div className="hist-acciones">

@@ -87,6 +87,10 @@ export interface Transporte {
   historiaApostar?(monto: number): void;
   /** Resuelve un evento de decisión (dilema/pelea) eligiendo una opción. */
   historiaElegir?(opcionIdx: number): void;
+  /** Abre el candado del barrio (el secreto), desde la intro. */
+  historiaAbrirAcertijo?(): void;
+  /** Prueba una cifra de tres dados contra el candado. */
+  historiaProbarCifra?(cifra: number[]): void;
   /** Da vuelta una carta en una lectura de suerte. */
   historiaSacarCarta?(cartaIdx: number): void;
   /** Usa el poder "Suerte": re-tira tu mano. */

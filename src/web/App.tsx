@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { leerPalmares } from "./palmares";
 import { Mesa } from "./Mesa";
 import { PantallaHistoria } from "./PantallaHistoria";
+import { Cuaderno } from "./Cuaderno";
 import { CampoJugador } from "./Personaje";
 import { Emblema, IconoCalavera, IconoWhatsApp, IconoDado, IconoPersonas } from "./Iconos";
 import { Avatar, fijarCaraJugador, CARA_DEFECTO } from "./Avatar";
@@ -292,6 +293,9 @@ function ConfigHistoria({ onListo, volver }: { onListo: (t: Transporte) => void;
   const prefs = leerPrefs();
   const guardada = prefs.historia && !prefs.historia.completado ? prefs.historia : null;
   const [nombre, setNombre] = useState(prefs.nombre ?? guardada?.nombre ?? "Forastero");
+  const [cuaderno, setCuaderno] = useState(false);
+
+  if (cuaderno) return <Cuaderno volver={() => setCuaderno(false)} />;
 
   const comenzar = (estado: ReturnType<typeof historiaNueva>) => {
     desbloquearAudio();
@@ -324,6 +328,9 @@ function ConfigHistoria({ onListo, volver }: { onListo: (t: Transporte) => void;
           Comenzar la aventura
         </button>
       )}
+      <button className="btn-link" onClick={() => setCuaderno(true)}>
+        Cuaderno del Tahúr
+      </button>
     </div>
   );
 }

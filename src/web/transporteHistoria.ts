@@ -15,6 +15,7 @@ import {
   rivalActual,
   escenarioActual,
   eventoActual,
+  acertijoPendiente,
   etiquetaEfecto,
   escenaDe,
   avanzar,
@@ -74,6 +75,9 @@ export class TransporteHistoria implements Transporte {
   private secretoActivo = false;
   /** Qué final mostrar (en fase "final"). */
   private finalTipo: TipoFinal | null = null;
+  /** El candado del barrio: último fallo y desenlace al abrirlo. */
+  private acertijoFallo: string | null = null;
+  private acertijoDesenlace: string | null = null;
   /** La apuesta de la mesa en curso (doblar o nada) y el botín de la victoria. */
   private apuestaMonto = 0;
   private suerteUsadaEnMesa = false;
@@ -211,6 +215,32 @@ export class TransporteHistoria implements Transporte {
     this.emitir();
   }
 
+  /** Abre el candado del barrio (el secreto), desde la intro. */
+  historiaAbrirAcertijo() {
+    if (this.fase !== "intro" || !acertijoPendiente(this.h)) return;
+    this.acertijoFallo = null;
+    this.acertijoDesenlace = null;
+    this.fase = "acertijo";
+    this.emitir();
+  }
+
+  /** Prueba una cifra de tres dados contra el candado del barrio. */
+  historiaProbarCifra(cifra: number[]) {
+    if (this.fase !== "acertijo" || this.acertijoDesenlace) return;
+    const a = acertijoPendiente(this.h);
+    if (!a || cifra.length !== 3) return;
+    if (a.solucion.every((v, i) => cifra[i] === v)) {
+      this.aplicarPremio(a.premio);
+      if (!this.h.dilemasResueltos.includes(a.clave)) this.h.dilemasResueltos.push(a.clave);
+      this.acertijoDesenlace = a.desenlace;
+      this.acertijoFallo = null;
+      this.guardar();
+    } else {
+      this.acertijoFallo = a.fallo; // sin castigo: el candado espera
+    }
+    this.emitir();
+  }
+
   /** Fija la apuesta de la mesa (sólo en la intro, dentro de las opciones). */
   historiaApostar(monto: number) {
     if (this.fase !== "intro") return;
@@ -288,6 +318,12 @@ export class TransporteHistoria implements Transporte {
     if (this.fase === "derrota") this.montarPartida();
   }
   historiaContinuar() {
+    if (this.fase === "acertijo") {
+      // Abierto o no, de vuelta a la intro del rival (se puede volver a intentar).
+      this.fase = "intro";
+      this.emitir();
+      return;
+    }
     if (this.fase === "evento") {
       // Tras ver el desenlace del evento, a la mesa.
       this.montarPartida();
@@ -532,6 +568,21 @@ export class TransporteHistoria implements Transporte {
           : null,
       botin: this.fase === "victoria" ? this.botin : null,
       apuestaPerdida: this.fase === "derrota" ? this.apuestaPerdida : 0,
+      acertijoDisponible:
+        this.fase === "intro" && acertijoPendiente(this.h)
+          ? { titulo: acertijoPendiente(this.h)!.titulo }
+          : null,
+      acertijo:
+        this.fase === "acertijo" && acertijoPendiente(this.h)
+          ? {
+              titulo: acertijoPendiente(this.h)!.titulo,
+              texto: acertijoPendiente(this.h)!.texto,
+              desenlace: this.acertijoDesenlace,
+              fallo: this.acertijoFallo,
+            }
+          : this.fase === "acertijo" && this.acertijoDesenlace
+            ? { titulo: "Secreto abierto", texto: "", desenlace: this.acertijoDesenlace, fallo: null }
+            : null,
     };
   }
 
