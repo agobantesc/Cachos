@@ -1,23 +1,24 @@
 // Transporte del MODO HISTORIA. Cumple la interfaz Transporte. Orquesta la
-// campaña sobre el motor:
-//   - cada combate se juega en una MESA del tamaño del encuentro (1v1, chica o
-//     grande), con TransporteLocal: el rival marcado a su nivel y el relleno más
-//     blando, con las reglas de la habilidad del boss;
-//   - gana el combate quien queda último con cachos (campeón de la mesa);
+// campaña sobre el motor, con EXPLORACIÓN del barrio (vista cenital tipo RPG):
+//   - al entrar a un capítulo, el jugador CAMINA el barrio: reta a los
+//     parroquianos en el orden que quiera, pasa por la tienda, se topa con los
+//     eventos de calle y, al vencer a todos, se abre la PUERTA del jefe;
+//   - antes de cada mesa (fase "reto") elige su APUESTA y ve el DESAFÍO;
+//   - cada combate se juega en una MESA del tamaño del encuentro, con
+//     TransporteLocal y las reglas de la habilidad del rival;
 //   - bosses "dado cargado" recargan su mano cada ronda (trampa);
-//   - al llegar a un escenario puede salir un DILEMA (decisión de calle);
-//   - entre escenarios abre la TIENDA para subir atributos y comprar items;
-//   - en la mesa puede usar ITEMS (cargar tu mano, marcar al rival, soplón) y el
-//     poder "Suerte" (re-tira tu mano).
+//   - al caer el jefe: epílogo y siguiente barrio (o el final que toque).
 import { TransporteLocal, type Instantanea, type Transporte } from "./transporte";
 import { guardarPrefs } from "./prefs";
 import {
   rivalActual,
   escenarioActual,
-  eventoActual,
+  eventoDisponible,
+  estadoEvento,
+  rivalesNoBoss,
+  bossDe,
   etiquetaEfecto,
   escenaDe,
-  avanzar,
   armarMesa,
   costoMejora,
   normalizar,
@@ -38,6 +39,9 @@ import {
   type FaseHistoria,
   type VistaHistoria,
   type EventoVista,
+  type ExplorarVista,
+  type EntidadVista,
+  type Escenario,
   type Evento,
   type EfectoMesa,
   type PremioEvento,
@@ -49,6 +53,15 @@ import {
   type ItemTiendaVista,
   type ItemManoVista,
 } from "./historia";
+import { mapaDeEscenario, esPared, entidadEn, type MapaEscenario, type EntidadMapa, type CondicionMapa } from "./mapa";
+
+type Direccion = "arriba" | "abajo" | "izquierda" | "derecha";
+const DIRS: Record<Direccion, [number, number]> = {
+  arriba: [0, -1],
+  abajo: [0, 1],
+  izquierda: [-1, 0],
+  derecha: [1, 0],
+};
 
 export class TransporteHistoria implements Transporte {
   private h: EstadoHistoria;
@@ -79,6 +92,12 @@ export class TransporteHistoria implements Transporte {
   private suerteUsadaEnMesa = false;
   private botin: VistaHistoria["botin"] = null;
   private apuestaPerdida = 0;
+
+  // --- Exploración (el barrio, vista cenital) ---
+  private mapa: MapaEscenario | null = null;
+  private jx = 0;
+  private jy = 0;
+  private mensaje: string | null = null;
 
   constructor(estado: EstadoHistoria) {
     this.h = normalizar(estado);
@@ -195,6 +214,8 @@ export class TransporteHistoria implements Transporte {
         const total = rival.plata + this.apuestaMonto + bono;
         this.botin = { premioBase: rival.plata, apuestaExtra: this.apuestaMonto, bono, desafioCumplido, total };
         this.h.plata += total;
+        // El rival queda vencido en el barrio (la puerta del jefe se va abriendo).
+        if (!this.secretoActivo && !this.h.derrotados.includes(rival.id)) this.h.derrotados.push(rival.id);
         this.guardar();
         this.fase = "victoria";
       } else {
@@ -211,30 +232,182 @@ export class TransporteHistoria implements Transporte {
     this.emitir();
   }
 
-  /** Fija la apuesta de la mesa (sólo en la intro, dentro de las opciones). */
+  /** Fija la apuesta de la mesa (sólo en el reto, dentro de las opciones). */
   historiaApostar(monto: number) {
-    if (this.fase !== "intro") return;
+    if (this.fase !== "reto") return;
     const base = this.rivalEnCurso().plata;
     if (!opcionesApuesta(this.h.plata, base).includes(monto)) return;
     this.apuestaMonto = monto;
     this.emitir();
   }
 
-  /** Empieza el encuentro: si hay un evento de calle pendiente, va primero. */
+  /** Entra al barrio actual: carga el mapa y deja al jugador en la entrada. */
+  private entrarBarrio() {
+    const esc = escenarioActual(this.h);
+    this.mapa = mapaDeEscenario(esc.clave);
+    if (this.mapa) {
+      this.jx = this.mapa.entrada.x;
+      this.jy = this.mapa.entrada.y;
+    }
+    this.mensaje = null;
+    this.desmontar();
+    this.fase = "explorar";
+    this.emitir();
+  }
+
+  /** Desde la intro del capítulo: a caminar el barrio. */
   historiaEmpezar() {
     if (this.fase !== "intro") return;
     this.h.prologoVisto = true;
-    const ev = eventoActual(this.h);
-    if (ev) {
-      this.eventoEnCurso = ev;
-      this.eventoResultado = null;
-      this.eventoEfecto = null;
-      this.cartaElegida = null;
-      this.fase = "evento";
-      this.guardar();
+    this.guardar();
+    this.entrarBarrio();
+  }
+
+  /** Desde la ficha del rival ("reto"): se sienta a la mesa. */
+  historiaSentarse() {
+    if (this.fase === "reto") this.montarPartida();
+  }
+
+  // --- Exploración: caminar el barrio ---------------------------------------
+
+  /** ¿La puerta del jefe está abierta? (todos los parroquianos vencidos) */
+  private puertaAbierta(esc: Escenario): boolean {
+    return rivalesNoBoss(esc).every((id) => this.h.derrotados.includes(id));
+  }
+
+  /** ¿Se cumple la condición de un botín del mapa? */
+  private condCumplida(cond?: CondicionMapa): boolean {
+    if (!cond) return true;
+    if (cond.tipo === "plata") return this.h.plata >= cond.monto;
+    return this.h.inventario[cond.item] > 0;
+  }
+
+  /** Un evento oculto (su marca no acompaña) no se dibuja ni estorba el paso. */
+  private entidadVisible(e: EntidadMapa): boolean {
+    if (e.tipo !== "evento") return true;
+    return estadoEvento(this.h, e.eventoClave ?? "") !== "oculto";
+  }
+
+  historiaMover(dir: string) {
+    if (this.fase !== "explorar" || !this.mapa) return;
+    const paso = DIRS[dir as Direccion];
+    if (!paso) return;
+    const nx = this.jx + paso[0];
+    const ny = this.jy + paso[1];
+    if (esPared(this.mapa, nx, ny)) return; // muro: ni se mueve
+    const ent = entidadEn(this.mapa, nx, ny);
+    if (!ent || !this.entidadVisible(ent)) {
+      this.jx = nx;
+      this.jy = ny;
+      this.mensaje = null;
       this.emitir();
-    } else {
-      this.montarPartida();
+      return;
+    }
+    if (ent.tipo === "puerta") {
+      if (this.puertaAbierta(escenarioActual(this.h))) {
+        // Puerta abierta: se cruza hacia el jefe.
+        this.jx = nx;
+        this.jy = ny;
+        this.mensaje = null;
+        this.emitir();
+      } else {
+        this.mensaje = ent.texto ?? "Está cerrado.";
+        this.emitir();
+      }
+      return;
+    }
+    this.interactuar(ent);
+  }
+
+  /** Interactúa con una entidad por id (la UI también deja tocar un token vecino). */
+  historiaInteractuar(id: string) {
+    if (this.fase !== "explorar" || !this.mapa) return;
+    const ent = this.mapa.entidades.find((e) => e.id === id);
+    if (!ent || !this.entidadVisible(ent)) return;
+    const dist = Math.abs(ent.x - this.jx) + Math.abs(ent.y - this.jy);
+    if (dist > 1) return; // sólo lo que tienes al lado
+    if (ent.tipo === "puerta") {
+      if (this.puertaAbierta(escenarioActual(this.h))) {
+        this.jx = ent.x;
+        this.jy = ent.y;
+        this.mensaje = null;
+        this.emitir();
+      } else {
+        this.mensaje = ent.texto ?? "Está cerrado.";
+        this.emitir();
+      }
+      return;
+    }
+    this.interactuar(ent);
+  }
+
+  private interactuar(ent: EntidadMapa) {
+    const esc = escenarioActual(this.h);
+    switch (ent.tipo) {
+      case "rival": {
+        const r = esc.rivales[ent.rivalIdx ?? -1];
+        if (!r) return;
+        if (this.h.derrotados.includes(r.id)) {
+          this.mensaje = `Ya le ganaste a ${r.nombre}.`;
+          this.emitir();
+          return;
+        }
+        this.h.rivalIdx = ent.rivalIdx ?? 0;
+        this.apuestaMonto = 0;
+        this.mensaje = null;
+        this.fase = "reto";
+        this.emitir();
+        return;
+      }
+      case "tienda":
+        this.mensaje = null;
+        this.fase = "tienda";
+        this.emitir();
+        return;
+      case "evento": {
+        const ev = eventoDisponible(this.h, ent.eventoClave ?? "");
+        if (!ev) {
+          this.mensaje = "Eso ya quedó atrás.";
+          this.emitir();
+          return;
+        }
+        this.eventoEnCurso = ev;
+        this.eventoResultado = null;
+        this.eventoEfecto = null;
+        this.cartaElegida = null;
+        this.mensaje = null;
+        this.fase = "evento";
+        this.emitir();
+        return;
+      }
+      case "letrero":
+        this.mensaje = ent.texto ?? null;
+        this.emitir();
+        return;
+      case "premio": {
+        if (this.h.premiosReclamados.includes(ent.id)) {
+          this.mensaje = "Aquí ya no queda nada.";
+          this.emitir();
+          return;
+        }
+        if (!this.condCumplida(ent.cond)) {
+          this.mensaje = ent.texto ?? "Está cerrado.";
+          this.emitir();
+          return;
+        }
+        if (ent.premio?.plata) this.h.plata += ent.premio.plata;
+        if (ent.premio?.item) {
+          const meta = itemMeta(ent.premio.item);
+          this.h.inventario[ent.premio.item] = Math.min(meta.max, this.h.inventario[ent.premio.item] + 1);
+        }
+        this.h.premiosReclamados.push(ent.id);
+        this.mensaje = ent.premio?.item
+          ? `Te llevas: ${itemMeta(ent.premio.item).nombre}.`
+          : `¡Encontraste $${(ent.premio?.plata ?? 0).toLocaleString("es-CL")}!`;
+        this.guardar();
+        this.emitir();
+        return;
+      }
     }
   }
 
@@ -288,9 +461,16 @@ export class TransporteHistoria implements Transporte {
     if (this.fase === "derrota") this.montarPartida();
   }
   historiaContinuar() {
-    if (this.fase === "evento") {
-      // Tras ver el desenlace del evento, a la mesa.
-      this.montarPartida();
+    if (this.fase === "evento" || this.fase === "tienda" || this.fase === "reto") {
+      // De vuelta al barrio (del evento resuelto, la tienda o arrepentido del reto).
+      if (this.fase === "reto" && this.secretoActivo) return; // del Patrón no se huye
+      this.entrarBarrio();
+      return;
+    }
+    if (this.fase === "derrota") {
+      // Sales de la mesa con la cola entre las piernas: de vuelta al barrio.
+      if (this.secretoActivo) return; // con el Patrón: revancha o nada
+      this.entrarBarrio();
       return;
     }
     if (this.fase === "victoria") {
@@ -305,30 +485,33 @@ export class TransporteHistoria implements Transporte {
         this.desmontar();
         this.fase = "final";
         this.guardar();
-      } else {
-        const { tienda, final } = avanzar(this.h);
-        if (final) {
-          // Cayó el Rey "público": se decide el final.
+      } else if (rivalActual(this.h).esBoss) {
+        // Cayó el jefe del barrio: al siguiente capítulo (o el final que toque).
+        if (this.h.escenarioIdx < CAMPANA.length - 1) {
+          this.h.escenarioIdx += 1;
+          this.h.rivalIdx = 0;
+          this.desmontar();
+          this.fase = "intro";
+        } else {
           const tipo = tipoFinal(this.h);
           if (tipo === "verdadero") {
             // El giro: aún falta el verdadero Rey. La campaña no termina aquí.
-            this.h.completado = false;
             this.secretoActivo = true;
             this.desmontar();
-            this.fase = "intro"; // intro del jefe secreto (rivalEnCurso = REY_VERDADERO)
+            this.fase = "reto"; // la ficha del Patrón (rivalEnCurso = REY_VERDADERO)
           } else {
-            this.finalTipo = tipo; // completado=true lo dejó avanzar()
+            this.h.completado = true;
+            this.finalTipo = tipo;
             this.desmontar();
             this.fase = "final";
           }
-        } else {
-          this.fase = tienda ? "tienda" : "intro";
-          this.desmontar();
         }
         this.guardar();
+      } else {
+        // Un parroquiano menos: de vuelta al barrio (queda vencido en el mapa).
+        this.entrarBarrio();
+        return;
       }
-    } else if (this.fase === "tienda") {
-      this.fase = "intro";
     }
     this.emitir();
   }
@@ -431,9 +614,9 @@ export class TransporteHistoria implements Transporte {
 
     const enIntro = this.fase === "intro";
     const narrativa = {
-      prologo: enIntro && !this.h.prologoVisto && this.h.escenarioIdx === 0 && this.h.rivalIdx === 0 ? PROLOGO : null,
-      intro: enIntro && this.h.rivalIdx === 0 ? esc.intro : null,
-      presentacion: enIntro ? rival.presentacion ?? null : null,
+      prologo: enIntro && !this.h.prologoVisto && this.h.escenarioIdx === 0 ? PROLOGO : null,
+      intro: enIntro ? esc.intro : null,
+      presentacion: this.fase === "reto" ? rival.presentacion ?? null : null,
       relato: this.fase === "victoria" && !rival.esBoss ? rival.relato ?? null : null,
       epilogo: haySecreto ? TWIST_VERDADERO : this.fase === "victoria" && rival.esBoss ? esc.epilogo : null,
     };
@@ -508,7 +691,10 @@ export class TransporteHistoria implements Transporte {
       },
       mesa: rival.mesa,
       acompanantes: armarMesa(this.h).acompanantes,
-      progresoRival: { idx: this.h.rivalIdx, total: esc.rivales.length },
+      progresoRival: {
+        idx: esc.rivales.filter((r) => this.h.derrotados.includes(r.id)).length,
+        total: esc.rivales.length,
+      },
       suerteDisponible: this.suerteUsos,
       ojo: ojoEf,
       colmillo: colmilloEf,
@@ -520,11 +706,11 @@ export class TransporteHistoria implements Transporte {
       finalTipo: this.fase === "final" ? this.finalTipo : null,
       haySecreto,
       apuesta:
-        this.fase === "intro"
+        this.fase === "reto"
           ? { elegida: this.apuestaMonto, opciones: opcionesApuesta(this.h.plata, rival.plata), premioBase: rival.plata }
           : null,
       desafio:
-        !this.secretoActivo && (this.fase === "intro" || this.fase === "mesa" || this.fase === "victoria")
+        !this.secretoActivo && (this.fase === "reto" || this.fase === "mesa" || this.fase === "victoria")
           ? (() => {
               const d = desafioDe(rival);
               return { nombre: d.nombre, desc: d.desc, bono: bonoDesafio(rival) };
@@ -532,7 +718,59 @@ export class TransporteHistoria implements Transporte {
           : null,
       botin: this.fase === "victoria" ? this.botin : null,
       apuestaPerdida: this.fase === "derrota" ? this.apuestaPerdida : 0,
+      explorar: this.vistaExplorar(),
+      esSecreto: this.secretoActivo,
     };
+  }
+
+  // --- Vista del barrio (exploración) ---------------------------------------
+  private vistaExplorar(): ExplorarVista | null {
+    if (this.fase !== "explorar" || !this.mapa) return null;
+    const m = this.mapa;
+    const esc = escenarioActual(this.h);
+    const porVencer = rivalesNoBoss(esc).filter((id) => !this.h.derrotados.includes(id)).length;
+    const pista = this.puertaAbierta(esc)
+      ? `La puerta de ${bossDe(esc).nombre} está abierta. Cuando quieras, sube.`
+      : `Vence a ${porVencer === 1 ? "1 rival más" : `${porVencer} rivales más`} y se abrirá la mesa de ${bossDe(esc).nombre}.`;
+    return {
+      titulo: m.titulo,
+      pista,
+      ancho: m.ancho,
+      alto: m.alto,
+      filas: m.filas,
+      jugador: { x: this.jx, y: this.jy, nombre: this.h.nombre },
+      entidades: m.entidades.filter((e) => this.entidadVisible(e)).map((e) => this.entidadVista(e, esc)),
+      mensaje: this.mensaje,
+    };
+  }
+
+  private entidadVista(e: EntidadMapa, esc: Escenario): EntidadVista {
+    const base = { id: e.id, x: e.x, y: e.y };
+    if (e.tipo === "rival") {
+      const r = esc.rivales[e.rivalIdx ?? -1];
+      const derrotado = r ? this.h.derrotados.includes(r.id) : false;
+      return {
+        ...base,
+        tipo: "rival",
+        ...(r ? { rivalId: r.id, rivalNombre: r.nombre, esBoss: r.esBoss, etiqueta: r.nombre } : {}),
+        estado: derrotado ? "derrotado" : "activo",
+      };
+    }
+    if (e.tipo === "puerta") {
+      return { ...base, tipo: "puerta", estado: this.puertaAbierta(esc) ? "abierto" : "bloqueado" };
+    }
+    if (e.tipo === "premio") {
+      const reclamado = this.h.premiosReclamados.includes(e.id);
+      return { ...base, tipo: "premio", estado: reclamado ? "resuelto" : this.condCumplida(e.cond) ? "activo" : "bloqueado" };
+    }
+    if (e.tipo === "evento") {
+      const est = estadoEvento(this.h, e.eventoClave ?? "");
+      return { ...base, tipo: "evento", estado: est === "resuelto" ? "resuelto" : "activo" };
+    }
+    if (e.tipo === "tienda") {
+      return { ...base, tipo: "tienda", estado: "activo", etiqueta: "Tienda" };
+    }
+    return { ...base, tipo: "letrero", estado: "activo" };
   }
 
   instantanea(): Instantanea {

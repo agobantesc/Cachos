@@ -41,23 +41,6 @@ export function IconoDado({ tam = 15 }: { tam?: number }) {
   );
 }
 
-/** Copa / trofeo, para el modo torneo. */
-export function IconoCopa({ tam = 26 }: { tam?: number }) {
-  return (
-    <svg className="ico" width={tam} height={tam} viewBox="0 0 24 24" aria-hidden="true">
-      <g fill="currentColor">
-        <path d="M6.5 3.5 h11 v3.5 a5.5 5.5 0 0 1 -11 0 z" />
-        <rect x="11.1" y="11.8" width="1.8" height="3.8" rx="0.7" />
-        <path d="M7.4 19.6 l1.1 -3.4 h7 l1.1 3.4 z" />
-      </g>
-      <g fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-        <path d="M6.6 4.6 H4.1 a2.2 2.2 0 0 0 2.8 3.5" />
-        <path d="M17.4 4.6 H19.9 a2.2 2.2 0 0 1 -2.8 3.5" />
-      </g>
-    </svg>
-  );
-}
-
 /** Calavera, para el modo historia (bajo mundo). */
 export function IconoCalavera({ tam = 28 }: { tam?: number }) {
   return (

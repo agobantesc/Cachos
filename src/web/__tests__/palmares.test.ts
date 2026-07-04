@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { leerPalmares, registrarPartida, registrarCopa, registrarFinal } from "../palmares";
+import { leerPalmares, registrarPartida, registrarFinal } from "../palmares";
 
 // Shim de localStorage para node (el módulo falla en silencio sin él).
 const store = new Map<string, string>();
@@ -25,14 +25,11 @@ describe("palmarés", () => {
     expect(p.mejorRacha).toBe(2);
   });
 
-  it("acumula copas y finales sin repetir el mismo final", () => {
-    registrarCopa();
-    registrarCopa();
+  it("acumula finales sin repetir el mismo final", () => {
     registrarFinal("estandar");
     registrarFinal("estandar");
     registrarFinal("verdadero");
     const p = leerPalmares();
-    expect(p.copas).toBe(2);
     expect(p.finales.sort()).toEqual(["estandar", "verdadero"]);
   });
 

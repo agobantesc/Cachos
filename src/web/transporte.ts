@@ -15,7 +15,6 @@ import {
   type Sentido,
 } from "../engine";
 import { decidirBot, type JugadaBot, type Nivel } from "./bots";
-import type { VistaTorneo } from "./torneo";
 import type { VistaHistoria } from "./historia";
 
 function accionDeJugada(jugada: JugadaBot, jugadorId: string): Accion {
@@ -52,8 +51,6 @@ export interface Instantanea {
   esLocal: boolean;
   /** true si es modo solitario contra la máquina (perspectiva fija en el humano). */
   esSolo: boolean;
-  /** Estado del torneo si se juega en modo torneo; null/undefined si no. */
-  torneo?: VistaTorneo | null;
   /** Estado de la conexión en línea (para mostrar "Reconectando…"). */
   conexion?: "ok" | "reconectando";
   /** Estado del modo historia, si se juega la campaña; null/undefined si no. */
@@ -73,12 +70,16 @@ export interface Transporte {
   /** Solitario: abandona la partida en curso y salta directo al resultado final
    * (resuelve la mesa entre bots). En línea no aplica. */
   terminarSolo(): Promise<void>;
-  /** Torneo: pasa de la pantalla "entre rondas" a sembrar la siguiente mesa. */
-  avanzarTorneo?(): Promise<void>;
   // --- Modo historia ---
-  /** Empieza la partida contra el rival actual (desde la intro). */
+  /** Desde la intro del capítulo: entra a caminar el barrio (mapa). */
   historiaEmpezar?(): void;
-  /** Avanza tras ganar (a la tienda, al siguiente rival o al final). */
+  /** Camina por el barrio (arriba/abajo/izquierda/derecha). */
+  historiaMover?(dir: string): void;
+  /** Interactúa con una entidad del mapa por id (token vecino). */
+  historiaInteractuar?(id: string): void;
+  /** Desde la ficha del rival ("reto"): se sienta a la mesa. */
+  historiaSentarse?(): void;
+  /** Vuelve al barrio (tras evento/tienda/victoria) o avanza el flujo. */
   historiaContinuar?(): void;
   /** Reintenta la partida perdida contra el mismo rival. */
   historiaReintentar?(): void;

@@ -206,17 +206,6 @@ export function Mesa({
 
   return (
     <div className={"mesa" + (miTurno ? " mesa--mi-turno" : "")}>
-      {snap.torneo && snap.torneo.faseTorneo === "mesa" && (
-        <div className="torneo-hud">
-          <span className="torneo-hud-etq">{snap.torneo.etiquetaRonda}</span>
-          <span className="torneo-hud-sep">·</span>
-          <span>{snap.torneo.vivos} en pie</span>
-          <span className="torneo-hud-sep">·</span>
-          <span>
-            ronda {snap.torneo.ronda}/{snap.torneo.totalRondas}
-          </span>
-        </div>
-      )}
       {snap.historia && snap.historia.faseHistoria === "mesa" && (
         <div className="historia-hud">
           <span className="hh-rival">
@@ -463,7 +452,7 @@ function Revelacion({
           <div className="siguiente">
             <span>Quedaste fuera de la mesa.</span>
             <button className="btn btn--apostar grande" onClick={() => transporte.terminarSolo()}>
-              {snap.torneo ? "Ver cómo sigue el torneo" : "Ver resultado final"}
+              "Ver resultado final"
             </button>
           </div>
         ) : soyAbridor ? (

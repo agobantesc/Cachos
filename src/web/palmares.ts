@@ -4,13 +4,13 @@
 const CLAVE = "cachos.palmares";
 
 export interface Palmares {
-  /** Mesas jugadas y ganadas (solo, torneo, historia y en línea). */
+  /** Mesas jugadas y ganadas (historia, solo y en línea). */
   jugadas: number;
   ganadas: number;
   /** Racha de mesas ganadas seguidas (actual y la mejor de la historia). */
   racha: number;
   mejorRacha: number;
-  /** Torneos coronados. */
+  /** Torneos coronados (histórico; el modo torneo ya no existe). */
   copas: number;
   /** Finales de la campaña vistos ("estandar" | "malo" | "verdadero"). */
   finales: string[];
@@ -53,13 +53,6 @@ export function registrarPartida(gano: boolean): void {
   } else {
     p.racha = 0;
   }
-  guardar(p);
-}
-
-/** Registra un torneo coronado. */
-export function registrarCopa(): void {
-  const p = leerPalmares();
-  p.copas += 1;
   guardar(p);
 }
 

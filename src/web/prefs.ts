@@ -1,5 +1,5 @@
 // Preferencias del jugador, persistidas en localStorage: para que la app
-// recuerde tu nombre, dificultad y el último torneo elegido entre sesiones.
+// recuerde tu nombre, dificultad y tu avance entre sesiones.
 import type { Nivel } from "./bots";
 import type { Cara } from "./Avatar";
 import type { EstadoHistoria } from "./historia";
@@ -10,8 +10,6 @@ export interface Prefs {
   nombre?: string;
   nivel?: Nivel;
   rivales?: number;
-  preset?: string;
-  rampa?: boolean;
   /** Rostro personalizado del jugador. */
   cara?: Cara;
   /** Avance del modo historia (campaña en curso). */
