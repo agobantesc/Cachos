@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Avatar } from "./Avatar";
 import { Dado } from "./Dado";
 import { Escena } from "./Escena";
-import { FINALES, escenaCapitulo, escenaFinal } from "./historia";
+import { FINALES, escenaCapitulo } from "./historia";
 import type { Pinta } from "../engine";
 import { Sonidos, vibrar } from "./sonido";
 import { registrarFinal } from "./palmares";
@@ -463,22 +463,44 @@ export function PantallaHistoria({
     );
   }
 
-  // --- FINAL (estándar / malo / verdadero) ---
+  // --- FINAL (estándar / malo / verdadero): epílogo de varios pasajes ---
   const tipo = t.finalTipo ?? "estandar";
   const fin = FINALES[tipo];
   const esMalo = tipo === "malo";
+  const beat = t.finalBeat!; // siempre presente mientras faseHistoria === "final"
+  const seguir = () => {
+    Sonidos.carta();
+    transporte.historiaContinuar?.();
+  };
   return (
     <div className={"pantalla historia-pantalla hist-final" + (esMalo ? " hist-final-malo" : "")} style={estiloCapitulo(t.escenario.idx)}>
       <span className="hist-kicker">{esMalo ? "Penthouse, lo más alto de Santiago" : t.escenario.lugar}</span>
       <h1 className={"hist-titulo " + (esMalo ? "hist-perdio" : "hist-gano")}>{fin.titulo}</h1>
-      <Escena escena={escenaFinal(tipo)} />
-      <p className="hist-ambiente">{fin.texto}</p>
-      <BarraStats t={t} />
-      <div className="hist-acciones">
-        <button className="btn btn--apostar grande" onClick={salir}>
-          Volver al menú
-        </button>
-      </div>
+      <Escena escena={beat.escena} />
+      <p className="hist-ambiente">{beat.texto}</p>
+      {beat.total > 1 && (
+        <div className="final-beats" aria-label={`Pasaje ${beat.idx + 1} de ${beat.total}`}>
+          {Array.from({ length: beat.total }).map((_, i) => (
+            <span key={i} className={"final-beat-dot" + (i <= beat.idx ? " activo" : "")} />
+          ))}
+        </div>
+      )}
+      {beat.esUltimo ? (
+        <>
+          <BarraStats t={t} />
+          <div className="hist-acciones">
+            <button className="btn btn--apostar grande" onClick={salir}>
+              Volver al menú
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="hist-acciones">
+          <button className="btn btn--apostar grande" onClick={seguir}>
+            Seguir
+          </button>
+        </div>
+      )}
     </div>
   );
 }

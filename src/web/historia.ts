@@ -635,24 +635,81 @@ export function tipoFinal(h: EstadoHistoria): TipoFinal {
 export const TWIST_VERDADERO =
   "El Rey, en el suelo, se ríe con la boca llena de sangre. '¿Treinta años invicto… yo? Pobre iluso. Yo soy la cara que ponen en la mesa para los que llegan hasta acá. El que de verdad reparte la baraja de todo Chile nunca se sienta donde lo vean.' Al fondo del penthouse se abre una puerta sin número. Tu aliado te aprieta el hombro: 'Esto te quería mostrar. El verdadero Rey del Cacho. Nadie volvió de esa pieza… pero tú no eres nadie.'";
 
-/** Textos de los tres finales. */
-export const FINALES: Record<TipoFinal, { titulo: string; texto: string }> = {
+/** Un pasaje del epílogo (fase "final"): su estampa y su texto. */
+export interface FinalBeat {
+  escena: string;
+  texto: string;
+}
+
+/** Epílogos de los tres finales: tres pasajes cada uno, de la caída del Rey al cierre. */
+export const FINALES: Record<TipoFinal, { titulo: string; beats: FinalBeat[] }> = {
   estandar: {
     titulo: "El mejor de Chile",
-    texto:
-      "Partiste en una pocilga del puerto, oliendo a pescado y a fracaso. Hoy, desde lo más alto de Santiago, no queda un nombre por encima del tuyo. El cacho, por fin, tiene dueño. Y sin embargo, de madrugada, contando tu plata frente al ventanal, una duda no te deja dormir: el Rey cayó demasiado fácil para treinta años de leyenda. Como si alguien, más arriba todavía, te hubiera dejado ganar. Pero estás cansado, y los reyes cansados no hacen preguntas. Te quedas con el trono… y con la incógnita.",
+    beats: [
+      {
+        escena: "fin-trono-mesa",
+        texto:
+          "El Rey del Cacho cae de rodillas antes de caer del todo, con el cacho todavía apretado contra el pecho, como si eso fuera a servirle de algo. Nadie en la mesa habla. El crupier —un viejo que ha visto perder a generaciones enteras— te mira como quien ve algo que no esperaba ver dos veces en la misma vida. Afuera del salón alguien golpea la baranda, despacio, y el golpe se contagia hasta sonar como un aplauso de fierro. Treinta años de leyenda, apagados en cinco tiradas.",
+      },
+      {
+        escena: "fin-trono-calle",
+        texto:
+          "La noticia baja más rápido que tú por las mismas escaleras que subiste. Para cuando llegas al primer piso ya la sabe medio Santiago; para cuando amanece, la sabe el país entero. En La Trastienda, El Croata levanta una copa que no brinda con nadie. En La Maestranza, alguien graba tu nombre a fierro caliente en la puerta del taller, junto al de El Verdugo, tachado. Doña Berta, allá en el puerto, ya les cuenta a los nuevos —siempre hay nuevos— que a ti también te tembló la mano la primera noche, y que igual llegaste. Eres una historia antes de terminar de vivirla.",
+      },
+      {
+        escena: "fin-trono",
+        texto:
+          "Partiste en una pocilga del puerto, oliendo a pescado y a fracaso; hoy nadie te reconocería en esa mesa pegajosa de vino. Desde lo más alto de Santiago, no queda un nombre por encima del tuyo. El cacho, por fin, tiene dueño. Y sin embargo, unas noches después, contando tu plata frente al mismo ventanal, una duda no te deja dormir: el Rey cayó demasiado fácil para treinta años de leyenda. Como si alguien, más arriba todavía, te hubiera dejado ganar. Pero estás cansado, y los reyes cansados no hacen preguntas. Te quedas con el trono… y con la incógnita.",
+      },
+    ],
   },
   malo: {
     titulo: "La banca siempre cobra",
-    texto:
-      "Levantaste tu imperio sobre cadáveres: el muerto de los cajones, el viejo del puente, el hermano que te buscó la cara. Subiste pisando a todos y arriba, donde ya no queda nadie a quien traicionar, te traicionan a ti. La copa de la victoria te sabe rara un segundo antes de que las piernas te fallen. Caes frente al ventanal con todo Chile encendido a tus pies, y lo último que oyes es una voz que no reconoces: 'La banca siempre cobra, cabro.' Otro saco de género rumbo al Mapocho. El cacho, esta noche, sigue sin dueño.",
+    beats: [
+      {
+        escena: "fin-traicion-cima",
+        texto:
+          "Por un segundo —uno solo— es dulce. El Rey del Cacho boquea en el suelo y tú te sientes, por primera vez en tu vida, invencible. Levantas los brazos y el salón entero aplaude, o eso crees oír. Pero el aplauso se corta antes de tiempo: alguien en tu propio séquito —no sabrías decir quién— deja de aplaudir primero, y te mira con una cara que no le habías visto antes. La cara de alguien que ya decidió algo.",
+      },
+      {
+        escena: "fin-traicion-fantasmas",
+        texto:
+          "La copa que te ponen en la mano sabe a cobre. En el reflejo del ventanal, por una fracción de segundo, ves más gente de la que hay en la sala: un cargador de La Vega que te mira sin parpadear, un viejo de las mesas del puerto con un niño de la mano, un hermano al que le debiste una explicación que nunca diste, un crío al que le sostuviste la mirada cuando debiste apartarla. Nadie más los ve. Tú sí. Llevas sus caras contigo desde que decidiste que la plata y el poder valían más que la cuenta que algún día había que pagar.",
+      },
+      {
+        escena: "fin-traicion",
+        texto:
+          "Levantaste tu imperio sobre cadáveres: el muerto de los cajones, el viejo del puente, el hermano que te buscó la cara. Subiste pisando a todos y arriba, donde ya no queda nadie a quien traicionar, te traicionan a ti. La copa de la victoria te sabe rara un segundo antes de que las piernas te fallen. Caes frente al ventanal con todo Chile encendido a tus pies, y lo último que oyes es una voz que no reconoces: 'La banca siempre cobra, cabro.' Otro saco de género rumbo al Mapocho. El cacho, esta noche, sigue sin dueño.",
+      },
+    ],
   },
   verdadero: {
     titulo: "El verdadero Rey del Cacho",
-    texto:
-      "No fue el penthouse, ni las luces, ni el aplauso. Fue una pieza sin ventanas, a oscuras, contra el hombre que llevaba treinta años repartiendo la baraja de todo Chile sin que nadie le viera la cara. Y lo bajaste. De verdad, esta vez. Cuando sales, el sol asoma sobre el río y, por primera vez, el Mapocho no se lleva a nadie. No hay rey escondido más arriba: lo comprobaste en carne propia. Empezaste en el barro, sin nombre, y hoy ERES el cacho —el de verdad, el que nadie va a destronar con trucos—. Te lo ganaste limpio, y acompañado. Esa, y no el trono, es la parte que cuenta.",
+    beats: [
+      {
+        escena: "fin-amanecer-puerta",
+        texto:
+          "El Patrón queda tendido sobre su propio cacho, en silencio, en una pieza que nunca tuvo testigos hasta esta noche. No hay aplausos ni copas: solo el zumbido de la ampolleta y tu respiración, todavía agitada. Tu aliado entra despacio, como quien no cree lo que está viendo, y te mira largo antes de hablar. 'Treinta años', dice al fin, 'y nadie había cruzado esa puerta dos veces.' Tú tampoco lo puedes creer del todo. Recién ahí entiendes que ganaste algo que no tiene precio en plata.",
+      },
+      {
+        escena: "fin-amanecer-penthouse",
+        texto:
+          "Cruzas de vuelta el penthouse con el Rey público todavía tirado donde cayó, humillado dos veces en la misma noche sin saberlo. Nadie ahí adentro sabrá jamás lo que pasó tras la puerta sin número; para ellos, la leyenda sigue siendo el de la vitrina. Tu aliado camina a tu lado y no dice nada más, pero no hace falta: los dos saben una verdad que el resto de Santiago nunca va a conocer, y por primera vez en esta historia, con eso te basta.",
+      },
+      {
+        escena: "fin-amanecer",
+        texto:
+          "Sales del edificio cuando el cielo recién empieza a cambiar de color. Empezaste en el barro, sin nombre, convencido de que el trono de arriba era lo único que importaba; pero lo que en verdad ganaste pasó lejos de las luces, en una pieza sin ventanas que nadie más va a conocer. El sol asoma sobre el río y, por primera vez, el Mapocho no se lleva a nadie. Hoy ERES el cacho —el de verdad, el que nadie va a destronar con trucos—. Te lo ganaste limpio, y acompañado. Esa, y no el trono, es la parte que cuenta.",
+      },
+    ],
   },
 };
+
+/** La estampa de cierre de un final (para distinguirlos en el Cuaderno/tests). */
+export function escenaFinal(tipo: TipoFinal): string {
+  const beats = FINALES[tipo].beats;
+  return beats[beats.length - 1]!.escena;
+}
 
 // Relleno de las mesas grandes (parroquianos sin nombre propio).
 const RELLENO = [
@@ -826,11 +883,6 @@ const ESCENA_EVENTO: Record<string, string> = {
 const ESCENA_CAPITULO = ["cap-muelle", "cap-vega", "cap-maestranza", "cap-trastienda", "cap-club", "cap-cumbre"];
 export function escenaCapitulo(idx: number): string {
   return ESCENA_CAPITULO[Math.max(0, Math.min(idx, ESCENA_CAPITULO.length - 1))]!;
-}
-
-/** Estampa de cada final. Ver Escena.tsx. */
-export function escenaFinal(tipo: TipoFinal): string {
-  return tipo === "malo" ? "fin-traicion" : tipo === "verdadero" ? "fin-amanecer" : "fin-trono";
 }
 
 /** El secreto del capítulo actual, si existe y sigue cerrado. */
@@ -1102,6 +1154,8 @@ export interface VistaHistoria {
   marcas: string[];
   /** Qué final se está mostrando (fase "final"). */
   finalTipo: TipoFinal | null;
+  /** Pasaje actual del epílogo del final (fase "final"): se recorre con historiaContinuar. */
+  finalBeat: { idx: number; total: number; escena: string; texto: string; esUltimo: boolean } | null;
   /** En la victoria del Rey "público", se desbloqueó el jefe secreto. */
   haySecreto: boolean;
   /** La apuesta de la mesa (en la intro): monto elegido y opciones. */

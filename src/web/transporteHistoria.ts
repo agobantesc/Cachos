@@ -35,6 +35,7 @@ import {
   HUMANO_ID,
   REY_VERDADERO,
   TWIST_VERDADERO,
+  FINALES,
   type EstadoHistoria,
   type FaseHistoria,
   type VistaHistoria,
@@ -73,8 +74,9 @@ export class TransporteHistoria implements Transporte {
   private cartaElegida: number | null = null;
   /** Combate contra el jefe final SECRETO (final verdadero) en curso. */
   private secretoActivo = false;
-  /** Qué final mostrar (en fase "final"). */
+  /** Qué final mostrar (en fase "final"), y en qué pasaje del epílogo va. */
   private finalTipo: TipoFinal | null = null;
+  private finalBeatIdx = 0;
   /** El candado del barrio: último fallo y desenlace al abrirlo. */
   private acertijoFallo: string | null = null;
   private acertijoDesenlace: string | null = null;
@@ -114,6 +116,15 @@ export class TransporteHistoria implements Transporte {
   /** El rival que se está enfrentando (el de la campaña, o el jefe secreto). */
   private rivalEnCurso(): RivalHistoria {
     return this.secretoActivo ? REY_VERDADERO : rivalActual(this.h);
+  }
+
+  /** El pasaje del epílogo que toca mostrar (fase "final"). */
+  private finalBeatVista(): VistaHistoria["finalBeat"] {
+    if (this.fase !== "final" || !this.finalTipo) return null;
+    const beats = FINALES[this.finalTipo].beats;
+    const idx = Math.min(this.finalBeatIdx, beats.length - 1);
+    const beat = beats[idx]!;
+    return { idx, total: beats.length, escena: beat.escena, texto: beat.texto, esUltimo: idx === beats.length - 1 };
   }
 
   // --- Flujo de la campaña ---------------------------------------------------
@@ -318,6 +329,13 @@ export class TransporteHistoria implements Transporte {
     if (this.fase === "derrota") this.montarPartida();
   }
   historiaContinuar() {
+    if (this.fase === "final") {
+      // Se recorre el epílogo pasaje a pasaje, hasta el cierre.
+      const total = FINALES[this.finalTipo ?? "estandar"].beats.length;
+      if (this.finalBeatIdx < total - 1) this.finalBeatIdx += 1;
+      this.emitir();
+      return;
+    }
     if (this.fase === "acertijo") {
       // Abierto o no, de vuelta a la intro del rival (se puede volver a intentar).
       this.fase = "intro";
@@ -337,6 +355,7 @@ export class TransporteHistoria implements Transporte {
         // Cayó el jefe SECRETO: final verdadero.
         this.h.completado = true;
         this.finalTipo = "verdadero";
+        this.finalBeatIdx = 0;
         this.secretoActivo = false;
         this.desmontar();
         this.fase = "final";
@@ -354,6 +373,7 @@ export class TransporteHistoria implements Transporte {
             this.fase = "intro"; // intro del jefe secreto (rivalEnCurso = REY_VERDADERO)
           } else {
             this.finalTipo = tipo; // completado=true lo dejó avanzar()
+            this.finalBeatIdx = 0;
             this.desmontar();
             this.fase = "final";
           }
@@ -554,6 +574,7 @@ export class TransporteHistoria implements Transporte {
       evento,
       marcas: [...this.h.marcas],
       finalTipo: this.fase === "final" ? this.finalTipo : null,
+      finalBeat: this.finalBeatVista(),
       haySecreto,
       apuesta:
         this.fase === "intro"

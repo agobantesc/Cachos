@@ -517,9 +517,74 @@ function Escenas({ escena }: { escena: string }) {
         </g>
       );
 
-    // ---- Los tres finales ----
+    // ---- Los tres finales (tres pasajes cada uno) ----
 
-    // Final estándar: el trono vacío y el cacho sobre el brazo.
+    // Estándar, pasaje 1: el Rey se derrumba sobre el paño, testigos a contraluz.
+    case "fin-trono-mesa":
+      return (
+        <g>
+          {/* foco cenital, intenso: el instante de la caída */}
+          <line x1="160" y1="0" x2="160" y2="26" stroke={NEGRO} strokeWidth="2.5" />
+          <path d="M150 26 h20 l-4 9 h-12 z" fill={NEGRO} />
+          <circle cx="160" cy="42" r="7" fill={ORO} opacity="0.95" />
+          <path d="M160 49 L92 128 L228 128 Z" fill={ORO} opacity="0.13" />
+          {/* mesa de paño */}
+          <ellipse cx="160" cy="112" rx="96" ry="20" fill="#15251a" />
+          <ellipse cx="160" cy="108" rx="96" ry="20" fill="#1c3323" />
+          <ellipse cx="160" cy="108" rx="96" ry="20" fill="none" stroke={ORO} strokeOpacity="0.25" />
+          {/* el Rey, derrumbado sobre el paño */}
+          <g fill={NEGRO}>
+            <ellipse cx="150" cy="98" rx="11" ry="8" />
+            <path d="M138 100 q14 10 34 2 l6 14 q-24 10 -46 0 z" />
+          </g>
+          {/* cacho volcado y dados desparramados */}
+          <path d="M182 96 l9 -10 -4 -6 -10 3 z" fill="#241a12" stroke={ORO} strokeOpacity="0.5" />
+          <rect x="196" y="98" width="8" height="8" rx="1.8" fill="#e9e3d2" transform="rotate(22 200 102)" />
+          <rect x="118" y="104" width="8" height="8" rx="1.8" fill="#e9e3d2" transform="rotate(-14 122 108)" />
+          <rect x="176" y="112" width="8" height="8" rx="1.8" fill="#e9e3d2" transform="rotate(40 180 116)" />
+          {/* testigos, recortados contra el paño a los bordes de la mesa */}
+          <g fill="#1c1626" stroke={ORO} strokeOpacity="0.3" strokeWidth="1">
+            <path d="M18 138 q0 -22 14 -30 q10 6 8 30 z" />
+            <path d="M280 138 q0 -24 16 -32 q11 7 8 32 z" />
+          </g>
+        </g>
+      );
+
+    // Estándar, pasaje 2: la noticia baja por la ciudad, de barrio en barrio.
+    case "fin-trono-calle":
+      return (
+        <g>
+          {/* cielo nocturno sobre los techos */}
+          <rect x="0" y="0" width="320" height="90" fill="#12101c" />
+          <circle cx="60" cy="24" r="7" fill="#e9e3d2" opacity="0.35" />
+          {/* skyline de varios barrios, luces sueltas encendidas */}
+          <g fill="#0d0c14">
+            <rect x="0" y="46" width="46" height="52" />
+            <rect x="44" y="30" width="38" height="68" />
+            <rect x="80" y="52" width="50" height="46" />
+            <rect x="128" y="20" width="34" height="78" />
+            <rect x="160" y="44" width="46" height="54" />
+            <rect x="204" y="34" width="40" height="64" />
+            <rect x="242" y="54" width="42" height="44" />
+            <rect x="282" y="24" width="38" height="74" />
+          </g>
+          <g fill={ORO} opacity="0.5">
+            {Array.from({ length: 14 }).map((_, i) => (
+              <rect key={i} x={10 + i * 22} y={40 + ((i * 23) % 40)} width="5" height="7" opacity={0.3 + ((i * 13) % 5) / 10} />
+            ))}
+          </g>
+          {/* piso de calle */}
+          <rect x="0" y="98" width="320" height="42" fill="#0d0b11" />
+          {/* el tahúr, a contraluz, alejándose por el medio de la calle */}
+          <g fill={NEGRO}>
+            <circle cx="160" cy="106" r="6" />
+            <path d="M150 114 q10 -5 20 0 l3 26 q-13 4 -26 0 z" />
+          </g>
+          <ellipse cx="160" cy="140" rx="18" ry="3" fill="#000" opacity="0.4" />
+        </g>
+      );
+
+    // Estándar, pasaje 3: el trono vacío y el cacho sobre el brazo.
     case "fin-trono":
       return (
         <g>
@@ -549,7 +614,58 @@ function Escenas({ escena }: { escena: string }) {
         </g>
       );
 
-    // Final malo: la copa envenenada volcada y la mano caída.
+    // Malo, pasaje 1: los brazos en alto, y un aplauso que se corta antes de tiempo.
+    case "fin-traicion-cima":
+      return (
+        <g>
+          <Suelo />
+          {/* ventanal con la ciudad, brillante */}
+          <rect x="86" y="10" width="150" height="96" fill="#0b1018" />
+          <g fill={ORO} opacity="0.55">
+            {Array.from({ length: 13 }).map((_, i) => (
+              <rect key={i} x={92 + i * 11} y={82 - ((i * 31) % 30)} width="6" height={((i * 31) % 30) + 14} />
+            ))}
+          </g>
+          <rect x="86" y="10" width="150" height="96" fill="none" stroke="#0a0810" strokeWidth="6" />
+          {/* el tahúr, brazos en alto, al centro */}
+          <g fill={NEGRO}>
+            <circle cx="160" cy="70" r="9" />
+            <path d="M150 80 q10 -5 20 0 l3 34 q-13 5 -26 0 z" />
+            <path d="M150 84 l-18 -30 M170 84 l18 -30" stroke={NEGRO} strokeWidth="5" strokeLinecap="round" />
+          </g>
+          {/* una silueta que ya no aplaude */}
+          <g fill={NEGRO} opacity="0.9">
+            <circle cx="252" cy="90" r="6" />
+            <path d="M244 98 q8 -3 16 0 l2 18 q-10 3 -20 0 z" />
+          </g>
+        </g>
+      );
+
+    // Malo, pasaje 2: rostros pálidos superpuestos en el vidrio, la cuenta que llega.
+    case "fin-traicion-fantasmas":
+      return (
+        <g>
+          {/* ventanal, ahora frío */}
+          <rect x="60" y="8" width="200" height="100" fill="#0d0f1a" />
+          <rect x="60" y="8" width="200" height="100" fill="none" stroke="#0a0810" strokeWidth="6" />
+          {/* rostros pálidos, apenas marcados, superpuestos en el vidrio */}
+          <g fill={PIEL} opacity="0.14">
+            <circle cx="96" cy="46" r="14" />
+            <circle cx="140" cy="70" r="12" />
+            <circle cx="196" cy="42" r="13" />
+            <circle cx="228" cy="74" r="11" />
+          </g>
+          {/* tu propia silueta, nítida, al centro */}
+          <g fill={NEGRO}>
+            <circle cx="160" cy="60" r="10" />
+            <path d="M148 72 q12 -6 24 0 l4 36 q-16 6 -32 0 z" />
+          </g>
+          {/* la copa en la mano, quieta */}
+          <path d="M182 78 l7 -3 6 3 -1 7 -5 2 -6 -2 z" fill="#1a1622" stroke={ORO} strokeOpacity="0.5" />
+        </g>
+      );
+
+    // Malo, pasaje 3: la copa envenenada volcada y la mano caída.
     case "fin-traicion":
       return (
         <g>
@@ -579,7 +695,63 @@ function Escenas({ escena }: { escena: string }) {
         </g>
       );
 
-    // Final verdadero: amanecer sobre el río, el tahúr se va caminando.
+    // Verdadero, pasaje 1: la pieza sin ventanas, el Patrón caído, el aliado en la puerta.
+    case "fin-amanecer-puerta":
+      return (
+        <g>
+          <Suelo />
+          {/* la pieza sin ventanas, oscura */}
+          <rect x="0" y="0" width="320" height="140" fill="#0a0810" />
+          {/* la única ampolleta */}
+          <line x1="160" y1="0" x2="160" y2="30" stroke={NEGRO} strokeWidth="2.5" />
+          <circle cx="160" cy="38" r="6" fill={ORO} opacity="0.95" />
+          <path d="M160 44 L104 118 L216 118 Z" fill={ORO} opacity="0.12" />
+          {/* el Patrón, caído sobre su cacho */}
+          <g fill={NEGRO}>
+            <ellipse cx="160" cy="104" rx="13" ry="9" />
+            <path d="M146 106 q14 10 32 2 l4 12 q-20 8 -38 0 z" />
+          </g>
+          <path d="M176 100 l8 -9 -3 -6 -9 3 z" fill="#241a12" stroke={ORO} strokeOpacity="0.5" />
+          {/* la puerta sin número, entreabierta, con el aliado entrando */}
+          <rect x="18" y="24" width="46" height="94" fill="#050408" />
+          <rect x="18" y="24" width="10" height="94" fill={NEGRO} />
+          <g fill={NEGRO} opacity="0.9">
+            <circle cx="40" cy="66" r="7" />
+            <path d="M31 76 q9 -4 18 0 l2 30 q-11 4 -22 0 z" />
+          </g>
+        </g>
+      );
+
+    // Verdadero, pasaje 2: de vuelta por el penthouse, el Rey público humillado en su trono.
+    case "fin-amanecer-penthouse":
+      return (
+        <g>
+          {/* ventanal con la ciudad, de noche cerrada */}
+          <rect x="0" y="8" width="320" height="92" fill="#0b1018" />
+          <g fill={ORO} opacity="0.4">
+            {Array.from({ length: 16 }).map((_, i) => (
+              <rect key={i} x={4 + i * 20} y={70 - ((i * 29) % 30)} width="7" height={((i * 29) % 30) + 12} />
+            ))}
+          </g>
+          <rect x="0" y="8" width="320" height="92" fill="none" stroke="#0a0810" strokeWidth="6" />
+          {/* piso */}
+          <rect x="0" y="100" width="320" height="40" fill="#0d0b11" />
+          {/* el Rey "público", humillado en su sillón, atrás */}
+          <g fill={NEGRO} opacity="0.6">
+            <rect x="242" y="66" width="46" height="46" rx="8" />
+            <ellipse cx="262" cy="82" rx="9" ry="7" />
+          </g>
+          {/* tú y tu aliado, caminando juntos hacia la salida, ya sobre el piso */}
+          <g fill={NEGRO} stroke={ORO} strokeOpacity="0.3" strokeWidth="1">
+            <circle cx="118" cy="112" r="7" />
+            <path d="M108 121 q10 -5 20 0 l3 17 q-13 4 -26 0 z" />
+            <circle cx="150" cy="114" r="6" />
+            <path d="M142 122 q8 -4 16 0 l3 15 q-11 4 -22 0 z" />
+          </g>
+        </g>
+      );
+
+    // Verdadero, pasaje 3: amanecer sobre el río, el tahúr se va caminando.
     case "fin-amanecer":
       return (
         <g>

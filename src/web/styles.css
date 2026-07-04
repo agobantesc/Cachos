@@ -573,6 +573,12 @@ button { touch-action: manipulation; }
   background: linear-gradient(180deg, rgba(143, 45, 36, 0.16), transparent);
 }
 .hist-final-malo .hist-titulo { color: var(--sangre-viva); text-shadow: 0 2px 18px rgba(178, 58, 46, 0.3); }
+
+/* Los pasajes del epílogo: puntos que se van llenando, uno por cada capítulo del final. */
+.final-beats { display: flex; gap: 7px; margin: 2px 0 4px; }
+.final-beat-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(217, 213, 201, 0.18); transition: background 0.2s ease; }
+.final-beat-dot.activo { background: var(--oro); }
+.hist-final-malo .final-beat-dot.activo { background: var(--sangre-viva); }
 .hist-mesa { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--tenue); margin: 0; }
 .hist-prologo {
   font-style: italic; color: var(--texto); line-height: 1.6; max-width: 26em; margin: 0 0 6px;

@@ -464,6 +464,22 @@ describe("acertijos (candados de cifra)", () => {
     expect(new Set([escenaFinal("estandar"), escenaFinal("malo"), escenaFinal("verdadero")]).size).toBe(3);
   });
 
+  it("cada final trae un epílogo de 3 pasajes, cada uno con su propia estampa", () => {
+    const todasLasEscenas = new Set<string>();
+    for (const tf of ["estandar", "malo", "verdadero"] as TipoFinal[]) {
+      const beats = FINALES[tf].beats;
+      expect(beats.length).toBe(3);
+      for (const b of beats) {
+        expect(b.texto, `${tf} texto`).toBeTruthy();
+        expect(b.escena, `${tf} escena`).toBeTruthy();
+        todasLasEscenas.add(b.escena);
+      }
+      // el pasaje de cierre coincide con escenaFinal (la estampa del Cuaderno).
+      expect(beats[beats.length - 1]!.escena).toBe(escenaFinal(tf));
+    }
+    expect(todasLasEscenas.size).toBe(9); // ninguna estampa se repite entre pasajes
+  });
+
   it("abrir el candado: fallar no castiga, acertar premia una sola vez y el secreto se cierra", () => {
     const h = historiaNueva("Curioso");
     h.escenarioIdx = 1; // La Vega: el candado del Charqui [4,3,3]
