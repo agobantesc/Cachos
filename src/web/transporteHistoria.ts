@@ -214,13 +214,19 @@ export class TransporteHistoria implements Transporte {
         const total = rival.plata + this.apuestaMonto + bono;
         this.botin = { premioBase: rival.plata, apuestaExtra: this.apuestaMonto, bono, desafioCumplido, total };
         this.h.plata += total;
-        // El rival queda vencido en el barrio (la puerta del jefe se va abriendo).
-        if (!this.secretoActivo && !this.h.derrotados.includes(rival.id)) this.h.derrotados.push(rival.id);
+        // El rival queda vencido y PERSISTIDO junto con la plata (también el
+        // Patrón: sin marcador, cerrar la app en esta pantalla permitiría
+        // re-pelearlo y duplicar el botín en cada recarga).
+        if (!this.h.derrotados.includes(rival.id)) this.h.derrotados.push(rival.id);
         this.guardar();
         this.fase = "victoria";
       } else {
         // Al perder, los items usados se recuperan (no se confirmó la baja)…
         // pero la apuesta se la queda la mesa. Perder ahora duele.
+        // El gasto transitorio se limpia aquí mismo: si no, la "bolsa" del
+        // barrio mostraría menos items de los que realmente tienes.
+        this.itemsGastados = { cargado: 0, marcado: 0, soplon: 0 };
+        this.soplonActivo = false;
         this.apuestaPerdida = Math.min(this.apuestaMonto, this.h.plata);
         if (this.apuestaPerdida > 0) {
           this.h.plata -= this.apuestaPerdida;
@@ -257,8 +263,16 @@ export class TransporteHistoria implements Transporte {
       } else {
         const tipo = tipoFinal(this.h);
         if (tipo === "verdadero") {
-          this.secretoActivo = true;
-          this.fase = "reto"; // la ficha del Patrón
+          if (this.h.derrotados.includes(REY_VERDADERO.id)) {
+            // El Patrón ya cayó (la app se cerró en su victoria): final real.
+            this.h.completado = true;
+            this.finalTipo = "verdadero";
+            this.guardar();
+            this.fase = "final";
+          } else {
+            this.secretoActivo = true;
+            this.fase = "reto"; // la ficha del Patrón
+          }
         } else {
           this.h.completado = true;
           this.finalTipo = tipo;

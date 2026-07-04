@@ -441,6 +441,19 @@ describe("exploración del barrio (TransporteHistoria)", () => {
     th2.detener();
   });
 
+  it("si el Patrón ya cayó (app cerrada en su victoria), va directo al final real", () => {
+    const h = historiaNueva("Leyenda");
+    h.escenarioIdx = 5;
+    h.derrotados = [...CAMPANA[5]!.rivales.map((r) => r.id), REY_VERDADERO.id];
+    h.marcas = ["honrado", "aliado", "verdad"];
+    const th = new TransporteHistoria(h);
+    th.historiaEmpezar();
+    const v = th.instantanea().historia!;
+    expect(v.faseHistoria).toBe("final"); // sin re-pelear (ni re-cobrar) al Patrón
+    expect(v.finalTipo).toBe("verdadero");
+    th.detener();
+  });
+
   it("tocar un token vecino (historiaInteractuar) también funciona", () => {
     const th = new TransporteHistoria(historiaNueva("Tap"));
     th.historiaEmpezar();
