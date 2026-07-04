@@ -417,6 +417,30 @@ describe("exploración del barrio (TransporteHistoria)", () => {
     th2.detener();
   });
 
+  it("si el jefe ya cayó (app cerrada en la victoria), el capítulo avanza solo", () => {
+    // Save con TODO el capítulo 1 vencido (incluido el jefe) pero sin avanzar.
+    const h = historiaNueva("Colgado");
+    h.derrotados = CAMPANA[0]!.rivales.map((r) => r.id);
+    const th = new TransporteHistoria(h);
+    th.historiaEmpezar(); // entrar al barrio detecta al jefe caído
+    const v = th.instantanea().historia!;
+    expect(v.faseHistoria).toBe("intro"); // la intro de La Vega, no un barrio vacío
+    expect(v.escenario.idx).toBe(1);
+    th.detener();
+
+    // Lo mismo en el último capítulo: cae directo a la decisión del final.
+    const h2 = historiaNueva("Colgado2");
+    h2.escenarioIdx = 5;
+    h2.derrotados = CAMPANA[5]!.rivales.map((r) => r.id);
+    h2.marcas = ["saqueador", "delator"]; // camino oscuro
+    const th2 = new TransporteHistoria(h2);
+    th2.historiaEmpezar();
+    const v2 = th2.instantanea().historia!;
+    expect(v2.faseHistoria).toBe("final");
+    expect(v2.finalTipo).toBe("malo");
+    th2.detener();
+  });
+
   it("tocar un token vecino (historiaInteractuar) también funciona", () => {
     const th = new TransporteHistoria(historiaNueva("Tap"));
     th.historiaEmpezar();

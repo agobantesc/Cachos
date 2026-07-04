@@ -244,6 +244,31 @@ export class TransporteHistoria implements Transporte {
   /** Entra al barrio actual: carga el mapa y deja al jugador en la entrada. */
   private entrarBarrio() {
     const esc = escenarioActual(this.h);
+    // Si el jefe del barrio ya cayó (p.ej. la app se cerró en la pantalla de
+    // victoria antes de continuar), el capítulo avanza solo: sin esto, el
+    // jugador volvería a un barrio sin rivales — un callejón sin salida.
+    if (this.h.derrotados.includes(bossDe(esc).id)) {
+      this.desmontar();
+      if (this.h.escenarioIdx < CAMPANA.length - 1) {
+        this.h.escenarioIdx += 1;
+        this.h.rivalIdx = 0;
+        this.guardar();
+        this.fase = "intro";
+      } else {
+        const tipo = tipoFinal(this.h);
+        if (tipo === "verdadero") {
+          this.secretoActivo = true;
+          this.fase = "reto"; // la ficha del Patrón
+        } else {
+          this.h.completado = true;
+          this.finalTipo = tipo;
+          this.guardar();
+          this.fase = "final";
+        }
+      }
+      this.emitir();
+      return;
+    }
     this.mapa = mapaDeEscenario(esc.clave);
     if (this.mapa) {
       this.jx = this.mapa.entrada.x;
