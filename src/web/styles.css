@@ -773,14 +773,15 @@ button { touch-action: manipulation; }
 }
 .jugador-tok .tok-av { box-shadow: 0 0 0 2px var(--oro-claro), 0 0 11px rgba(230, 200, 120, 0.55); border-radius: 50%; }
 
-.mapa-msg {
-  position: absolute; top: 6px; left: 50%; transform: translateX(-50%); max-width: 92%;
+/* El aviso del barrio vive BAJO el mapa (dentro tapaba al jefe y la puerta). */
+.explorar-msg {
+  display: inline-block; max-width: 24em;
   background: rgba(18, 15, 21, 0.94); border: 1px solid var(--oro); color: var(--hueso);
-  font-size: 12px; line-height: 1.35; padding: 6px 11px; border-radius: 10px; z-index: 8;
+  font-size: 12px; line-height: 1.35; padding: 6px 11px; border-radius: 10px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
 }
 
-.explorar-cerca { min-height: 1.4em; font-size: 13px; color: var(--texto); }
+.explorar-cerca { min-height: 2.6em; font-size: 13px; color: var(--texto); }
 .explorar-cerca b { color: var(--oro); }
 .ec-tenue { color: var(--tenue); }
 

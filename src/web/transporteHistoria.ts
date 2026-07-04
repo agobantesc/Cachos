@@ -715,7 +715,8 @@ export class TransporteHistoria implements Transporte {
         dialogo,
       },
       mesa: rival.mesa,
-      acompanantes: armarMesa(this.h).acompanantes,
+      // Con el Patrón es un duelo aparte: nada de acompañantes de la campaña.
+      acompanantes: this.secretoActivo ? [] : armarMesa(this.h).acompanantes,
       progresoRival: {
         idx: esc.rivales.filter((r) => this.h.derrotados.includes(r.id)).length,
         total: esc.rivales.length,

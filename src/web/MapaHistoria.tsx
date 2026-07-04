@@ -33,12 +33,19 @@ function Token({ e, onTap }: { e: EntidadVista; onTap: () => void }) {
     (e.tipo === "puerta" ? (e.estado === "abierto" ? " tok--abierta" : " tok--cerrada") : "") +
     (e.estado === "bloqueado" && e.tipo !== "puerta" ? " tok--bloqueado" : "");
   const style = { left: e.x * TILE, top: e.y * TILE, width: TILE, height: TILE };
+  // El estado va en el label: los lectores de pantalla no ven el grisado.
   const label =
-    e.tipo === "rival" ? (e.esBoss ? "Jefe " : "") + (e.rivalNombre ?? "rival") :
-    e.tipo === "tienda" ? "Tienda" :
-    e.tipo === "evento" ? "Algo pasa aquí" :
-    e.tipo === "premio" ? "Botín" :
-    e.tipo === "puerta" ? "Puerta del jefe" : "Letrero";
+    e.tipo === "rival"
+      ? (e.esBoss ? "Jefe " : "") + (e.rivalNombre ?? "rival") + (e.estado === "derrotado" ? " (vencido)" : "")
+      : e.tipo === "tienda"
+        ? "Tienda"
+        : e.tipo === "evento"
+          ? e.estado === "resuelto" ? "Algo pasó aquí (resuelto)" : "Algo pasa aquí"
+          : e.tipo === "premio"
+            ? e.estado === "resuelto" ? "Botín (vacío)" : e.estado === "bloqueado" ? "Botín (cerrado)" : "Botín"
+            : e.tipo === "puerta"
+              ? e.estado === "abierto" ? "Puerta del jefe (abierta)" : "Puerta del jefe (cerrada)"
+              : "Letrero";
 
   return (
     <button className={clase} style={style} onClick={onTap} aria-label={label}>
@@ -149,15 +156,14 @@ export function MapaHistoria({
               <Avatar id="humano" nombre={ex.jugador.nombre} tam={TILE - 4} anillo />
             </span>
           </div>
-
-          {ex.mensaje && (
-            <div className="mapa-msg" role="status">{ex.mensaje}</div>
-          )}
         </div>
       </div>
 
+      {/* El aviso va BAJO el mapa (dentro tapaba al jefe y la puerta). */}
       <div className="explorar-cerca" aria-live="polite">
-        {cerca ? (
+        {ex.mensaje ? (
+          <span className="explorar-msg" role="status">{ex.mensaje}</span>
+        ) : cerca ? (
           <>
             <b>{nombreCerca(cerca)}</b> · {accionDe(cerca)}
           </>
