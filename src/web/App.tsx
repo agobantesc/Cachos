@@ -9,7 +9,7 @@ import { Avatar, fijarCaraJugador, CARA_DEFECTO } from "./Avatar";
 import { invitarWhatsApp, copiarInvitacion, salaDesdeURL, limpiarURLSala } from "./invitacion";
 import { TransporteLocal, type Transporte } from "./transporte";
 import { TransporteHistoria } from "./transporteHistoria";
-import { historiaNueva, escenarioActual } from "./historia";
+import { historiaNueva, escenarioActual, normalizar } from "./historia";
 import { onlineConfigurado, crearTransporteOnline } from "./online";
 import { useInstantanea } from "./util";
 import { leerPrefs, guardarPrefs } from "./prefs";
@@ -313,7 +313,7 @@ function ConfigHistoria({ onListo, volver }: { onListo: (t: Transporte) => void;
       {guardada ? (
         <>
           <div className="hist-continuar">
-            Vas por <b>{escenarioActual(guardada).nombre}</b> · ${guardada.plata.toLocaleString("es-CL")}
+            Vas por <b>{escenarioActual(normalizar(guardada)).nombre}</b> · ${guardada.plata.toLocaleString("es-CL")}
           </div>
           <button className="btn btn--apostar grande" onClick={() => comenzar(guardada)}>
             Continuar tu historia
