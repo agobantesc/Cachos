@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { leerPalmares } from "./palmares";
 import { Mesa } from "./Mesa";
 import { PantallaHistoria } from "./PantallaHistoria";
-import { MapaHistoria } from "./MapaHistoria";
 import { CampoJugador } from "./Personaje";
 import { Emblema, IconoCalavera, IconoWhatsApp, IconoDado, IconoPersonas } from "./Iconos";
 import { Avatar, fijarCaraJugador, CARA_DEFECTO } from "./Avatar";
@@ -52,9 +51,7 @@ function Juego({ transporte, salir }: { transporte: Transporte; salir: () => voi
   // En la campaña, las pantallas de historia (intro, eventos, victoria…)
   // reemplazan a la mesa; mientras se juega la mesa, manda el juego normal.
   let contenido;
-  if (snap.historia && snap.historia.faseHistoria === "explorar") {
-    contenido = <MapaHistoria snap={snap} transporte={transporte} salir={salir} />;
-  } else if (snap.historia && snap.historia.faseHistoria !== "mesa") {
+  if (snap.historia && snap.historia.faseHistoria !== "mesa") {
     contenido = <PantallaHistoria snap={snap} transporte={transporte} salir={salir} />;
   } else if (snap.faseApp === "juego") {
     contenido = <Mesa snap={snap} transporte={transporte} salir={salir} />;

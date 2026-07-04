@@ -204,10 +204,8 @@ export type Evento =
   | { tipo: "dilema" | "pelea"; clave: string; titulo: string; texto: string; opciones: OpcionDilema[] }
   | { tipo: "lectura"; clave: string; titulo: string; texto: string; cartas: CartaLectura[] };
 
-/** Un evento del barrio, quizá condicionado a una MARCA previa (así una
- *  decisión de antes cambia lo que aparece después). En el mapa, cada evento
- *  es un punto con el que te topas caminando; `antesDe` sólo documenta el
- *  orden narrativo pensado. */
+/** Un evento agendado: aparece antes del rival `antesDe`, quizá condicionado a
+ *  una MARCA previa (así una decisión de antes cambia lo que viene después). */
 export interface EventoProgramado {
   antesDe: number;
   evento: Evento;
@@ -658,10 +656,8 @@ function inventarioLimpio(inv: Partial<Inventario> | undefined): Inventario {
 // Estado de la campaña (persistible)
 // ---------------------------------------------------------------------------
 
-/** Versión del formato de la campaña.
- *  v2: La Maestranza se insertó en el índice 2.
- *  v4: exploración del barrio — el avance se guarda por rivales DERROTADOS. */
-export const HISTORIA_VERSION = 4;
+/** Versión del formato de la campaña. v2 insertó La Maestranza en el índice 2. */
+export const HISTORIA_VERSION = 2;
 
 export interface EstadoHistoria {
   nombre: string;
@@ -669,7 +665,6 @@ export interface EstadoHistoria {
   inventario: Inventario;
   plata: number;
   escenarioIdx: number;
-  /** Rival seleccionado (al que estás retando / acabas de enfrentar). */
   rivalIdx: number;
   completado: boolean;
   /** Para mostrar el prólogo sólo una vez. */
@@ -679,11 +674,6 @@ export interface EstadoHistoria {
   /** Marcas de tu pasado (honrado, saqueador, delator, aliado…): condicionan
    *  eventos de consecuencia más adelante. Tus decisiones cambian el rumbo. */
   marcas: string[];
-  /** Ids de rivales ya derrotados (en el barrio los enfrentas en el orden que
-   *  quieras; la puerta del jefe se abre al vencer a todos los parroquianos). */
-  derrotados: string[];
-  /** Botines del mapa ya reclamados (por id de entidad). */
-  premiosReclamados: string[];
   /** Ventaja/desventaja para la PRÓXIMA mesa (de una lectura o pelea). */
   efectoPendiente?: EfectoMesa | null;
   /** Versión del formato (para migrar índices de escenario al crecer la campaña). */
@@ -702,8 +692,6 @@ export function historiaNueva(nombre: string): EstadoHistoria {
     prologoVisto: false,
     dilemasResueltos: [],
     marcas: [],
-    derrotados: [],
-    premiosReclamados: [],
     version: HISTORIA_VERSION,
   };
 }
@@ -720,24 +708,26 @@ export function normalizar(h: EstadoHistoria): EstadoHistoria {
   if (ver < 2 && escenarioIdx >= 2) escenarioIdx += 1;
   escenarioIdx = Math.max(0, Math.min(escenarioIdx, CAMPANA.length - 1));
 
-  // Migración v2/v3 → v4: el avance lineal (rivalIdx) pasa a "rivales
-  // derrotados": los anteriores al puntero quedan vencidos en el mapa.
-  let derrotados = h.derrotados;
-  if (!Array.isArray(derrotados)) {
+  // Migración de bajada (v4 → lineal): la versión con exploración guardaba el
+  // avance como lista de rivales DERROTADOS. Se convierte al puntero lineal:
+  // tantos rivales del capítulo vencidos, tantas mesas ya superadas.
+  let rivalIdx = h.rivalIdx ?? 0;
+  const derrotados = (h as { derrotados?: unknown }).derrotados;
+  if (Array.isArray(derrotados)) {
     const esc = CAMPANA[escenarioIdx]!;
-    const tope = Math.max(0, Math.min(h.rivalIdx ?? 0, esc.rivales.length));
-    derrotados = esc.rivales.slice(0, tope).map((r) => r.id);
+    const vencidos = esc.rivales.filter((r) => (derrotados as string[]).includes(r.id)).length;
+    rivalIdx = vencidos;
   }
+  rivalIdx = Math.max(0, Math.min(rivalIdx, CAMPANA[escenarioIdx]!.rivales.length - 1));
 
   return {
     ...h,
     escenarioIdx,
+    rivalIdx,
     atributos: atributosLimpios(h.atributos),
     inventario: inventarioLimpio(h.inventario),
     dilemasResueltos: Array.isArray(h.dilemasResueltos) ? h.dilemasResueltos : [],
     marcas: Array.isArray(h.marcas) ? h.marcas : [],
-    derrotados,
-    premiosReclamados: Array.isArray(h.premiosReclamados) ? h.premiosReclamados : [],
     version: HISTORIA_VERSION,
   };
 }
@@ -749,35 +739,21 @@ export function rivalActual(h: EstadoHistoria): RivalHistoria {
   const esc = escenarioActual(h);
   return esc.rivales[Math.min(h.rivalIdx, esc.rivales.length - 1)]!;
 }
-/** Ids de los rivales NO-jefe de un escenario (los parroquianos del barrio). */
-export function rivalesNoBoss(esc: Escenario): string[] {
-  return esc.rivales.filter((r) => !r.esBoss).map((r) => r.id);
-}
-/** El jefe del escenario (el último rival). */
-export function bossDe(esc: Escenario): RivalHistoria {
-  return esc.rivales[esc.rivales.length - 1]!;
-}
 
-/** Un evento del barrio, por su clave, si está DISPONIBLE: sin resolver y con
- *  las marcas del jugador a favor (una decisión pasada abre o veta eventos). */
-export function eventoDisponible(h: EstadoHistoria, clave: string): Evento | null {
+/** El evento de calle que toca antes del rival actual (si hay y sin resolver).
+ *  Las MARCAS del jugador pueden abrir o vetar eventos: una decisión pasada
+ *  cambia lo que aparece después. */
+export function eventoActual(h: EstadoHistoria): Evento | null {
   const esc = escenarioActual(h);
   const marcas = h.marcas ?? [];
   for (const e of esc.eventos ?? []) {
-    if (e.evento.clave !== clave) continue;
-    if (h.dilemasResueltos.includes(clave)) return null;
-    if (e.requiere && !marcas.includes(e.requiere)) return null;
-    if (e.vetadoPor && marcas.includes(e.vetadoPor)) return null;
+    if (e.antesDe !== h.rivalIdx) continue;
+    if (h.dilemasResueltos.includes(e.evento.clave)) continue;
+    if (e.requiere && !marcas.includes(e.requiere)) continue;
+    if (e.vetadoPor && marcas.includes(e.vetadoPor)) continue;
     return e.evento;
   }
   return null;
-}
-
-/** Estado visual de un evento en el mapa: activo, ya resuelto, u oculto (su
- *  condición de marca no se cumple: ni siquiera se muestra). */
-export function estadoEvento(h: EstadoHistoria, clave: string): "activo" | "resuelto" | "oculto" {
-  if (h.dilemasResueltos.includes(clave)) return "resuelto";
-  return eventoDisponible(h, clave) ? "activo" : "oculto";
 }
 
 /** Estampa (viñeta) que ilustra cada evento, por su clave. Ver Escena.tsx. */
@@ -934,47 +910,7 @@ export function armarMesaSecreta(nombre: string): {
 // Vista para la UI
 // ---------------------------------------------------------------------------
 
-export type FaseHistoria =
-  | "intro" // narrativa al entrar a un barrio (capítulo)
-  | "explorar" // caminando el barrio (vista cenital)
-  | "reto" // ficha del rival antes de sentarse (apuesta y desafío)
-  | "evento"
-  | "mesa"
-  | "victoria"
-  | "derrota"
-  | "tienda"
-  | "final";
-
-// --- Vista del barrio (exploración cenital tipo RPG) ------------------------
-
-export interface EntidadVista {
-  id: string;
-  tipo: "rival" | "tienda" | "evento" | "puerta" | "letrero" | "premio";
-  x: number;
-  y: number;
-  /** Para rivales: a quién enfrentas. */
-  rivalId?: string;
-  rivalNombre?: string;
-  esBoss?: boolean;
-  /** Estado visual del token. */
-  estado: "activo" | "derrotado" | "bloqueado" | "abierto" | "resuelto";
-  /** Texto corto bajo el token (nombre del rival, etc.). */
-  etiqueta?: string;
-}
-
-export interface ExplorarVista {
-  titulo: string;
-  /** Objetivo del barrio (qué falta para abrir la mesa del jefe). */
-  pista: string;
-  ancho: number;
-  alto: number;
-  /** Grid de muros/piso ('#' y '.'). */
-  filas: string[];
-  jugador: { x: number; y: number; nombre: string };
-  entidades: EntidadVista[];
-  /** Aviso transitorio (puerta cerrada, botín, letrero…). */
-  mensaje: string | null;
-}
+export type FaseHistoria = "intro" | "evento" | "mesa" | "victoria" | "derrota" | "tienda" | "final";
 
 export interface MejoraVista {
   clave: ClaveAtributo;
@@ -1078,14 +1014,10 @@ export interface VistaHistoria {
   finalTipo: TipoFinal | null;
   /** En la victoria del Rey "público", se desbloqueó el jefe secreto. */
   haySecreto: boolean;
-  /** La apuesta de la mesa (en el reto): monto elegido y opciones. */
+  /** La apuesta de la mesa (en la intro): monto elegido y opciones. */
   apuesta: { elegida: number; opciones: number[]; premioBase: number } | null;
-  /** El desafío de la casa de esta mesa (reto, mesa y victoria). */
+  /** El desafío de la casa de esta mesa (intro, mesa y victoria). */
   desafio: { nombre: string; desc: string; bono: number } | null;
-  /** El barrio (vista cenital), cuando estás explorando. */
-  explorar: ExplorarVista | null;
-  /** true durante el duelo contra el jefe secreto (no hay barrio al que volver). */
-  esSecreto: boolean;
   /** Desglose del botín (en victoria): base + apuesta doblada + bono. */
   botin: { premioBase: number; apuestaExtra: number; bono: number; desafioCumplido: boolean | null; total: number } | null;
   /** Plata que se comió la mesa (en derrota, si había apuesta). */

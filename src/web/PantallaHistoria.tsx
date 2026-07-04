@@ -91,7 +91,7 @@ export function PantallaHistoria({
     escenaPrev.current = clave;
     if (t.faseHistoria === "evento") {
       Sonidos.evento();
-    } else if (t.faseHistoria === "reto" && r.esBoss) {
+    } else if (t.faseHistoria === "intro" && r.esBoss) {
       Sonidos.boss();
       vibrar([40, 80, 40]);
     } else if (t.faseHistoria === "final") {
@@ -102,7 +102,7 @@ export function PantallaHistoria({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [t.faseHistoria, t.evento?.titulo, r.id, r.esBoss, t.finalTipo]);
 
-  // --- INTRO: la llegada al barrio (narrativa del capítulo) ---
+  // --- INTRO: el lugar y el rival ---
   if (t.faseHistoria === "intro") {
     return (
       <div className="pantalla historia-pantalla">
@@ -112,26 +112,6 @@ export function PantallaHistoria({
         </span>
         <h1 className="hist-titulo">{t.escenario.nombre}</h1>
         {t.narrativa.intro && <p className="hist-ambiente">{t.narrativa.intro}</p>}
-        <BarraStats t={t} />
-        <Bolsa t={t} />
-        <div className="hist-acciones">
-          <button className="btn btn--apostar grande" onClick={() => transporte.historiaEmpezar?.()}>
-            Entrar al barrio
-          </button>
-          <button className="btn-link" onClick={salir}>
-            Guardar y salir
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // --- RETO: la ficha del rival, la apuesta y el desafío, antes de sentarse ---
-  if (t.faseHistoria === "reto") {
-    return (
-      <div className="pantalla historia-pantalla">
-        <span className="hist-kicker">{t.escenario.nombre}</span>
-        <h1 className="hist-titulo">{r.esBoss ? "La mesa del jefe" : "Te sientas con…"}</h1>
         <FichaRival t={t} />
         <MesaInfo t={t} />
         {t.narrativa.presentacion && <p className="hist-relato">{t.narrativa.presentacion}</p>}
@@ -174,18 +154,12 @@ export function PantallaHistoria({
           </div>
         )}
         <div className="hist-acciones">
-          <button className="btn btn--apostar grande" onClick={() => transporte.historiaSentarse?.()}>
+          <button className="btn btn--apostar grande" onClick={() => transporte.historiaEmpezar?.()}>
             {t.mesa <= 2 ? "Sentarse al duelo" : "Sentarse a la mesa"}
           </button>
-          {t.esSecreto ? (
-            <button className="btn-link" onClick={salir}>
-              Guardar y salir
-            </button>
-          ) : (
-            <button className="btn-link" onClick={() => transporte.historiaContinuar?.()}>
-              Volver al barrio
-            </button>
-          )}
+          <button className="btn-link" onClick={salir}>
+            Guardar y salir
+          </button>
         </div>
       </div>
     );
@@ -225,7 +199,7 @@ export function PantallaHistoria({
         <BarraStats t={t} />
         <div className="hist-acciones">
           <button className="btn btn--apostar grande" onClick={() => transporte.historiaContinuar?.()}>
-            {t.haySecreto ? "Entra a esa pieza sin número" : r.esBoss ? "Seguir bajando al fondo" : "Volver al barrio"}
+            {t.haySecreto ? "Entra a esa pieza sin número" : r.esBoss ? "Seguir bajando al fondo" : "Seguir el camino"}
           </button>
         </div>
       </div>
@@ -250,11 +224,6 @@ export function PantallaHistoria({
           <button className="btn btn--apostar grande" onClick={() => transporte.historiaReintentar?.()}>
             Otra mano (revancha)
           </button>
-          {!t.esSecreto && (
-            <button className="btn-link" onClick={() => transporte.historiaContinuar?.()}>
-              Volver al barrio
-            </button>
-          )}
           <button className="btn-link" onClick={salir}>
             Guardar y salir
           </button>
@@ -296,7 +265,7 @@ export function PantallaHistoria({
             <BarraStats t={t} />
             <div className="hist-acciones">
               <button className="btn btn--apostar grande" onClick={() => transporte.historiaContinuar?.()}>
-                Volver al barrio
+                A la mesa
               </button>
             </div>
           </>
@@ -398,7 +367,7 @@ export function PantallaHistoria({
         </div>
         <div className="hist-acciones">
           <button className="btn btn--apostar grande" onClick={() => transporte.historiaContinuar?.()}>
-            Volver al barrio
+            Seguir el camino
           </button>
         </div>
       </div>
