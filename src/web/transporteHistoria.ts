@@ -26,6 +26,7 @@ import {
   tipoFinal,
   armarMesaSecreta,
   desafioDe,
+  umbralRelampago,
   bonoDesafio,
   opcionesApuesta,
   ATRIBUTOS,
@@ -190,6 +191,14 @@ export class TransporteHistoria implements Transporte {
           !this.suerteUsadaEnMesa &&
           this.itemsGastados.cargado + this.itemsGastados.marcado + this.itemsGastados.soplon === 0
         );
+      case "relampago":
+        return pub.numeroRonda <= umbralRelampago(pub.jugadores.length);
+      case "resucitado":
+        return yo.yaJugoObligado;
+      case "alfilo":
+        return yo.cantidadDados === 1;
+      case "doblete":
+        return yo.stats.calzosAcertados >= 2;
     }
   }
 

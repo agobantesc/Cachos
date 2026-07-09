@@ -9,6 +9,7 @@ import {
   eventoActual,
   tipoFinal,
   desafioDe,
+  umbralRelampago,
   opcionesApuesta,
   REY_VERDADERO,
   FINALES,
@@ -109,16 +110,30 @@ describe("campaña", () => {
     expect(reglasDe("r-mecha").sicilianaDadosPerdidos).toBe(3); // Pólvora
   });
 
-  it("el desafío es determinista y esquiva 'Calzador' donde no se puede calzar", () => {
+  it("el desafío es determinista y esquiva los que la mesa no permite cumplir", () => {
     for (const e of CAMPANA) {
       for (const r of e.rivales) {
         const d = desafioDe(r);
         expect(d).toEqual(desafioDe(r)); // determinista
         if (r.habilidad?.reglas?.calzarPermitido === false) {
-          expect(d.clave).not.toBe("calzador"); // imposible en esa mesa
+          expect(["calzador", "doblete"]).not.toContain(d.clave); // imposible sin calzo
+        }
+        if (r.habilidad?.reglas?.obligadoActivo === false) {
+          expect(d.clave).not.toBe("resucitado"); // sin obligado, nunca se cumple
         }
       }
     }
+  });
+
+  it("hay variedad real de desafíos entre todos los rivales (no siempre los mismos 2)", () => {
+    const claves = new Set(CAMPANA.flatMap((e) => e.rivales.map((r) => desafioDe(r).clave)));
+    expect(claves.size).toBeGreaterThanOrEqual(5); // de los 8 tipos, se ven al menos 5 distintos
+  });
+
+  it("umbralRelampago crece con el tamaño de la mesa (calibrado jugando partidas)", () => {
+    expect(umbralRelampago(2)).toBe(7);
+    expect(umbralRelampago(6)).toBe(27);
+    expect(umbralRelampago(6)).toBeGreaterThan(umbralRelampago(2));
   });
 
   it("opcionesApuesta ofrece nada/mitad/entera/doble hasta donde alcanza la plata", () => {

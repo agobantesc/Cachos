@@ -985,16 +985,22 @@ export function armarMesa(h: EstadoHistoria): {
 
 /** Objetivo opcional de una mesa. Si lo cumples al ganar, la casa paga el bono. */
 export interface Desafio {
-  clave: "impecable" | "calzador" | "sobrado" | "manolimpia";
+  clave: "impecable" | "calzador" | "sobrado" | "manolimpia" | "relampago" | "resucitado" | "alfilo" | "doblete";
   nombre: string;
   desc: string;
+  /** Regla de la casa que este desafío necesita para ser posible (ver ReglasCasa). */
+  requiere?: "calzarPermitido" | "obligadoActivo";
 }
 
 const DESAFIOS: Desafio[] = [
   { clave: "impecable", nombre: "Impecable", desc: "Gana sin perder ni un solo dado." },
-  { clave: "calzador", nombre: "Calzador", desc: "Gana con al menos un calzo acertado." },
+  { clave: "calzador", nombre: "Calzador", desc: "Gana con al menos un calzo acertado.", requiere: "calzarPermitido" },
   { clave: "sobrado", nombre: "Sobrado", desc: "Gana conservando 3 o más dados." },
   { clave: "manolimpia", nombre: "A mano limpia", desc: "Gana sin usar items ni el poder Suerte." },
+  { clave: "relampago", nombre: "Relámpago", desc: "Gana rápido, sin dejar que la mesa se alargue." },
+  { clave: "resucitado", nombre: "Resucitado", desc: "Gana habiendo pasado por el obligado (remontada desde 1 dado).", requiere: "obligadoActivo" },
+  { clave: "alfilo", nombre: "Al filo", desc: "Gana con un solo dado en la mano: te salvaste raspando." },
+  { clave: "doblete", nombre: "Doblete", desc: "Gana con dos calzos acertados o más.", requiere: "calzarPermitido" },
 ];
 
 function hashTexto(s: string): number {
@@ -1004,13 +1010,23 @@ function hashTexto(s: string): number {
 }
 
 /** El desafío de la casa para un rival (determinista por su id). Si la mesa no
- *  permite calzar, "Calzador" sería imposible: cae a "Sobrado". */
+ *  cumple lo que ese desafío necesita (p. ej. no se puede calzar, o no hay
+ *  obligado), se busca el siguiente desafío posible. */
 export function desafioDe(rival: RivalHistoria): Desafio {
-  let d = DESAFIOS[hashTexto(rival.id) % DESAFIOS.length]!;
-  if (d.clave === "calzador" && rival.habilidad?.reglas?.calzarPermitido === false) {
-    d = DESAFIOS.find((x) => x.clave === "sobrado")!;
+  const reglas = rival.habilidad?.reglas ?? {};
+  const posible = (d: Desafio) => !d.requiere || reglas[d.requiere] !== false;
+  const inicio = hashTexto(rival.id) % DESAFIOS.length;
+  for (let i = 0; i < DESAFIOS.length; i++) {
+    const d = DESAFIOS[(inicio + i) % DESAFIOS.length]!;
+    if (posible(d)) return d;
   }
-  return d;
+  return DESAFIOS[0]!; // impecable: siempre posible (red de seguridad)
+}
+
+/** Cuántas rondas cuentan como "rápido" para el desafío Relámpago, según el
+ *  tamaño de la mesa (calibrado jugando partidas: ronda el 25° percentil). */
+export function umbralRelampago(tamMesa: number): number {
+  return 5 * (tamMesa - 1) + 2;
 }
 
 /** Bono que paga el desafío: dobla el premio base del rival. */
