@@ -163,6 +163,56 @@ describe("campaña", () => {
     expect(new Set(huellas).size).toBe(bosses.length);
   });
 
+  it("todos los jefes (y el Patrón) traen una cinemática de entrada de 2 pasajes, cada uno con su estampa", () => {
+    const bosses = [...CAMPANA.map((e) => e.rivales[e.rivales.length - 1]!), REY_VERDADERO];
+    const escenas = new Set<string>();
+    for (const b of bosses) {
+      expect(b.cinematica, `${b.id} cinemática`).toBeTruthy();
+      expect(b.cinematica!.length).toBe(2);
+      for (const beat of b.cinematica!) {
+        expect(beat.escena, `${b.id} escena`).toBeTruthy();
+        expect(beat.texto, `${b.id} texto`).toBeTruthy();
+        escenas.add(beat.escena);
+      }
+    }
+  });
+
+  it("cada capítulo trae un epílogo de 2 pasajes antes del cierre, cada uno con su estampa", () => {
+    for (const e of CAMPANA) {
+      expect(e.epilogoBeats, `${e.clave} epilogoBeats`).toBeTruthy();
+      expect(e.epilogoBeats!.length).toBe(2);
+      for (const beat of e.epilogoBeats!) {
+        expect(beat.escena, `${e.clave} escena`).toBeTruthy();
+        expect(beat.texto, `${e.clave} texto`).toBeTruthy();
+      }
+    }
+  });
+
+  it("la cinemática del jefe se recorre pasaje a pasaje antes de mostrar su presentación", () => {
+    const idxVerdugo = CAMPANA.findIndex((e) => e.clave === "maestranza");
+    const h = historiaNueva("Curioso");
+    h.escenarioIdx = idxVerdugo;
+    h.rivalIdx = CAMPANA[idxVerdugo]!.rivales.length - 1; // El Verdugo
+    const th = new TransporteHistoria(h);
+    let v = th.instantanea().historia!;
+    expect(v.faseHistoria).toBe("intro");
+    expect(v.cinematica).toBeTruthy();
+    expect(v.cinematica!.idx).toBe(0);
+    expect(v.cinematica!.total).toBe(2);
+    expect(v.cinematica!.esUltimo).toBe(false);
+
+    th.historiaContinuar!();
+    v = th.instantanea().historia!;
+    expect(v.cinematica!.idx).toBe(1);
+    expect(v.cinematica!.esUltimo).toBe(true);
+
+    th.historiaContinuar!(); // se acabó la cinemática: no quedan más pasajes
+    v = th.instantanea().historia!;
+    expect(v.cinematica).toBeNull();
+    expect(v.faseHistoria).toBe("intro"); // sigue en la intro, ahora con la ficha normal
+    th.detener();
+  });
+
   it("el desafío es determinista y esquiva los que la mesa no permite cumplir", () => {
     for (const e of CAMPANA) {
       for (const r of e.rivales) {

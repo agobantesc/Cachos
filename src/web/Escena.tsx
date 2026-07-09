@@ -816,6 +816,317 @@ function Escenas({ escena }: { escena: string }) {
         </g>
       );
 
+    // ---- Cinemáticas de entrada de los jefes (segundo pasaje) ----
+
+    // Doña Berta: tras la cortina de humo, tres vasos-trofeo en el borde de la mesa.
+    case "jefe-berta":
+      return (
+        <g>
+          <Suelo />
+          <ellipse cx="160" cy="46" rx="130" ry="50" fill="#8b8678" opacity="0.09" />
+          <ellipse cx="120" cy="60" rx="90" ry="40" fill="#8b8678" opacity="0.07" />
+          <rect x="60" y="104" width="200" height="10" rx="3" fill="#241a12" />
+          <g fill="none" stroke="#e9e3d2" strokeWidth="1.4" strokeOpacity="0.8">
+            <path d="M196 104 v-11 M192 93 h8" />
+            <path d="M212 104 v-11 M208 93 h8" />
+            <path d="M228 104 v-11 M224 93 h8" />
+          </g>
+          <g fill={NEGRO}>
+            <circle cx="130" cy="66" r="10" />
+            <path d="M117 78 q13 -6 26 0 l4 34 q-17 6 -34 0 z" />
+          </g>
+          <path d="M106 96 l8 -3 7 3 -2 8 -6 2 -6 -3 z" fill="#241a12" stroke={ORO} strokeOpacity="0.6" />
+        </g>
+      );
+
+    // El Carnicero: ganchos y reses colgando, cuchillo en mano, mancha de sangre.
+    case "jefe-carnicero":
+      return (
+        <g>
+          <Suelo />
+          <g fill={NEGRO}>
+            <path d="M60 8 v14 M60 22 q-10 4 -8 22 q2 14 8 14 q6 0 8 -14 q2 -18 -8 -22" />
+            <path d="M120 6 v12 M120 18 q-9 4 -7 24 q2 16 7 16 q5 0 7 -16 q2 -20 -7 -24" />
+          </g>
+          <path d="M40 118 q40 -6 80 2 q30 5 10 12 q-46 8 -90 -2 z" fill={SANGRE} opacity="0.45" />
+          <g fill={NEGRO}>
+            <circle cx="190" cy="64" r="10" />
+            <path d="M177 76 q13 -6 26 0 l4 36 q-17 6 -34 0 z" />
+          </g>
+          <path d="M214 82 l18 -10" stroke={NEGRO} strokeWidth="4" strokeLinecap="round" />
+          <path d="M230 71 l10 -6 3 3 -8 8 z" fill="#c8c4bc" stroke={NEGRO} strokeWidth="1" />
+        </g>
+      );
+
+    // El Verdugo: foco único, saco de género sobre la mesa, mole inmóvil.
+    case "jefe-verdugo":
+      return (
+        <g>
+          <Suelo />
+          <line x1="160" y1="0" x2="160" y2="28" stroke={NEGRO} strokeWidth="2.5" />
+          <circle cx="160" cy="36" r="6" fill={ORO} opacity="0.9" />
+          <path d="M160 42 L110 118 L210 118 Z" fill={ORO} opacity="0.1" />
+          <path d="M0 128 h320 M0 134 h320" stroke="#241a12" strokeWidth="2" opacity="0.6" />
+          <path d="M140 96 q20 -14 40 0 q4 14 -4 20 q-16 8 -32 0 q-8 -6 -4 -20 z" fill="#2a2118" stroke="#4a3c22" />
+          <g fill={NEGRO}>
+            <circle cx="160" cy="66" r="12" />
+            <path d="M140 80 q20 -8 40 0 l6 40 q-26 8 -52 0 z" />
+          </g>
+        </g>
+      );
+
+    // El Croata: un tinte helado sobre la trastienda, humo de cigarro perfectamente recto.
+    case "jefe-croata":
+      return (
+        <g>
+          <Suelo />
+          <rect x="0" y="0" width="320" height="140" fill="#0c1622" opacity="0.4" />
+          <ellipse cx="160" cy="112" rx="86" ry="20" fill="#15251a" opacity="0.5" />
+          <g fill={NEGRO}>
+            <circle cx="160" cy="62" r="10" />
+            <path d="M148 74 q12 -6 24 0 l4 38 q-16 6 -32 0 z" />
+          </g>
+          <path d="M178 90 l10 -3" stroke={NEGRO} strokeWidth="3" strokeLinecap="round" />
+          <path d="M189 88 q1 -18 0 -34" stroke="#9fb3c2" strokeWidth="1.4" fill="none" opacity="0.5" />
+          <circle cx="190" cy="87" r="1.6" fill={SANGRE} opacity="0.8" />
+        </g>
+      );
+
+    // El Senador: cortinas de terciopelo, sombrero, el brillo de algo bajo la mesa.
+    case "jefe-senador":
+      return (
+        <g>
+          <Suelo />
+          <path d="M0 0 q10 70 0 140 h40 q-14 -70 0 -140 z" fill="#3a1a2e" opacity="0.7" />
+          <path d="M320 0 q-10 70 0 140 h-40 q14 -70 0 -140 z" fill="#3a1a2e" opacity="0.7" />
+          <g fill={NEGRO}>
+            <path d="M182 52 q-2 -8 18 -8 q20 0 18 8 z" />
+            <ellipse cx="200" cy="53" rx="22" ry="4" />
+            <circle cx="200" cy="66" r="9" />
+            <path d="M188 76 q12 -6 24 0 l4 38 q-16 6 -32 0 z" />
+          </g>
+          <circle cx="205" cy="112" r="2.4" fill={ORO} opacity="0.9" />
+          <path d="M256 140 q0 -20 12 -28 q9 6 7 28 z" fill={NEGRO} opacity="0.8" />
+        </g>
+      );
+
+    // El Rey del Cacho: el ventanal de siempre, sentado con calma de treinta años.
+    case "jefe-rey":
+      return (
+        <g>
+          <rect x="16" y="10" width="288" height="104" fill="#0b1018" />
+          <g fill={ORO} opacity="0.5">
+            {Array.from({ length: 20 }).map((_, i) => (
+              <rect key={i} x={22 + i * 14} y={92 - ((i * 23) % 60)} width="7" height={((i * 23) % 60) + 16} />
+            ))}
+          </g>
+          <rect x="16" y="10" width="288" height="104" fill="none" stroke="#0a0810" strokeWidth="7" />
+          <g fill={NEGRO}>
+            <rect x="130" y="70" width="60" height="44" rx="8" />
+            <circle cx="160" cy="66" r="10" />
+          </g>
+          <path d="M118 96 l9 -3 8 3 -2 9 -6 2 -7 -3 z" fill="#241a12" stroke={ORO} strokeOpacity="0.6" />
+        </g>
+      );
+
+    // El Patrón: mirando desde el umbral hacia la pieza sin ventanas.
+    case "jefe-patron":
+      return (
+        <g>
+          <rect x="0" y="0" width="320" height="140" fill="#050408" />
+          <rect x="90" y="8" width="140" height="124" fill="#0a0810" />
+          <rect x="90" y="8" width="140" height="124" fill="none" stroke="#000000" strokeWidth="8" />
+          <circle cx="160" cy="52" r="4" fill={ORO} opacity="0.85" />
+          <path d="M160 56 L136 110 L184 110 Z" fill={ORO} opacity="0.08" />
+          <g fill={NEGRO} opacity="0.9">
+            <circle cx="160" cy="86" r="8" />
+            <path d="M149 96 q11 -5 22 0 l3 22 q-14 5 -28 0 z" />
+          </g>
+          <rect x="0" y="0" width="20" height="140" fill="#050408" />
+          <rect x="300" y="0" width="20" height="140" fill="#050408" />
+        </g>
+      );
+
+    // ---- Cierre de capítulo: la caída del jefe y su secuela ----
+
+    // La Pocilga cae: el cacho rebota sobre la mesa pegajosa de vino.
+    case "caida-pocilga":
+      return (
+        <g>
+          <Suelo />
+          <rect x="40" y="100" width="240" height="8" rx="3" fill="#241a12" />
+          <path d="M150 76 l9 -8 8 5 -3 10 -8 3 -6 -4 z" fill="#241a12" stroke={ORO} strokeOpacity="0.5" transform="rotate(24 155 82)" />
+          <rect x="120" y="94" width="9" height="9" rx="2" fill="#e9e3d2" transform="rotate(-30 124 98)" />
+          <rect x="176" y="98" width="9" height="9" rx="2" fill="#e9e3d2" transform="rotate(18 180 102)" />
+          <g fill={NEGRO} opacity="0.7">
+            <path d="M30 138 q0 -18 12 -24 q9 5 7 24 z" />
+            <path d="M270 138 q0 -20 13 -26 q10 6 8 26 z" />
+          </g>
+        </g>
+      );
+    // La noticia sale corriendo hacia la noche del puerto.
+    case "secuela-pocilga":
+      return (
+        <g>
+          <rect x="230" y="14" width="70" height="110" fill="#10151f" />
+          <circle cx="278" cy="34" r="7" fill="#e9e3d2" opacity="0.4" />
+          <rect x="222" y="10" width="10" height="118" fill={NEGRO} />
+          <g fill={NEGRO}>
+            <circle cx="200" cy="72" r="7" />
+            <path d="M191 80 q9 -4 18 0 l6 34 q-15 6 -30 0 z" />
+            <path d="M191 84 l-14 10 M209 84 l16 6" stroke={NEGRO} strokeWidth="4" strokeLinecap="round" />
+          </g>
+          <Suelo />
+        </g>
+      );
+
+    // La Vega Chica cae: el cuchillo se le clava en el aserrín.
+    case "caida-vega":
+      return (
+        <g>
+          <Suelo />
+          <rect x="20" y="98" width="90" height="8" fill="#241a12" />
+          <rect x="210" y="98" width="90" height="8" fill="#241a12" />
+          <path d="M158 118 l16 -34 4 2 -12 34 z" fill="#c8c4bc" stroke={NEGRO} strokeWidth="1" transform="rotate(-6 160 100)" />
+          <ellipse cx="160" cy="120" rx="20" ry="4" fill="#000000" opacity="0.3" />
+          <path d="M140 96 q10 -6 22 -2 q4 5 -1 9 q-12 2 -20 -1 q-4 -3 -1 -6 z" fill={PIEL} />
+          <circle cx="150" cy="98" r="2" fill={SANGRE} opacity="0.7" />
+        </g>
+      );
+    // Los puestos del mercado bajan la voz; la noticia baja con ellos.
+    case "secuela-vega":
+      return (
+        <g>
+          <Suelo />
+          <g fill={NEGRO} opacity="0.75">
+            <rect x="16" y="80" width="46" height="50" />
+            <rect x="70" y="86" width="40" height="44" />
+            <rect x="210" y="84" width="42" height="46" />
+            <rect x="258" y="78" width="46" height="52" />
+          </g>
+          <g fill={NEGRO}>
+            <circle cx="130" cy="88" r="6" />
+            <path d="M122 96 q8 -4 16 0 l2 26 q-10 4 -20 0 z" />
+            <circle cx="190" cy="90" r="6" />
+            <path d="M182 98 q8 -4 16 0 l2 24 q-10 4 -20 0 z" />
+          </g>
+        </g>
+      );
+
+    // La Maestranza cae: el cacho gastado rueda entre los rieles.
+    case "caida-maestranza":
+      return (
+        <g>
+          <path d="M0 110 h320 M0 118 h320" stroke="#241a12" strokeWidth="3" />
+          <g stroke="#1a140c" strokeWidth="3">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <line key={i} x1={i * 34} y1="108" x2={i * 34} y2="120" />
+            ))}
+          </g>
+          <path d="M150 96 l8 -3 7 3 -2 8 -6 2 -6 -3 z" fill="#241a12" stroke={ORO} strokeOpacity="0.5" transform="rotate(40 154 100)" />
+          <g fill={ORO}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <circle key={i} cx={210 + i * 8} cy={70 - ((i * 13) % 20)} r="1.4" opacity={0.5 - i * 0.07} />
+            ))}
+          </g>
+        </g>
+      );
+    // Los obreros se corren para abrir un boquerón oscuro entre los rieles.
+    case "secuela-maestranza":
+      return (
+        <g>
+          <Suelo />
+          <path d="M130 30 q30 -10 60 0 v90 h-60 z" fill="#050408" />
+          <g fill={NEGRO} opacity="0.85">
+            <path d="M60 140 q0 -26 16 -34 q12 7 9 34 z" />
+            <path d="M250 140 q0 -28 17 -36 q13 8 9 36 z" />
+          </g>
+        </g>
+      );
+
+    // La Trastienda cae: al Croata se le cae el cigarro por primera vez en diez años.
+    case "caida-trastienda":
+      return (
+        <g>
+          <Suelo />
+          <ellipse cx="160" cy="112" rx="86" ry="20" fill="#15251a" />
+          <ellipse cx="160" cy="108" rx="86" ry="20" fill="#1c3323" />
+          <path d="M150 70 l14 -5" stroke={NEGRO} strokeWidth="3" strokeLinecap="round" transform="rotate(50 155 72)" />
+          <circle cx="150" cy="92" r="1.6" fill={SANGRE} opacity="0.8" />
+          <path d="M148 96 q-2 8 1 14" stroke="#7a7484" strokeWidth="1.4" fill="none" opacity="0.4" />
+          <path d="M170 84 q8 -4 16 0 q2 4 -2 6 q-10 1 -16 -1 q-2 -2 2 -5 z" fill={PIEL} />
+        </g>
+      );
+    // Una puerta que nadie sabía que estaba ahí se abre más adentro.
+    case "secuela-trastienda":
+      return (
+        <g>
+          <Suelo />
+          <rect x="128" y="12" width="64" height="106" fill="#050408" />
+          <rect x="128" y="12" width="64" height="106" fill="none" stroke="#0a0810" strokeWidth="6" />
+          <path d="M192 12 v106" stroke={ORO} strokeOpacity="0.2" strokeWidth="1.4" />
+          <ellipse cx="160" cy="70" rx="50" ry="60" fill="#0c1622" opacity="0.25" />
+        </g>
+      );
+
+    // El Subterráneo cae: al Senador se le desparraman los fajos de un bolsillo roto.
+    case "caida-club":
+      return (
+        <g>
+          <Suelo />
+          <path d="M0 0 q10 70 0 140 h34 q-12 -70 0 -140 z" fill="#3a1a2e" opacity="0.6" />
+          <path d="M320 0 q-10 70 0 140 h-34 q12 -70 0 -140 z" fill="#3a1a2e" opacity="0.6" />
+          <g fill={ORO} opacity="0.85">
+            <rect x="140" y="100" width="16" height="9" rx="1.5" transform="rotate(-12 148 104)" />
+            <rect x="164" y="106" width="16" height="9" rx="1.5" transform="rotate(20 172 110)" />
+            <circle cx="130" cy="112" r="5" />
+            <circle cx="190" cy="108" r="5" />
+          </g>
+        </g>
+      );
+    // La multitud del Subterráneo se corre un paso atrás cuando pasas.
+    case "secuela-club":
+      return (
+        <g>
+          <Suelo />
+          <g fill={NEGRO} opacity="0.8">
+            <path d="M40 140 q0 -22 13 -30 q10 6 8 30 z" />
+            <path d="M92 140 q0 -24 14 -32 q11 7 9 32 z" />
+            <path d="M214 140 q0 -24 14 -32 q11 7 9 32 z" />
+            <path d="M266 140 q0 -22 13 -30 q10 6 8 30 z" />
+          </g>
+          <ellipse cx="160" cy="60" rx="40" ry="50" fill={ORO} opacity="0.05" />
+        </g>
+      );
+
+    // La Cumbre: al Rey le tiemblan las manos por primera vez en treinta años.
+    case "caida-cumbre":
+      return (
+        <g>
+          <rect x="16" y="10" width="288" height="94" fill="#0b1018" />
+          <g fill={ORO} opacity="0.4">
+            {Array.from({ length: 18 }).map((_, i) => (
+              <rect key={i} x={22 + i * 15} y={82 - ((i * 23) % 50)} width="7" height={((i * 23) % 50) + 14} />
+            ))}
+          </g>
+          <rect x="16" y="10" width="288" height="94" fill="none" stroke="#0a0810" strokeWidth="6" />
+          <path d="M148 96 l9 -3 8 3 -2 8 -6 2 -6 -3 z" fill="#241a12" stroke={ORO} strokeOpacity="0.6" />
+          <path d="M146 100 q-2 3 0 6 M172 100 q2 3 0 6" stroke={ORO} strokeOpacity="0.3" strokeWidth="1" fill="none" />
+        </g>
+      );
+    // El silencio que sigue: manos vacías, todo Chile encendido detrás.
+    case "secuela-cumbre":
+      return (
+        <g>
+          <rect x="16" y="10" width="288" height="94" fill="#0b1018" />
+          <rect x="16" y="10" width="288" height="94" fill="none" stroke="#0a0810" strokeWidth="6" />
+          <g fill={PIEL} opacity="0.9">
+            <path d="M140 100 q10 -5 20 -1 q3 5 -2 8 q-11 2 -18 -1 q-3 -3 0 -6 z" />
+          </g>
+          <ellipse cx="160" cy="112" rx="60" ry="10" fill="#000000" opacity="0.2" />
+        </g>
+      );
+
     // Genérico: una silueta bajo un farol, humo de cigarro.
     default:
       return (

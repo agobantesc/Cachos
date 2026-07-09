@@ -79,6 +79,10 @@ export class TransporteHistoria implements Transporte {
   /** Qué final mostrar (en fase "final"), y en qué pasaje del epílogo va. */
   private finalTipo: TipoFinal | null = null;
   private finalBeatIdx = 0;
+  /** Pasaje de la cinemática de entrada del jefe actual (fase "intro"). */
+  private cinematicaIdx = 0;
+  /** Pasaje del epílogo de capítulo, tras vencer al jefe (fase "victoria"). */
+  private epilogoIdx = 0;
   /** El candado del barrio: último fallo y desenlace al abrirlo. */
   private acertijoFallo: string | null = null;
   private acertijoDesenlace: string | null = null;
@@ -127,6 +131,24 @@ export class TransporteHistoria implements Transporte {
     const idx = Math.min(this.finalBeatIdx, beats.length - 1);
     const beat = beats[idx]!;
     return { idx, total: beats.length, escena: beat.escena, texto: beat.texto, esUltimo: idx === beats.length - 1 };
+  }
+
+  /** La cinemática de entrada del jefe (fase "intro"), mientras queden pasajes. */
+  private cinematicaVista(): VistaHistoria["cinematica"] {
+    if (this.fase !== "intro") return null;
+    const beats = this.rivalEnCurso().cinematica ?? [];
+    if (this.cinematicaIdx >= beats.length) return null;
+    const beat = beats[this.cinematicaIdx]!;
+    return { idx: this.cinematicaIdx, total: beats.length, escena: beat.escena, texto: beat.texto, esUltimo: this.cinematicaIdx === beats.length - 1 };
+  }
+
+  /** El epílogo de capítulo (fase "victoria" contra un jefe), mientras queden pasajes. */
+  private epilogoBeatVista(): VistaHistoria["epilogoBeat"] {
+    if (this.fase !== "victoria" || this.secretoActivo || !this.rivalEnCurso().esBoss) return null;
+    const beats = escenarioActual(this.h).epilogoBeats ?? [];
+    if (this.epilogoIdx >= beats.length) return null;
+    const beat = beats[this.epilogoIdx]!;
+    return { idx: this.epilogoIdx, total: beats.length, escena: beat.escena, texto: beat.texto, esUltimo: this.epilogoIdx === beats.length - 1 };
   }
 
   // --- Flujo de la campaña ---------------------------------------------------
@@ -222,6 +244,7 @@ export class TransporteHistoria implements Transporte {
         this.botin = { premioBase: rival.plata, apuestaExtra: this.apuestaMonto, bono, desafioCumplido, total };
         this.h.plata += total;
         this.guardar();
+        this.epilogoIdx = 0;
         this.fase = "victoria";
       } else {
         // Al perder, los items usados se recuperan (no se confirmó la baja)…
@@ -239,7 +262,7 @@ export class TransporteHistoria implements Transporte {
 
   /** Abre el candado del barrio (el secreto), desde la intro. */
   historiaAbrirAcertijo() {
-    if (this.fase !== "intro" || !acertijoPendiente(this.h)) return;
+    if (this.fase !== "intro" || this.cinematicaVista() || !acertijoPendiente(this.h)) return;
     this.acertijoFallo = null;
     this.acertijoDesenlace = null;
     this.fase = "acertijo";
@@ -265,7 +288,7 @@ export class TransporteHistoria implements Transporte {
 
   /** Fija la apuesta de la mesa (sólo en la intro, dentro de las opciones). */
   historiaApostar(monto: number) {
-    if (this.fase !== "intro") return;
+    if (this.fase !== "intro" || this.cinematicaVista()) return;
     const base = this.rivalEnCurso().plata;
     if (!opcionesApuesta(this.h.plata, base).includes(monto)) return;
     this.apuestaMonto = monto;
@@ -274,7 +297,7 @@ export class TransporteHistoria implements Transporte {
 
   /** Empieza el encuentro: si hay un evento de calle pendiente, va primero. */
   historiaEmpezar() {
-    if (this.fase !== "intro") return;
+    if (this.fase !== "intro" || this.cinematicaVista()) return;
     this.h.prologoVisto = true;
     const ev = eventoActual(this.h);
     if (ev) {
@@ -347,6 +370,15 @@ export class TransporteHistoria implements Transporte {
       this.emitir();
       return;
     }
+    if (this.fase === "intro") {
+      // Se recorre la cinemática de entrada del jefe, pasaje a pasaje.
+      const total = this.rivalEnCurso().cinematica?.length ?? 0;
+      if (this.cinematicaIdx < total) {
+        this.cinematicaIdx += 1;
+        this.emitir();
+      }
+      return;
+    }
     if (this.fase === "acertijo") {
       // Abierto o no, de vuelta a la intro del rival (se puede volver a intentar).
       this.fase = "intro";
@@ -359,6 +391,13 @@ export class TransporteHistoria implements Transporte {
       return;
     }
     if (this.fase === "victoria") {
+      // Se recorre el epílogo de capítulo, pasaje a pasaje, antes de avanzar.
+      const totalEpilogo = !this.secretoActivo && this.rivalEnCurso().esBoss ? escenarioActual(this.h).epilogoBeats?.length ?? 0 : 0;
+      if (this.epilogoIdx < totalEpilogo) {
+        this.epilogoIdx += 1;
+        this.emitir();
+        return;
+      }
       // La mesa quedó atrás: la apuesta y el botín se limpian para la próxima.
       this.apuestaMonto = 0;
       this.botin = null;
@@ -380,6 +419,7 @@ export class TransporteHistoria implements Transporte {
             // El giro: aún falta el verdadero Rey. La campaña no termina aquí.
             this.h.completado = false;
             this.secretoActivo = true;
+            this.cinematicaIdx = 0;
             this.desmontar();
             this.fase = "intro"; // intro del jefe secreto (rivalEnCurso = REY_VERDADERO)
           } else {
@@ -389,12 +429,14 @@ export class TransporteHistoria implements Transporte {
             this.fase = "final";
           }
         } else {
+          this.cinematicaIdx = 0;
           this.fase = tienda ? "tienda" : "intro";
           this.desmontar();
         }
         this.guardar();
       }
     } else if (this.fase === "tienda") {
+      this.cinematicaIdx = 0;
       this.fase = "intro";
     }
     this.emitir();
@@ -502,7 +544,7 @@ export class TransporteHistoria implements Transporte {
       intro: enIntro && this.h.rivalIdx === 0 ? esc.intro : null,
       presentacion: enIntro ? rival.presentacion ?? null : null,
       relato: this.fase === "victoria" && !rival.esBoss ? rival.relato ?? null : null,
-      epilogo: haySecreto ? TWIST_VERDADERO : this.fase === "victoria" && rival.esBoss ? esc.epilogo : null,
+      epilogo: haySecreto ? TWIST_VERDADERO : this.fase === "victoria" && !this.secretoActivo && rival.esBoss ? esc.epilogo : null,
     };
 
     const mejoras: MejoraVista[] =
@@ -586,6 +628,8 @@ export class TransporteHistoria implements Transporte {
       marcas: [...this.h.marcas],
       finalTipo: this.fase === "final" ? this.finalTipo : null,
       finalBeat: this.finalBeatVista(),
+      cinematica: this.cinematicaVista(),
+      epilogoBeat: this.epilogoBeatVista(),
       haySecreto,
       apuesta:
         this.fase === "intro"

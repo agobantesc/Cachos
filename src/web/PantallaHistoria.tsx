@@ -148,6 +148,38 @@ export function PantallaHistoria({
 
   // --- INTRO: el lugar y el rival ---
   if (t.faseHistoria === "intro") {
+    // La cinemática de entrada del jefe (si la hay) se recorre antes de la ficha y la mesa.
+    if (t.cinematica) {
+      const c = t.cinematica;
+      return (
+        <div className="pantalla historia-pantalla" style={estiloCapitulo(t.escenario.idx)}>
+          <span className="hist-kicker">
+            {t.escenario.lugar} · Cap. {t.escenario.idx + 1}/{t.escenario.total}
+          </span>
+          <h1 className="hist-titulo">{t.escenario.nombre}</h1>
+          <Escena escena={c.escena} />
+          <p className="hist-ambiente">{c.texto}</p>
+          {c.total > 1 && (
+            <div className="pasaje-dots" aria-label={`Pasaje ${c.idx + 1} de ${c.total}`}>
+              {Array.from({ length: c.total }).map((_, i) => (
+                <span key={i} className={"pasaje-dot" + (i <= c.idx ? " activo" : "")} />
+              ))}
+            </div>
+          )}
+          <div className="hist-acciones">
+            <button
+              className="btn btn--apostar grande"
+              onClick={() => {
+                Sonidos.carta();
+                transporte.historiaContinuar?.();
+              }}
+            >
+              Seguir
+            </button>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="pantalla historia-pantalla" style={estiloCapitulo(t.escenario.idx)}>
         {t.narrativa.prologo && <p className="hist-prologo">{t.narrativa.prologo}</p>}
@@ -218,6 +250,36 @@ export function PantallaHistoria({
 
   // --- VICTORIA ---
   if (t.faseHistoria === "victoria") {
+    // El epílogo del capítulo (si lo hay) se recorre antes de la ficha de victoria.
+    if (t.epilogoBeat) {
+      const b = t.epilogoBeat;
+      return (
+        <div className="pantalla historia-pantalla hist-boss-caido" style={estiloCapitulo(t.escenario.idx)}>
+          <span className="hist-kicker">{t.escenario.nombre}</span>
+          <h1 className="hist-titulo hist-gano">Cayó el jefe</h1>
+          <Escena escena={b.escena} />
+          <p className="hist-ambiente">{b.texto}</p>
+          {b.total > 1 && (
+            <div className="pasaje-dots" aria-label={`Pasaje ${b.idx + 1} de ${b.total}`}>
+              {Array.from({ length: b.total }).map((_, i) => (
+                <span key={i} className={"pasaje-dot" + (i <= b.idx ? " activo" : "")} />
+              ))}
+            </div>
+          )}
+          <div className="hist-acciones">
+            <button
+              className="btn btn--apostar grande"
+              onClick={() => {
+                Sonidos.carta();
+                transporte.historiaContinuar?.();
+              }}
+            >
+              Seguir
+            </button>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className={"pantalla historia-pantalla" + (r.esBoss ? " hist-boss-caido" : "")} style={estiloCapitulo(t.escenario.idx)}>
         <span className="hist-kicker">{t.escenario.nombre}</span>
@@ -479,9 +541,9 @@ export function PantallaHistoria({
       <Escena escena={beat.escena} />
       <p className="hist-ambiente">{beat.texto}</p>
       {beat.total > 1 && (
-        <div className="final-beats" aria-label={`Pasaje ${beat.idx + 1} de ${beat.total}`}>
+        <div className="pasaje-dots" aria-label={`Pasaje ${beat.idx + 1} de ${beat.total}`}>
           {Array.from({ length: beat.total }).map((_, i) => (
-            <span key={i} className={"final-beat-dot" + (i <= beat.idx ? " activo" : "")} />
+            <span key={i} className={"pasaje-dot" + (i <= beat.idx ? " activo" : "")} />
           ))}
         </div>
       )}

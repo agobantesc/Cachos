@@ -18,6 +18,25 @@ function nivelMenos(n: Nivel): Nivel {
   return NIVELES[Math.max(0, NIVELES.indexOf(n) - 1)]!;
 }
 
+/** Un pasaje narrativo: su estampa y su texto. Se usa para los epílogos de
+ *  los finales, las cinemáticas de entrada de los jefes y el cierre de
+ *  capítulo — cualquier momento que se cuenta en varios pasajes. */
+export interface FinalBeat {
+  escena: string;
+  texto: string;
+}
+
+/** Un pasaje EN CURSO, tal como lo ve la UI: su índice, el total de la
+ *  secuencia y si es el último (para cambiar el botón de "Seguir" a lo
+ *  que corresponda cerrar esa pantalla). */
+export interface BeatVista {
+  idx: number;
+  total: number;
+  escena: string;
+  texto: string;
+  esUltimo: boolean;
+}
+
 // ---------------------------------------------------------------------------
 // Habilidades de los bosses (vía reglas / trampa — nunca cachos de más)
 // ---------------------------------------------------------------------------
@@ -115,6 +134,8 @@ export interface RivalHistoria {
   /** Narración del NARRADOR tras vencerlo (puente a lo que viene). Sólo no-boss;
    *  los jefes cierran con el epílogo del escenario. */
   relato?: string;
+  /** Cinemática de entrada (2 pasajes) antes de la ficha y la mesa. Sólo bosses. */
+  cinematica?: FinalBeat[];
 }
 
 // --- Items (consumibles que el jugador junta y usa en la mesa) --------------
@@ -243,6 +264,8 @@ export interface Escenario {
   intro: string;
   /** Narración al caer el boss del escenario (antes de la tienda). */
   epilogo: string;
+  /** Pasajes previos al epílogo (la caída del jefe, antes del texto de cierre). */
+  epilogoBeats?: FinalBeat[];
   /** Eventos de calle (decisiones, peleas, lecturas y consecuencias). */
   eventos?: EventoProgramado[];
   /** Secreto del barrio (candado de cifra), si lo hay. */
@@ -263,6 +286,10 @@ export const CAMPANA: Escenario[] = [
     ambiente: "Olor a pescado podrido y vino caliente.",
     intro: "Aquí parten todos los que sueñan con el cacho… y aquí se quedan casi todos. La mesa está pegajosa de vino y los parroquianos huelen la sangre nueva. Siéntate y demuestra que no eres uno más.",
     epilogo: "La pocilga entera te mira distinto ahora. Doña Berta te sirve un trago de la casa, en silencio. Afuera, dos hombres arrastran un saco pesado hacia el muelle; nadie voltea a mirar. Diste el primer paso fuera del barro… y aquí el barro se traga a la gente entera.",
+    epilogoBeats: [
+      { escena: "caida-pocilga", texto: "El cacho se le escapa de la mano y rebota sobre la madera pegajosa. Por un segundo, nadie en la pocilga respira. Treinta años de reinado se le caen a Doña Berta de encima como un abrigo viejo." },
+      { escena: "secuela-pocilga", texto: "Alguien corre hacia la puerta antes de que termines de recoger tu plata: la noticia ya va calle arriba. En la pocilga del puerto, esta noche, nació algo que todavía no tiene nombre." },
+    ],
     eventos: [
       { antesDe: 0, evento: {
         tipo: "dilema",
@@ -289,6 +316,10 @@ export const CAMPANA: Escenario[] = [
         relato: "La Cabrera se levanta sin reclamar. Antes de irse te suelta tres palabras que valen oro: 'Doña Berta supo.' La dueña de la pocilga ya tiene tu nombre.",
         dialogos: d("Tres en la mesa y dos van a llorar. Adivina cuáles.", "Mierda, el cabro tiene ojo. Anótenlo.", "Vuelve cuando sepas mentir, niño.") },
       { id: "b-berta", nombre: "Doña Berta", nivel: "medio", mesa: 3, esBoss: true, plata: 90, habilidad: SIN_CLEMENCIA,
+        cinematica: [
+          { escena: "cap-muelle", texto: "Tres mesas caíste ganando, y la pocilga entera lo sabe. Los parroquianos se corren para dejarte paso hacia el fondo, donde el humo es más espeso y las apuestas dejan de ser un juego. Ahí, tras la cortina, alguien lleva treinta años sin perder." },
+          { escena: "jefe-berta", texto: "Doña Berta no levanta la vista de su cacho. Frente a ella, tres vasos vacíos alineados en el borde de la mesa: trofeos, no adornos. Cuando por fin te mira, sonríe como quien ya contó tus dientes. 'Siéntate, mijito. Vamos a ver de qué estás hecho.'" },
+        ],
         presentacion: "Al fondo, tras una cortina de humo, la mismísima Doña Berta acomoda su cacho. Treinta años reinando este chiquero. En su mesa no le gana nadie. Nadie.",
         dialogos: d("Soy la dueña de esta pocilga, mijito. Treinta años y nadie me gana en mi mesa.", "Treinta años invicta… y me la ganó este forastero. Anda, sigue subiendo.", "La casa siempre gana, cabrito. Vuelve cuando seas grande.") },
     ],
@@ -300,6 +331,10 @@ export const CAMPANA: Escenario[] = [
     ambiente: "Cajones de fruta, sangre de matadero y plata sucia.",
     intro: "Subiste del puerto a la capital. En La Vega, de noche, la fruta tapa cosas peores y el que duda mal amanece flotando en el Mapocho. Aquí ya se juega por plata de verdad.",
     epilogo: "El Carnicero te da la mano con la suya manchada. 'Hay sangre nueva en Santiago', dice, y por primera vez no suena a amenaza. Suena a respeto.",
+    epilogoBeats: [
+      { escena: "caida-vega", texto: "El cuchillo se le cae de la mano manchada y se clava en el aserrín. El Carnicero, que despresó vacas y ambiciosos por igual durante veinte años, se queda mirando sus propios dedos como si no los reconociera." },
+      { escena: "secuela-vega", texto: "Los vendedores de la Vega bajan la voz, y la noticia baja con ellos, calle abajo, hasta llegar —dicen— a oídos del mismísimo puerto." },
+    ],
     eventos: [
       { antesDe: 0, evento: {
         tipo: "dilema",
@@ -347,6 +382,10 @@ export const CAMPANA: Escenario[] = [
         relato: "El Sapo se va a cantar lo que vio. Y lo que vio fue una paliza. Al fondo del matadero, El Carnicero deja de filetear un segundo para escuchar tu nombre.",
         dialogos: d("Yo le cuento todo al jefe. Y de ti… todavía no tengo nada bueno.", "Ya, ya. Le voy a decir que tenga cuidado contigo.", "El sapo siempre canta primero, cabro.") },
       { id: "b-carnicero", nombre: "El Carnicero", nivel: "avanzado", mesa: 4, esBoss: true, plata: 150, habilidad: SANGRE_FACIL,
+        cinematica: [
+          { escena: "cap-vega", texto: "El Charqui, la Quintrala, Sapo Reyes: todos caen. Y todos, al perder, te mandan al mismo lugar: hacia el fondo del mercado, donde el aire huele a sangre fresca y nadie mira lo que hace El Carnicero con las manos." },
+          { escena: "jefe-carnicero", texto: "El Carnicero no te recibe con palabras. Sigue destazando algo que ya no importa qué es, mientras limpia el filo en su delantal manchado. Cuando termina, recién entonces te mira. 'Así que tú eres el que anda haciendo preguntas raras en mi mercado.'" },
+        ],
         presentacion: "El olor a sangre se hace más fuerte. El Carnicero limpia su cuchillo en el delantal y te corre la silla. 'Despreso vacas y ambiciosos por igual.'",
         dialogos: d("Yo despresa vacas y ambiciosos por igual. En mi mesa, dudar al que abre se paga caro.", "…veinte años que no perdía. Sube nomás, te van a comer más arriba.", "Otro pa'l gancho. Límpienle la sangre a la mesa.") },
     ],
@@ -358,6 +397,10 @@ export const CAMPANA: Escenario[] = [
     ambiente: "Fierro oxidado, aceite quemado y trenes que ya no salen.",
     intro: "Te corriste la voz y te llamaron a la Maestranza: galpones muertos donde se juntan los pesados de verdad, los que ya no le temen a nadie. Acá no hay vino ni fruta que tape nada. Sólo fierro, y la pura mentira al hueso.",
     epilogo: "El Verdugo guarda su cacho en un saco de género y te mira de arriba abajo. 'Pasaste por el fierro y seguís de pie', gruñe. Te señala un boquerón oscuro entre los rieles: el camino sigue para abajo.",
+    epilogoBeats: [
+      { escena: "caida-maestranza", texto: "El cacho gastado de mil ejecuciones rueda entre los rieles y se detiene contra un durmiente oxidado. El Verdugo se queda de pie, inmóvil, como una máquina a la que por fin se le acabó el carbón." },
+      { escena: "secuela-maestranza", texto: "Los fierros dejan de sonar. Uno por uno, los obreros del galpón se corren para abrirte camino hacia un boquerón oscuro entre los rieles: nadie te lo dice, pero todos saben que ahí sigue el descenso." },
+    ],
     eventos: [
       { antesDe: 0, evento: {
         tipo: "dilema",
@@ -395,6 +438,10 @@ export const CAMPANA: Escenario[] = [
         relato: "Mecha aguanta el bufido y, por una vez, no explota. 'Pasa nomás.' Al fondo del galpón, una sombra enorme deja un saco de género sobre la mesa.",
         dialogos: d("Tengo la paciencia justa para una mano. Apúrate o exploto.", "…contuviste la mecha. Pocos lo logran.", "Bum. Te dije que tenía la mecha corta, cabro.") },
       { id: "b-verdugo", nombre: "El Verdugo", nivel: "experto", mesa: 4, esBoss: true, plata: 220, habilidad: SIN_COMODIN,
+        cinematica: [
+          { escena: "cap-maestranza", texto: "El Fundidor, La Trenza, Mecha Corta: todos te avisaron, cada uno a su manera, que El Verdugo no juega — ejecuta. Entre los rieles muertos, el galpón se abre a un espacio más grande, y más oscuro." },
+          { escena: "jefe-verdugo", texto: "Una mole de sombra desata un saco de género sobre la mesa: adentro, un cacho gastado de mil ejecuciones. No dice nada todavía. El fierro, alrededor, tampoco." },
+        ],
         presentacion: "Una mole de hombre desata el saco: adentro, un cacho gastado por mil ejecuciones. 'En mi mesa el as no salva a nadie.' El Verdugo no parpadea.",
         dialogos: d("En mi mesa el as no salva a nadie. Aquí la pinta vale lo que es, igual que la gente.", "Sin comodines me ganaste. Eso… eso es de los grandes. Baja, te están esperando.", "Sin comodines no eres nada, cabro. Como casi todos.") },
     ],
@@ -406,6 +453,10 @@ export const CAMPANA: Escenario[] = [
     ambiente: "Humo de cigarro barato y deudas que se pagan con sangre.",
     intro: "Bajaste por los rieles hasta una trastienda. Un foco amarillo cuelga sobre el paño verde y aquí ya nadie juega por plata: se juega por respeto, y a veces por la vida.",
     epilogo: "El Croata apaga su cigarro en el dorso de su propia mano, sin pestañear. 'Pocos me hacen sudar. El último fue hace diez años; lo sacaron del Mapocho en pedazos.' Te abre la puerta a lo más profundo. Del otro lado, todo es más oscuro.",
+    epilogoBeats: [
+      { escena: "caida-trastienda", texto: "Por primera vez en diez años, al Croata se le cae el cigarro de entre los dedos antes de terminarlo. No dice nada. El hielo, cuando se rompe, no hace ruido: se raja por dentro." },
+      { escena: "secuela-trastienda", texto: "Tras el paño verde, alguien abre una puerta que no sabías que estaba ahí. El aire que sale es más frío que el del Croata, y más oscuro que toda la trastienda junta." },
+    ],
     eventos: [
       { antesDe: 0, evento: {
         tipo: "dilema",
@@ -453,6 +504,10 @@ export const CAMPANA: Escenario[] = [
         relato: "La Viuda te despide con un beso al aire. 'Otro luto para mi colección.' Tras el humo, El Croata apaga su cigarro: llegó tu turno con el hielo.",
         dialogos: d("Enterré a tres maridos jugando al cacho. Siéntate, lindo, hay sitio.", "Me dejas viuda otra vez… de mi invicto. Qué hombre.", "Otro luto más para mi colección, mijito.") },
       { id: "b-croata", nombre: "El Croata", nivel: "brutal", mesa: 2, esBoss: true, plata: 260, habilidad: TEMPANO,
+        cinematica: [
+          { escena: "cap-trastienda", texto: "El Notario, Pituto, la Viuda Alegre: cada uno con su parte del rumor. Hay un hombre al fondo que no suda, no parpadea, no pierde. Bajo el foco amarillo, el paño verde te espera para la última mesa de la trastienda." },
+          { escena: "jefe-croata", texto: "El Croata ya te lleva la cuenta antes de que te sientes: cuántas veces subiste de más, cuántas dudaste tarde. No fuma por vicio — fuma para tener las manos quietas. 'Siéntate', dice, sin levantar la vista. 'Veamos qué tan bien mientes.'" },
+        ],
         presentacion: "El Croata no te mira: te calcula. Frío como témpano, lleva cuenta de cada gesto tuyo. 'Veamos cuál pesa más: tu ojo o mi paciencia.'",
         dialogos: d("Dicen que tienes ojo. Yo tengo paciencia de hielo. Mano a mano: veamos cuál pesa más.", "Frío como soy, esto me hierve la sangre. Buen juego, forastero.", "Tu cara te delató tres manos atrás. Aprende a mentir.") },
     ],
@@ -464,6 +519,10 @@ export const CAMPANA: Escenario[] = [
     ambiente: "Terciopelo gastado y armas bajo la mesa.",
     intro: "Para entrar pagaste con favores; para salir, hay que ganar. Aquí nadie pregunta nombres y todos tienen algo que esconder. Estás en lo profundo, y lo profundo se traga a los ambiciosos.",
     epilogo: "El Senador se va sin pagar, claro, pero todos lo vieron caer. Antes de cruzar la puerta te deja una promesa con voz de terciopelo: 'Esto no te lo perdono ni muerto, cabro.' La noticia, igual, ya va subiendo… hasta la cumbre.",
+    epilogoBeats: [
+      { escena: "caida-club", texto: "Los fajos que el Senador tenía listos para pagar favores se le desparraman de un bolsillo roto. Por un segundo, el hombre que hace las leyes de la mesa se ve exactamente como lo que es: un tramposo más, pillado." },
+      { escena: "secuela-club", texto: "En el Subterráneo nadie aplaude —acá abajo no se aplaude nunca— pero todos, sin excepción, se corren un paso atrás cuando pasas. La noticia ya sube, de boca en boca, hacia la Cumbre." },
+    ],
     eventos: [
       { antesDe: 0, evento: {
         tipo: "dilema",
@@ -532,6 +591,10 @@ export const CAMPANA: Escenario[] = [
         relato: "El Comisario te deja libre 'por esta vez'. Antes de irse, baja la voz: 'El Senador hace trampa y tiene comprado a medio Chile. Arriba ya no hay reglas.'",
         dialogos: d("De día persigo al hampa; de noche le gano la plata. Conozco todos sus trucos.", "Si fueras delincuente, serías el mejor. Lástima que eres honrado.", "Queda detenido… en el último puesto, cabro.") },
       { id: "b-senador", nombre: "El Senador", nivel: "experto", mesa: 4, esBoss: true, plata: 360, habilidad: DADO_CARGADO,
+        cinematica: [
+          { escena: "cap-club", texto: "Madame Ruiz, el Turco Fino, El Comisario: todos, a su manera, te dejaron ver lo mismo. Acá abajo el que manda no se sienta a jugar limpio. Se sienta a cobrar." },
+          { escena: "jefe-senador", texto: "El Senador llega cuando ya nadie lo espera, como llegan los que mandan. No te mira mientras se sienta: mira el cacho, calculando. Bajo la mesa, algo brilla un segundo de más." },
+        ],
         presentacion: "El Senador llega tarde, como los que mandan. Se sienta sin saludar. 'Yo hago las leyes de esta mesa, muchacho. Y la primera es que yo gano.'",
         dialogos: d("Yo hago las leyes de esta mesa, muchacho. Y la primera es que yo gano.", "Esto… esto no se compra. Maldito talento. Te van a estar esperando arriba.", "El poder no se reparte, se quita. Y a ti te lo acabo de quitar.") },
     ],
@@ -543,6 +606,10 @@ export const CAMPANA: Escenario[] = [
     ambiente: "Desde este ventanal se ve todo Chile encendido.",
     intro: "Llegaste desde el último muelle hasta el cielo. Abajo, toda la ciudad. Arriba, nada. Sólo queda un nombre por borrar del mapa, y te está esperando con una sonrisa de treinta años.",
     epilogo: "El Rey deja su cacho sobre el paño con manos que, por primera vez en treinta años, le tiemblan. Afuera, el Mapocho se lleva en silencio a todos los que apostaron antes que tú y perdieron; esta noche, por fin, el río pasa de largo. Subiste desde un saco de pescado podrido hasta el cielo de Santiago, dejando una estela de tahúres caídos, y nadie —nadie— quedó por encima de tu nombre. El cacho, al fin, tiene un dueño nuevo. Duerme con un ojo abierto: el trono se gana una vez, pero se defiende toda la vida.",
+    epilogoBeats: [
+      { escena: "caida-cumbre", texto: "Por primera vez en treinta años, al Rey del Cacho le tiemblan las manos al dejar el cacho sobre el paño. Todo Santiago, encendido tras el ventanal, parece contener la respiración con él." },
+      { escena: "secuela-cumbre", texto: "Nadie en el penthouse dice una palabra. El Rey se queda mirando sus propias manos vacías, como si recién ahora entendiera que treinta años también se acaban." },
+    ],
     eventos: [
       { antesDe: 0, evento: {
         tipo: "dilema",
@@ -585,6 +652,10 @@ export const CAMPANA: Escenario[] = [
         relato: "La Jueza dicta su último veredicto de la noche: 'Culpable… de ser mejor que yo. Pasa.' Se hace un silencio. Tras la última puerta, treinta años de leyenda te esperan.",
         dialogos: d("He condenado a hombres por menos que tu ambición. A ver si me convences.", "Veredicto: culpable… de ser mejor que yo. Pasa.", "Sentencia firme: de vuelta al barro, sin apelación.") },
       { id: "b-rey", nombre: "El Rey del Cacho", nivel: "brutal", mesa: 2, esBoss: true, plata: 1500, habilidad: OJO_HALCON,
+        cinematica: [
+          { escena: "cap-cumbre", texto: "El Heredero, la Jueza: los últimos peldaños antes del trono. Cada mesa que ganaste en esta ciudad, cada capítulo, te trajo hasta este ventanal con todo Chile encendido a tus pies." },
+          { escena: "jefe-rey", texto: "Treinta años sentado en el mismo sillón, contra el mismo ventanal, y ni una vez tuvo que levantarse. El Rey del Cacho no te mira con miedo ni con desprecio: te mira como quien ya ha visto morir a cien iguales a ti." },
+        ],
         presentacion: "Treinta años invicto, sentado contra el ventanal con todo Chile a sus pies. El Rey del Cacho sonríe como quien ya ganó. 'La leyenda termina aquí, mano a mano.'",
         dialogos: d("Subiste desde el barro hasta mi mesa. Eso ya es leyenda. Pero la leyenda termina aquí, mano a mano.", "Treinta años… y un don nadie del puerto me destrona. El cacho es tuyo. Chile es tuyo.", "Yo SOY el cacho, muchacho. Vuelve al barro de donde saliste.") },
     ],
@@ -610,6 +681,10 @@ export const REY_VERDADERO: RivalHistoria = {
   esBoss: true,
   habilidad: LA_BANCA,
   plata: 5000,
+  cinematica: [
+    { escena: "cap-cumbre", texto: "El giro todavía te zumba en los oídos: el Rey de la vitrina era una fachada. Sigues a tu aliado por un pasillo que el penthouse escondía, hasta una puerta sin número, al fondo de todo." },
+    { escena: "jefe-patron", texto: "La puerta se abre a una pieza sin ventanas. No hay aplausos esperándote esta vez, ni ventanal con la ciudad. Sólo una ampolleta, un hombre sin edad, y treinta años de silencio esperando a que alguien cruzara ese umbral." },
+  ],
   presentacion:
     "La pieza no tiene ventanas. Bajo una sola ampolleta, un hombre sin edad baraja un cacho más viejo que Santiago. No te mira: ya sabe cómo termina esto, o eso cree. 'Treinta años esperando a alguien que llegara hasta acá', dice la voz. 'Siéntate. La banca te recibe.'",
   dialogos: d(
@@ -636,12 +711,6 @@ export function tipoFinal(h: EstadoHistoria): TipoFinal {
 /** Giro al caer el Rey "público", cuando se desbloqueó el final verdadero. */
 export const TWIST_VERDADERO =
   "El Rey, en el suelo, se ríe con la boca llena de sangre. '¿Treinta años invicto… yo? Pobre iluso. Yo soy la cara que ponen en la mesa para los que llegan hasta acá. El que de verdad reparte la baraja de todo Chile nunca se sienta donde lo vean.' Al fondo del penthouse se abre una puerta sin número. Tu aliado te aprieta el hombro: 'Esto te quería mostrar. El verdadero Rey del Cacho. Nadie volvió de esa pieza… pero tú no eres nadie.'";
-
-/** Un pasaje del epílogo (fase "final"): su estampa y su texto. */
-export interface FinalBeat {
-  escena: string;
-  texto: string;
-}
 
 /** Epílogos de los tres finales: tres pasajes cada uno, de la caída del Rey al cierre. */
 export const FINALES: Record<TipoFinal, { titulo: string; beats: FinalBeat[] }> = {
@@ -1177,7 +1246,11 @@ export interface VistaHistoria {
   /** Qué final se está mostrando (fase "final"). */
   finalTipo: TipoFinal | null;
   /** Pasaje actual del epílogo del final (fase "final"): se recorre con historiaContinuar. */
-  finalBeat: { idx: number; total: number; escena: string; texto: string; esUltimo: boolean } | null;
+  finalBeat: BeatVista | null;
+  /** Pasaje de la cinemática de entrada del jefe (fase "intro"), mientras queden. */
+  cinematica: BeatVista | null;
+  /** Pasaje del epílogo de capítulo tras vencer al jefe (fase "victoria"), mientras queden. */
+  epilogoBeat: BeatVista | null;
   /** En la victoria del Rey "público", se desbloqueó el jefe secreto. */
   haySecreto: boolean;
   /** La apuesta de la mesa (en la intro): monto elegido y opciones. */
