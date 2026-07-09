@@ -20,13 +20,16 @@ import type { Nivel } from "./bots";
 // aparezca en toda la app.
 fijarCaraJugador(leerPrefs().cara ?? CARA_DEFECTO);
 
-const ETIQUETA_NIVEL: Record<Nivel, string> = {
+// "brutal" no se ofrece acá: es un escalón reservado a jefes puntuales del
+// modo historia (ver bots.ts), no una dificultad para jugar solo.
+type NivelSolo = Exclude<Nivel, "brutal">;
+const ETIQUETA_NIVEL: Record<NivelSolo, string> = {
   facil: "Fácil",
   medio: "Medio",
   avanzado: "Avanzado",
   experto: "Experto",
 };
-const DESC_NIVEL: Record<Nivel, string> = {
+const DESC_NIVEL: Record<NivelSolo, string> = {
   facil: "Juega a cartas vistas: arriesga de más y se deja cazar.",
   medio: "Fundamentos sólidos. Lee las señales de la mesa y apuesta honesto.",
   avanzado: "Calcula fino y empieza a engañar: farolea y disimula su mano.",
@@ -248,7 +251,7 @@ function ConfigSolo({ onListo, volver }: { onListo: (t: Transporte) => void; vol
   const prefs = leerPrefs();
   const [nombre, setNombre] = useState(prefs.nombre ?? "Miembro");
   const [rivales, setRivales] = useState(prefs.rivales ?? 3);
-  const [nivel, setNivel] = useState<Nivel>(prefs.nivel ?? "medio");
+  const [nivel, setNivel] = useState<NivelSolo>(prefs.nivel && prefs.nivel !== "brutal" ? prefs.nivel : "medio");
 
   const empezar = () => {
     desbloquearAudio(); // habilita el audio dentro del gesto del usuario
@@ -274,7 +277,7 @@ function ConfigSolo({ onListo, volver }: { onListo: (t: Transporte) => void; vol
 
       <div className="campo-label">Dificultad</div>
       <div className="segmento">
-        {(Object.keys(ETIQUETA_NIVEL) as Nivel[]).map((n) => (
+        {(Object.keys(ETIQUETA_NIVEL) as NivelSolo[]).map((n) => (
           <button key={n} className={"seg-btn" + (nivel === n ? " sel" : "")} onClick={() => setNivel(n)}>
             {ETIQUETA_NIVEL[n]}
           </button>

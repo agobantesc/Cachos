@@ -156,8 +156,9 @@ export class TransporteLocal implements Transporte {
   }
 
   /** Modo historia: "dado cargado" — re-tira la mano buscando la más concentrada
-   *  (un mismo número repetido), para que el boss tramposo juegue con ventaja. */
-  cargarMano(jugadorId: string): boolean {
+   *  (un mismo número repetido), para que el boss tramposo juegue con ventaja.
+   *  `intentos` gradúa qué tan burda es la trampa (más alto = más ventaja). */
+  cargarMano(jugadorId: string, intentos = 8): boolean {
     if (this.estado.fase !== "EN_RONDA") return false;
     const j = this.estado.jugadores.find((x) => x.id === jugadorId);
     if (!j || j.eliminado || j.dados.length === 0) return false;
@@ -173,7 +174,7 @@ export class TransporteLocal implements Transporte {
     };
     let mejor = j.dados;
     let mejorScore = concentracion(mejor);
-    for (let k = 0; k < 8; k++) {
+    for (let k = 0; k < intentos; k++) {
       const tirada = j.dados.map(() => (1 + Math.floor(Math.random() * 6)) as Pinta);
       const s = concentracion(tirada);
       if (s > mejorScore) {

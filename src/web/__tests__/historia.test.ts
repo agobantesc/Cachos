@@ -6,6 +6,7 @@ import {
   historiaNueva,
   normalizar,
   armarMesa,
+  armarMesaSecreta,
   eventoActual,
   tipoFinal,
   desafioDe,
@@ -108,6 +109,58 @@ describe("campaña", () => {
     expect(reglasDe("r-viuda").obligadoActivo).toBe(false); // Sin velorio
     expect(reglasDe("r-quintrala").calzarRecuperaDado).toBe(false); // Calzo seco
     expect(reglasDe("r-mecha").sicilianaDadosPerdidos).toBe(3); // Pólvora
+  });
+
+  it("los jefes tramposos escalan la intensidad de la trampa (más tiradas, más ventaja)", () => {
+    const buscar = (id: string) => {
+      for (let ei = 0; ei < CAMPANA.length; ei++) {
+        const ri = CAMPANA[ei]!.rivales.findIndex((r) => r.id === id);
+        if (ri >= 0) return { ei, ri };
+      }
+      throw new Error("no está " + id);
+    };
+    const mesaDe = (id: string) => {
+      const { ei, ri } = buscar(id);
+      const h = historiaNueva("X");
+      h.escenarioIdx = ei;
+      h.rivalIdx = ri;
+      return armarMesa(h);
+    };
+    const senador = mesaDe("b-senador"); // Dado cargado
+    expect(senador.dadoCargadoId).toBe("b-senador");
+    expect(senador.dadoCargadoIntentos).toBe(8);
+    const rey = mesaDe("b-rey"); // Ojo de halcón: además lee el farol
+    expect(rey.dadoCargadoId).toBe("b-rey");
+    expect(rey.dadoCargadoIntentos).toBeGreaterThan(senador.dadoCargadoIntentos);
+    const patron = armarMesaSecreta("X"); // La banca nunca pierde: el tope
+    expect(patron.dadoCargadoId).toBe("b-patron");
+    expect(patron.dadoCargadoIntentos).toBeGreaterThan(rey.dadoCargadoIntentos);
+    // Un boss SIN esa habilidad no recarga su mano.
+    expect(mesaDe("b-berta").dadoCargadoId).toBeNull();
+  });
+
+  it("Témpano, el Rey y el Patrón juegan 'brutal' (leen el farol); los demás jefes no", () => {
+    const nivelDe = (id: string) => {
+      for (const e of CAMPANA) {
+        const r = e.rivales.find((x) => x.id === id);
+        if (r) return r.nivel;
+      }
+      throw new Error("no está " + id);
+    };
+    expect(nivelDe("b-croata")).toBe("brutal");
+    expect(nivelDe("b-rey")).toBe("brutal");
+    expect(REY_VERDADERO.nivel).toBe("brutal");
+    for (const id of ["b-berta", "b-carnicero", "b-verdugo", "b-senador"]) {
+      expect(nivelDe(id)).not.toBe("brutal");
+    }
+  });
+
+  it("cada jefe de capítulo tiene una identidad mecánica distinta (sin repetir la misma trampa)", () => {
+    const huella = (r: (typeof CAMPANA)[number]["rivales"][number]) =>
+      JSON.stringify({ nivel: r.nivel, reglas: r.habilidad?.reglas ?? null, dadoCargado: r.habilidad?.dadoCargado ?? null });
+    const bosses = CAMPANA.map((e) => e.rivales[e.rivales.length - 1]!);
+    const huellas = bosses.map(huella);
+    expect(new Set(huellas).size).toBe(bosses.length);
   });
 
   it("el desafío es determinista y esquiva los que la mesa no permite cumplir", () => {

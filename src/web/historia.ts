@@ -12,7 +12,7 @@ import { crearReglas, type ReglasCasa } from "../engine";
 
 export const HUMANO_ID = "humano";
 
-const NIVELES: Nivel[] = ["facil", "medio", "avanzado", "experto"];
+const NIVELES: Nivel[] = ["facil", "medio", "avanzado", "experto", "brutal"];
 /** Un escalón más blando (para el relleno de las mesas grandes). */
 function nivelMenos(n: Nivel): Nivel {
   return NIVELES[Math.max(0, NIVELES.indexOf(n) - 1)]!;
@@ -27,8 +27,10 @@ export interface HabilidadBoss {
   desc: string;
   /** Reglas de la casa que rigen SU mesa. */
   reglas?: Partial<ReglasCasa>;
-  /** Hace trampa: re-carga su mano cada ronda buscando concentración. */
-  dadoCargado?: boolean;
+  /** Hace trampa: re-carga su mano cada ronda buscando concentración. El
+   *  número es cuántas tiradas prueba antes de quedarse con la mejor (más
+   *  alto = trampa más burda y más ventaja). */
+  dadoCargado?: number;
 }
 
 const SIN_CLEMENCIA: HabilidadBoss = {
@@ -48,17 +50,17 @@ const SIN_COMODIN: HabilidadBoss = {
 };
 const TEMPANO: HabilidadBoss = {
   nombre: "Témpano",
-  desc: "Frío como el hielo: te lee los faroles antes de que termines de mentir.",
+  desc: "Frío como el hielo: te lee los faroles antes de que termines de mentir. No hace trampa; no la necesita.",
 };
 const DADO_CARGADO: HabilidadBoss = {
   nombre: "Dado cargado",
-  desc: "Hace trampa: tiene comprado hasta los dados, y siempre le favorecen.",
-  dadoCargado: true,
+  desc: "Hace trampa: tiene comprado hasta los dados, y casi siempre le favorecen.",
+  dadoCargado: 8,
 };
 const OJO_HALCON: HabilidadBoss = {
   nombre: "Ojo de halcón",
-  desc: "El mejor de Chile en treinta años: juego perfecto y, por si fuera poco, dados cargados.",
-  dadoCargado: true,
+  desc: "El mejor de Chile en treinta años: te lee el farol antes de que lo termines, y por si fuera poco, juega con los dados comprados.",
+  dadoCargado: 10,
 };
 
 // --- Reglas de mesa (mesas comunes con reglas propias — no sólo los jefes) ---
@@ -450,7 +452,7 @@ export const CAMPANA: Escenario[] = [
         presentacion: "La Viuda Alegre enterró a tres maridos en esta misma mesa. Te corre la silla con una sonrisa negra. 'Hay sitio, lindo.'",
         relato: "La Viuda te despide con un beso al aire. 'Otro luto para mi colección.' Tras el humo, El Croata apaga su cigarro: llegó tu turno con el hielo.",
         dialogos: d("Enterré a tres maridos jugando al cacho. Siéntate, lindo, hay sitio.", "Me dejas viuda otra vez… de mi invicto. Qué hombre.", "Otro luto más para mi colección, mijito.") },
-      { id: "b-croata", nombre: "El Croata", nivel: "experto", mesa: 2, esBoss: true, plata: 260, habilidad: TEMPANO,
+      { id: "b-croata", nombre: "El Croata", nivel: "brutal", mesa: 2, esBoss: true, plata: 260, habilidad: TEMPANO,
         presentacion: "El Croata no te mira: te calcula. Frío como témpano, lleva cuenta de cada gesto tuyo. 'Veamos cuál pesa más: tu ojo o mi paciencia.'",
         dialogos: d("Dicen que tienes ojo. Yo tengo paciencia de hielo. Mano a mano: veamos cuál pesa más.", "Frío como soy, esto me hierve la sangre. Buen juego, forastero.", "Tu cara te delató tres manos atrás. Aprende a mentir.") },
     ],
@@ -582,7 +584,7 @@ export const CAMPANA: Escenario[] = [
         presentacion: "La Jueza condenó a hombres por menos que tu ambición. Te mira por encima de sus lentes. 'A ver si me convences, forastero.'",
         relato: "La Jueza dicta su último veredicto de la noche: 'Culpable… de ser mejor que yo. Pasa.' Se hace un silencio. Tras la última puerta, treinta años de leyenda te esperan.",
         dialogos: d("He condenado a hombres por menos que tu ambición. A ver si me convences.", "Veredicto: culpable… de ser mejor que yo. Pasa.", "Sentencia firme: de vuelta al barro, sin apelación.") },
-      { id: "b-rey", nombre: "El Rey del Cacho", nivel: "experto", mesa: 2, esBoss: true, plata: 1500, habilidad: OJO_HALCON,
+      { id: "b-rey", nombre: "El Rey del Cacho", nivel: "brutal", mesa: 2, esBoss: true, plata: 1500, habilidad: OJO_HALCON,
         presentacion: "Treinta años invicto, sentado contra el ventanal con todo Chile a sus pies. El Rey del Cacho sonríe como quien ya ganó. 'La leyenda termina aquí, mano a mano.'",
         dialogos: d("Subiste desde el barro hasta mi mesa. Eso ya es leyenda. Pero la leyenda termina aquí, mano a mano.", "Treinta años… y un don nadie del puerto me destrona. El cacho es tuyo. Chile es tuyo.", "Yo SOY el cacho, muchacho. Vuelve al barro de donde saliste.") },
     ],
@@ -595,15 +597,15 @@ export const CAMPANA: Escenario[] = [
 
 const LA_BANCA: HabilidadBoss = {
   nombre: "La banca nunca pierde",
-  desc: "El verdadero capo: juego perfecto y dados comprados. Treinta años invicto… de verdad esta vez.",
-  dadoCargado: true,
+  desc: "El verdadero capo: te lee entero y juega con los dados comprados a fondo. Treinta años invicto… de verdad esta vez.",
+  dadoCargado: 16,
 };
 
 /** El VERDADERO Rey del Cacho: jefe final secreto del final real. */
 export const REY_VERDADERO: RivalHistoria = {
   id: "b-patron",
   nombre: "El Patrón del Cacho",
-  nivel: "experto",
+  nivel: "brutal",
   mesa: 2,
   esBoss: true,
   habilidad: LA_BANCA,
@@ -951,6 +953,7 @@ export function armarMesa(h: EstadoHistoria): {
   nivelPorJugador: Record<string, Nivel>;
   reglas: ReglasCasa;
   dadoCargadoId: string | null;
+  dadoCargadoIntentos: number;
   acompanantes: string[];
 } {
   const rival = rivalActual(h);
@@ -975,6 +978,7 @@ export function armarMesa(h: EstadoHistoria): {
     nivelPorJugador,
     reglas: crearReglas(rival.habilidad?.reglas ?? {}),
     dadoCargadoId: rival.habilidad?.dadoCargado ? rival.id : null,
+    dadoCargadoIntentos: rival.habilidad?.dadoCargado ?? 8,
     acompanantes,
   };
 }
@@ -1047,6 +1051,7 @@ export function armarMesaSecreta(nombre: string): {
   nivelPorJugador: Record<string, Nivel>;
   reglas: ReglasCasa;
   dadoCargadoId: string | null;
+  dadoCargadoIntentos: number;
 } {
   const r = REY_VERDADERO;
   return {
@@ -1057,6 +1062,7 @@ export function armarMesaSecreta(nombre: string): {
     nivelPorJugador: { [r.id]: r.nivel },
     reglas: crearReglas(r.habilidad?.reglas ?? {}),
     dadoCargadoId: r.habilidad?.dadoCargado ? r.id : null,
+    dadoCargadoIntentos: r.habilidad?.dadoCargado ?? 8,
   };
 }
 

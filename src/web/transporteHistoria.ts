@@ -62,6 +62,7 @@ export class TransporteHistoria implements Transporte {
   private detenido = false;
   private suerteUsos = 0;
   private dadoCargadoId: string | null = null;
+  private dadoCargadoIntentos = 8;
   /** "El dato del soplón": pistas activas por esta partida. */
   private soplonActivo = false;
   /** Items gastados en el encuentro EN CURSO. No se descuentan del inventario
@@ -134,6 +135,7 @@ export class TransporteHistoria implements Transporte {
     const rival = this.rivalEnCurso();
     const mesa = this.secretoActivo ? armarMesaSecreta(this.h.nombre) : armarMesa(this.h);
     this.dadoCargadoId = mesa.dadoCargadoId;
+    this.dadoCargadoIntentos = mesa.dadoCargadoIntentos;
     this.suerteUsos = this.h.atributos.suerte;
     this.soplonActivo = false;
     this.suerteUsadaEnMesa = false;
@@ -170,7 +172,7 @@ export class TransporteHistoria implements Transporte {
 
   /** Boss "dado cargado": recarga su mano al inicio de cada ronda. */
   private aplicarTrampa() {
-    if (this.dadoCargadoId && this.inner) this.inner.cargarMano(this.dadoCargadoId);
+    if (this.dadoCargadoId && this.inner) this.inner.cargarMano(this.dadoCargadoId, this.dadoCargadoIntentos);
   }
 
   /** ¿Se cumplió el desafío de la casa? (se evalúa sobre la mesa ya ganada) */

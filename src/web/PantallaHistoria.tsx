@@ -12,7 +12,7 @@ import type { Instantanea, Transporte } from "./transporte";
 import type { VistaHistoria } from "./historia";
 
 const ETIQUETA_NIVEL: Record<string, string> = {
-  facil: "Novato", medio: "Curtido", avanzado: "Veterano", experto: "Leyenda",
+  facil: "Novato", medio: "Curtido", avanzado: "Veterano", experto: "Leyenda", brutal: "Sin piedad",
 };
 
 // El color de cada barrio: tiñe sutilmente el fondo de las pantallas de la

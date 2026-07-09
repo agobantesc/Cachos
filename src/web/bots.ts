@@ -13,7 +13,7 @@ import {
   type Pinta,
 } from "../engine";
 
-export type Nivel = "facil" | "medio" | "avanzado" | "experto";
+export type Nivel = "facil" | "medio" | "avanzado" | "experto" | "brutal";
 
 export type JugadaBot =
   | { tipo: "DUDAR" }
@@ -55,13 +55,15 @@ interface ParamsNivel {
 // La dificultad es una ESCALA COGNITIVA: cada nivel "ve" más de la mesa que el
 // anterior. Fácil sólo mira su propia mano; medio lee la señal de la apuesta;
 // avanzado suma la sospecha de farol y empieza a engañar; experto además lee el
-// historial de la ronda, oculta su estrategia y castiga los faroles del rival.
+// historial de la ronda, oculta su estrategia y castiga los faroles del rival;
+// brutal —reservado a un puñado de jefes— te lee el farol antes de que
+// termines de mentir y casi no se le nota el propio.
 //   • leer el tablero   -> todos (binomial sobre los dados desconocidos)
 //   • leer la señal      -> creditoApuesta (fácil ~0 ignora; sube con el nivel)
-//   • sospechar faroles  -> descuentoFarol  (0 -> 0.28)
-//   • leer el historial  -> lecturaHistorial (0 -> 0.5)
-//   • ENGAÑAR/ocultarse   -> engana          (0 -> 0.24)
-//   • precisión (menos azar) -> ruido         (0.16 -> 0.02)
+//   • sospechar faroles  -> descuentoFarol  (0 -> 0.55)
+//   • leer el historial  -> lecturaHistorial (0 -> 0.55)
+//   • ENGAÑAR/ocultarse   -> engana          (0 -> 0.14)
+//   • precisión (menos azar) -> ruido         (0.16 -> 0.015)
 const PARAMS: Record<Nivel, ParamsNivel> = {
   // Fácil: juega a cartas vistas. Agresivo y errático (sube de más y se deja
   // cazar); ignora la señal de la apuesta y NO engaña. No se suicida con la
@@ -78,6 +80,12 @@ const PARAMS: Record<Nivel, ParamsNivel> = {
   // de la ronda —caza al que sube de más a cualquier exceso—, calzo fino, y
   // ENGAÑO: oculta su estrategia mezclando subidas creíbles para no dejarse leer.
   experto: { umbralApertura: 0.8, sesgoSubir: 0.04, ruido: 0.02, umbralCalzo: 0.2, pasaConValido: 1, bluffPaso: 0.07, dudaPaso: 0.09, creditoApuesta: 0.8, descuentoFarol: 0.4, lecturaHistorial: 0.38, engana: 0.11 },
+  // Brutal: un escalón que NO se ofrece en "Jugar solo" — reservado a jefes
+  // puntuales del modo historia (Témpano, y quienes además hacen trampa con
+  // los dados). Sospecha del farol y lectura del historial al máximo: te caza
+  // el salto de más y la pinta que ya se repitió en la ronda; y engaña más
+  // que nadie para que no le leas la propia.
+  brutal: { umbralApertura: 0.82, sesgoSubir: 0.03, ruido: 0.015, umbralCalzo: 0.18, pasaConValido: 1, bluffPaso: 0.08, dudaPaso: 0.11, creditoApuesta: 0.82, descuentoFarol: 0.55, lecturaHistorial: 0.52, engana: 0.14 },
 };
 
 const PINTAS: Pinta[] = [2, 3, 4, 5, 6, 1]; // ases al final
