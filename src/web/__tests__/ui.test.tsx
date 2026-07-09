@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { Mesa } from "../Mesa";
 import { App } from "../App";
 import { TransporteLocal } from "../transporte";
+import { crearReglas } from "../../engine";
 
 // Smoke tests del UI: renderizan los componentes con el motor real (sin navegador)
 // para garantizar que el árbol de React se dibuja sin errores y muestra lo esperado.
@@ -46,5 +47,25 @@ describe("Mesa (en juego)", () => {
     const html = renderToStaticMarkup(<Mesa snap={t.instantanea()} transporte={t} salir={() => {}} />);
     expect(html).toContain("Revelación");
     expect(html).toContain("cuenta"); // muestra el conteo por jugador
+  });
+
+  it("la siciliana muestra los dados perdidos de LA MESA, no un número fijo", () => {
+    // Mesa con una regla de casa propia (como un jefe del modo historia): la
+    // siciliana cuesta 3 dados en vez de los 2 por defecto.
+    const t = new TransporteLocal(
+      [
+        { id: "p0", nombre: "Ana" },
+        { id: "p1", nombre: "Beto" },
+        { id: "p2", nombre: "Cata" },
+      ],
+      { reglas: crearReglas({ sicilianaDadosPerdidos: 3 }) },
+    );
+    void t.iniciar();
+    void t.apostar({ cantidad: 2, pinta: 5 }); // primera apuesta de la ronda (el abridor)
+    void t.dudar(); // dudo inmediato al abridor -> siciliana
+    const html = renderToStaticMarkup(<Mesa snap={t.instantanea()} transporte={t} salir={() => {}} />);
+    expect(html).toContain("siciliana");
+    expect(html).toContain("−3 dado"); // la regla de ESTA mesa (3), no el "2" por defecto
+    expect(html).not.toContain("−2 dado");
   });
 });

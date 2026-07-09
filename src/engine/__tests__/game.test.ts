@@ -146,6 +146,22 @@ describe("la siciliana", () => {
     expect(e.ultimaResolucion!.perdedorId).toBe("A"); // 1 < 2 -> no se cumple
   });
 
+  it("una casa con su propia regla (p. ej. un jefe de la historia) puede cobrar más de 2 dados", () => {
+    const casa = crearJuego(
+      ["A", "B", "C"].map((id) => ({ id, nombre: id })),
+      crearReglas({ sicilianaDadosPerdidos: 3 }),
+    );
+    let e = iniciarRonda(casa, { rng: rng0 });
+    setDados(e, "A", [1, 1, 5, 4, 6]);
+    setDados(e, "B", [2, 2, 6, 6, 4]);
+    setDados(e, "C", [2, 3, 4, 6, 6]);
+    e = aplicarAccion(e, { tipo: "APOSTAR", jugadorId: "A", apuesta: { cantidad: 3, pinta: 5 } });
+    e = aplicarAccion(e, { tipo: "DUDAR", jugadorId: "B" });
+    expect(e.ultimaResolucion!.siciliana).toBe(true);
+    expect(e.ultimaResolucion!.dadosPerdidos).toBe(3); // la regla de la casa manda, no el "2" por defecto
+    expect(jugadorPorId(e, "A")!.dados.length).toBe(2);
+  });
+
   it("con SÓLO 2 jugadores se desactiva: el dudo inmediato cuenta los ases como comodín", () => {
     let e = nuevaPartida(); // A, B
     e.abridorRondaId = "A";

@@ -417,7 +417,11 @@ function Revelacion({
       <div className="revelacion-caja">
         <h2>{esPaso ? "Paso dudado" : "Revelación"}</h2>
         <p className="resultado">{texto}</p>
-        {res.siciliana && <p className="siciliana">¡La siciliana! (−2 dados, ases no cuentan)</p>}
+        {res.siciliana && (
+          <p className="siciliana">
+            ¡La siciliana! (−{res.dadosPerdidos} dado{res.dadosPerdidos > 1 ? "s" : ""}, ases no cuentan)
+          </p>
+        )}
         {esPaso && res.pasadorId && (
           <p className="siciliana">{razonPaso(res.dadosRevelados[res.pasadorId] ?? [])}</p>
         )}
