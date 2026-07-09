@@ -5,7 +5,7 @@ import { Avatar } from "./Avatar";
 import { IconoDado, IconoSonido } from "./Iconos";
 import { BarraAcciones } from "./BarraAcciones";
 import { nombrarApuesta, PLURAL_PINTA } from "./util";
-import { Sonidos, sonidoActivado, alternarSonido, vibrar } from "./sonido";
+import { Sonidos, Ambiente, sonidoActivado, alternarSonido, vibrar } from "./sonido";
 import { registrarPartida } from "./palmares";
 import type { Instantanea, Transporte } from "./transporte";
 
@@ -113,6 +113,21 @@ export function Mesa({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p.fase, p.numeroRonda]);
+
+  // Tensión del modo historia: drone grave contra un JEFE, y latido cuando
+  // quedas al filo (último dado, o dos dados / ronda de obligado).
+  useEffect(() => {
+    if (!snap.historia) return;
+    Ambiente.jefe(snap.historia.rival.esBoss);
+    const misDados = p.jugadores.find((j) => j.id === snap.miId)?.cantidadDados ?? 5;
+    const nivel = misDados === 1 ? 2 : misDados === 2 || p.esRondaObligado ? 1 : 0;
+    Ambiente.tension(nivel);
+    return () => {
+      Ambiente.jefe(false);
+      Ambiente.tension(0);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [snap.historia?.rival.id, p.numeroRonda, p.esRondaObligado]);
 
   // Aviso de turno: campanilla cuando te toca a TI, y un golpecito suave cuando
   // juega un rival. Así no te pierdes tu turno —el dolor de jugar acompañado—.
@@ -384,9 +399,14 @@ function Revelacion({
   const cuenta = (caras: Pinta[]) => caras.filter(esMatch).length;
 
   // Redoble + háptica al destaparse los vasos (una vez por revelación).
+  // Si cayó la siciliana, su golpe dramático encima del redoble.
   useEffect(() => {
     Sonidos.revelar();
     vibrar([12, 50, 12]);
+    if (res.siciliana) {
+      Sonidos.siciliana();
+      vibrar([40, 60, 40, 60, 80]);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

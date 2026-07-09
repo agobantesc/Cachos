@@ -6,7 +6,7 @@ import { Dado } from "./Dado";
 import { Escena } from "./Escena";
 import { FINALES, escenaCapitulo } from "./historia";
 import type { Pinta } from "../engine";
-import { Sonidos, vibrar } from "./sonido";
+import { Sonidos, Ambiente, vibrar } from "./sonido";
 import { registrarFinal } from "./palmares";
 import type { Instantanea, Transporte } from "./transporte";
 import type { VistaHistoria } from "./historia";
@@ -145,6 +145,12 @@ export function PantallaHistoria({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [t.faseHistoria, t.evento?.titulo, r.id, r.esBoss, t.finalTipo]);
+
+  // Paisaje sonoro continuo del capítulo (olas, fierro, terciopelo…). Es un
+  // singleton global: sigue sonando durante la mesa y cambia con el capítulo.
+  useEffect(() => {
+    Ambiente.iniciar(escenaCapitulo(t.escenario.idx));
+  }, [t.escenario.idx]);
 
   // --- INTRO: el lugar y el rival ---
   if (t.faseHistoria === "intro") {

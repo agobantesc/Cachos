@@ -13,7 +13,7 @@ import { historiaNueva, escenarioActual, normalizar } from "./historia";
 import { onlineConfigurado, crearTransporteOnline } from "./online";
 import { useInstantanea } from "./util";
 import { leerPrefs, guardarPrefs } from "./prefs";
-import { desbloquearAudio } from "./sonido";
+import { desbloquearAudio, Ambiente } from "./sonido";
 import type { Nivel } from "./bots";
 
 // Carga el rostro guardado del jugador (o la cara estándar limpia) para que
@@ -40,6 +40,7 @@ export function App() {
   const [transporte, setTransporte] = useState<Transporte | null>(null);
   const salir = () => {
     transporte?.detener();
+    Ambiente.detener(); // el paisaje sonoro de la campaña no sigue al salón
     setTransporte(null);
   };
   return (
