@@ -331,7 +331,7 @@ export function Mesa({
             >
               {esTurno && <span className="vaso-turno" aria-hidden="true">juega</span>}
               <div className="vaso-cara">
-                <Avatar id={id} nombre={j.nombre} tam={30} anillo={id === snap.miId} />
+                <Avatar id={id} nombre={j.nombre} tam={38} anillo={id === snap.miId} />
               </div>
               <div className="vaso-nombre">
                 {j.nombre} {id === snap.miId && <span className="yo">(tú)</span>}

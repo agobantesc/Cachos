@@ -18,6 +18,8 @@ export default defineConfig({
       registerType: "autoUpdate",
       injectRegister: "auto",
       includeAssets: ["cacho.svg"],
+      // Precachear también la tipografía embebida (woff2) para el modo offline.
+      workbox: { globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"] },
       manifest: {
         name: "La Asociación de Cachos",
         short_name: "Asociación",

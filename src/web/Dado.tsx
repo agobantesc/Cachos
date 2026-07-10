@@ -3,9 +3,9 @@ import type { Pinta } from "../engine";
 
 // Posición (en un viewBox 0..100) de cada punto posible en la grilla 3x3.
 const POS: ReadonlyArray<readonly [number, number]> = [
-  [26, 26], [50, 26], [74, 26],
-  [26, 50], [50, 50], [74, 50],
-  [26, 74], [50, 74], [74, 74],
+  [27, 27], [50, 27], [73, 27],
+  [27, 50], [50, 50], [73, 50],
+  [27, 73], [50, 73], [73, 73],
 ];
 
 // Qué celdas de la grilla 3x3 lleva encendidas cada cara.
@@ -19,16 +19,18 @@ const PIPS: Record<Pinta, number[]> = {
 };
 
 /**
- * Un dado es UN SVG autocontenido: el cuerpo (rect) y los puntos (circles) van
- * dentro del mismo SVG, con tamaño en píxeles y colores en atributos `fill`.
- * No depende de CSS ni de tamaños en porcentaje —se ve igual en todo navegador
- * (iOS Safari incluido), que era justo donde los puntos desaparecían.
+ * Un dado es UN SVG autocontenido: cuerpo, bisel, brillo y puntos van dentro
+ * del mismo SVG con colores en atributos `fill` — sin defs, gradientes con id
+ * ni CSS, para que se vea idéntico en todo navegador (iOS Safari incluido).
+ * El volumen se simula con capas: canto inferior más oscuro, cara de marfil,
+ * lámina de brillo arriba y pips "grabados" (borde de luz abajo a la derecha).
  */
 export const Dado = memo(function Dado({ cara, tam = 44 }: { cara: Pinta; tam?: number }) {
   const esAs = cara === 1;
-  const fondo = esAs ? "#fbf3d6" : "#e9e3d2";
-  const borde = esAs ? "#c8a24a" : "rgba(0,0,0,0.12)";
-  const punto = esAs ? "#b23a2e" : "#15110a";
+  const fondo = esAs ? "#fbf3d6" : "#ece6d5";
+  const canto = esAs ? "#c9b06a" : "#b8b099";
+  const borde = esAs ? "#c8a24a" : "rgba(60, 50, 30, 0.35)";
+  const punto = esAs ? "#b23a2e" : "#221c12";
   return (
     <svg
       className="dado"
@@ -38,9 +40,22 @@ export const Dado = memo(function Dado({ cara, tam = 44 }: { cara: Pinta; tam?: 
       role="img"
       aria-label={`dado ${cara}`}
     >
-      <rect x="3" y="3" width="94" height="94" rx="20" fill={fondo} stroke={borde} strokeWidth={esAs ? 3 : 2} />
+      {/* canto inferior (le da grosor al dado) */}
+      <rect x="4" y="8" width="92" height="89" rx="19" fill={canto} />
+      {/* cara */}
+      <rect x="4" y="3" width="92" height="90" rx="19" fill={fondo} stroke={borde} strokeWidth={esAs ? 3 : 2} />
+      {/* lámina de brillo superior */}
+      <rect x="10" y="8" width="80" height="24" rx="12" fill="#ffffff" opacity="0.3" />
+      {/* sombra interior del borde inferior de la cara */}
+      <rect x="10" y="74" width="80" height="13" rx="7" fill="#000000" opacity="0.05" />
       {PIPS[cara].map((i) => (
-        <circle key={i} cx={POS[i]![0]} cy={POS[i]![1]} r={9.5} fill={punto} />
+        <g key={i}>
+          {/* borde de luz: el pip se ve grabado en el marfil */}
+          <circle cx={POS[i]![0] + 1.3} cy={POS[i]![1] + 1.5} r={9.6} fill="#ffffff" opacity="0.5" />
+          <circle cx={POS[i]![0]} cy={POS[i]![1]} r={9.4} fill={punto} />
+          {/* chispa de luz dentro del pip */}
+          <circle cx={POS[i]![0] - 3} cy={POS[i]![1] - 3.2} r={2.2} fill="#ffffff" opacity={esAs ? 0.35 : 0.18} />
+        </g>
       ))}
     </svg>
   );
@@ -50,7 +65,10 @@ export const Dado = memo(function Dado({ cara, tam = 44 }: { cara: Pinta; tam?: 
 export function DadoOculto({ tam = 28 }: { tam?: number }) {
   return (
     <svg className="dado" width={tam} height={tam} viewBox="0 0 100 100" aria-hidden="true">
-      <rect x="3" y="3" width="94" height="94" rx="20" fill="#1d1f27" stroke="rgba(200,162,74,0.25)" strokeWidth="2" />
+      <rect x="4" y="8" width="92" height="89" rx="19" fill="#0e0f14" />
+      <rect x="4" y="3" width="92" height="90" rx="19" fill="#1d1f27" stroke="rgba(200,162,74,0.3)" strokeWidth="2" />
+      <rect x="10" y="8" width="80" height="22" rx="11" fill="#ffffff" opacity="0.05" />
+      <circle cx="50" cy="50" r="7" fill="none" stroke="rgba(200,162,74,0.35)" strokeWidth="2.5" />
     </svg>
   );
 }
