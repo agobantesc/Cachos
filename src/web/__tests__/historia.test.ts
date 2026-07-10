@@ -19,6 +19,11 @@ import {
   escenaCapitulo,
   escenaFinal,
   ecosDelCamino,
+  OFICIOS,
+  costoMejora,
+  costoItem,
+  bonoDesafio,
+  umbralMaraton,
   type EstadoHistoria,
   type TipoFinal,
 } from "../historia";
@@ -110,6 +115,25 @@ describe("campaña", () => {
     expect(reglasDe("r-viuda").obligadoActivo).toBe(false); // Sin velorio
     expect(reglasDe("r-quintrala").calzarRecuperaDado).toBe(false); // Calzo seco
     expect(reglasDe("r-mecha").sicilianaDadosPerdidos).toBe(3); // Pólvora
+    expect(reglasDe("r-cabrera").calzarSoloConMitadDeDados).toBe(false); // Calzo libre
+    expect(reglasDe("r-notario").sicilianaActiva).toBe(false); // Letra chica
+    expect(reglasDe("r-madame").obligadoCerradoParaOtros).toBe(false); // Cartas sobre la mesa
+    expect(reglasDe("r-turco").obligadoAsesNoComodin).toBe(false); // Cortesía de la casa
+  });
+
+  it("Sapo Reyes juega soplado: trampa suave de dado cargado (5 tiradas)", () => {
+    const h = historiaNueva("X");
+    h.escenarioIdx = 1;
+    h.rivalIdx = 2; // Sapo Reyes
+    const mesa = armarMesa(h);
+    expect(mesa.dadoCargadoId).toBe("r-sapo");
+    expect(mesa.dadoCargadoIntentos).toBe(5);
+  });
+
+  it("la mayoría de las mesas tiene su propia regla o trampa (variedad de casas)", () => {
+    const rivales = CAMPANA.flatMap((e) => e.rivales);
+    const conHabilidad = rivales.filter((r) => r.habilidad).length;
+    expect(conHabilidad).toBeGreaterThanOrEqual(16); // de 23 rivales
   });
 
   it("los jefes tramposos escalan la intensidad de la trampa (más tiradas, más ventaja)", () => {
@@ -223,6 +247,56 @@ describe("campaña", () => {
     expect(ecos.length).toBe(2);
     for (const linea of ecos) expect(linea.length).toBeGreaterThan(10);
     expect(ecosDelCamino([])).toEqual([]);
+  });
+
+  it("los OFICIOS: 5 estilos, cada uno con su bono de partida", () => {
+    expect(OFICIOS.length).toBe(5);
+    expect(new Set(OFICIOS.map((o) => o.id)).size).toBe(5);
+    for (const o of OFICIOS) {
+      expect(o.nombre).toBeTruthy();
+      expect(o.glifo).toBeTruthy();
+      expect(o.desc).toBeTruthy();
+    }
+    // Atributo de partida
+    expect(historiaNueva("X", 0, "relojero").atributos.ojo).toBe(1);
+    expect(historiaNueva("X", 0, "charlatan").atributos.colmillo).toBe(1);
+    expect(historiaNueva("X", 0, "cabalista").atributos.suerte).toBe(1);
+    // Items y plata
+    const contra = historiaNueva("X", 0, "contrabandista");
+    expect(contra.inventario).toEqual({ cargado: 1, marcado: 1, soplon: 1 });
+    expect(historiaNueva("X", 0, "buenacuna").plata).toBe(250);
+    // Sin oficio: todo en cero, como siempre
+    const plano = historiaNueva("X");
+    expect(plano.atributos).toEqual({ ojo: 0, colmillo: 0, suerte: 0 });
+    expect(plano.plata).toBe(0);
+    // La leyenda y el oficio se suman (colchón de fama + apellido)
+    expect(historiaNueva("X", 2, "buenacuna").plata).toBe(450);
+  });
+
+  it("el oficio abarata lo suyo: mejoras un 25% menos, items un 20% menos, desafíos +25%", () => {
+    // El Relojero: el Ojo cuesta 60 -> 45; los demás atributos, precio normal.
+    expect(costoMejora("ojo", 0)).toBe(60);
+    expect(costoMejora("ojo", 0, "relojero")).toBe(45);
+    expect(costoMejora("colmillo", 0, "relojero")).toBe(80);
+    expect(costoMejora("suerte", 0, "cabalista")).toBe(Math.round(50 * 0.75));
+    // El Contrabandista: items al 80%.
+    expect(costoItem("soplon")).toBeGreaterThan(costoItem("soplon", "contrabandista"));
+    expect(costoItem("cargado", "relojero")).toBe(costoItem("cargado"));
+    // De Buena Cuna: el bono del desafío paga +25%.
+    const rival = CAMPANA[0]!.rivales[0]!;
+    expect(bonoDesafio(rival, "buenacuna")).toBe(Math.round(rival.plata * 1.25));
+    expect(bonoDesafio(rival)).toBe(rival.plata);
+  });
+
+  it("los desafíos nuevos entran a la rotación y el umbral Maratón crece con la mesa", () => {
+    const claves = new Set<string>();
+    for (let i = 0; i < 400; i++) {
+      claves.add(desafioDe({ ...CAMPANA[0]!.rivales[0]!, id: "fake-" + i }).clave);
+    }
+    for (const c of ["temerario", "maraton", "cabalero"]) expect(claves.has(c), c).toBe(true);
+    expect(umbralMaraton(2)).toBe(9);
+    expect(umbralMaraton(6)).toBe(29);
+    expect(umbralMaraton(6)).toBeGreaterThan(umbralRelampago(6));
   });
 
   it("Nueva Partida+ (Leyenda): endurece a todos los rivales un escalón y parte con un colchón", () => {

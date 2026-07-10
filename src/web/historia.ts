@@ -112,6 +112,31 @@ const SIN_ATENUANTES: HabilidadBoss = {
   desc: "En su tribunal el as no es comodín: cada pinta responde por sí sola.",
   reglas: { asComodin: false },
 };
+const CALZO_LIBRE: HabilidadBoss = {
+  nombre: "Calzo libre",
+  desc: "En su mesa se puede calzar desde la primera mano, sin esperar a que se vacíe.",
+  reglas: { calzarSoloConMitadDeDados: false },
+};
+const LETRA_CHICA: HabilidadBoss = {
+  nombre: "Letra chica",
+  desc: "Nada de sicilianas: toda duda cuesta un dado, como manda el contrato.",
+  reglas: { sicilianaActiva: false },
+};
+const CARTAS_VISTAS: HabilidadBoss = {
+  nombre: "Cartas sobre la mesa",
+  desc: "El obligado se juega abierto: todos ven todos los dados. Aquí nadie se esconde.",
+  reglas: { obligadoCerradoParaOtros: false },
+};
+const CORTESIA: HabilidadBoss = {
+  nombre: "Cortesía de la casa",
+  desc: "Hasta en el obligado el as sigue de comodín. Elegancia ante todo.",
+  reglas: { obligadoAsesNoComodin: false },
+};
+const SOPLADO: HabilidadBoss = {
+  nombre: "Soplado",
+  desc: "Dicen que le soplan los dados: su mano llega demasiado buena, demasiado seguido.",
+  dadoCargado: 5,
+};
 
 // ---------------------------------------------------------------------------
 // Rivales y escenarios
@@ -329,7 +354,7 @@ export const CAMPANA: Escenario[] = [
         presentacion: "Un tipo curtido despeja la mesa de un manotazo. 'Tú y yo, sin público.' Roto Manríquez no pierde mano a mano desde que tiene memoria.",
         relato: "Roto se toma el resto de su trago de un sorbo y no dice nada. Dos seguidas. La pocilga empieza a mirarte como se mira a un problema.",
         dialogos: d("Tú y yo, mano a mano. Sin testigos.", "No puede ser… me ganó un pendejo.", "Otra cañita pa' celebrar tu paliza.") },
-      { id: "r-cabrera", nombre: "La Cabrera", nivel: "medio", mesa: 3, esBoss: false, plata: 34,
+      { id: "r-cabrera", nombre: "La Cabrera", nivel: "medio", mesa: 3, esBoss: false, plata: 34, habilidad: CALZO_LIBRE,
         presentacion: "La Cabrera te clava los ojos desde el fondo. Dicen que huele la mentira antes de que la digas, y que nunca, nunca, paga de más.",
         relato: "La Cabrera se levanta sin reclamar. Antes de irse te suelta tres palabras que valen oro: 'Doña Berta supo.' La dueña de la pocilga ya tiene tu nombre.",
         dialogos: d("Tres en la mesa y dos van a llorar. Adivina cuáles.", "Mierda, el cabro tiene ojo. Anótenlo.", "Vuelve cuando sepas mentir, niño.") },
@@ -407,7 +432,7 @@ export const CAMPANA: Escenario[] = [
         presentacion: "La Quintrala te sienta a su lado con una sonrisa que corta. Mano a mano. Lindo cachito el tuyo… sería una pena perderlo con ella.",
         relato: "La Quintrala recoge sus anillos y se va sin mirar atrás. Te queda su perfume y una certeza: en La Vega, los que sonríen son los que más muerden.",
         dialogos: d("Lindo cachito… sería una pena que lo perdieras conmigo.", "Maldito seas. Nadie me lee la mano así.", "Te lo dije, lindo. Esto era mío.") },
-      { id: "r-sapo", nombre: "Sapo Reyes", nivel: "avanzado", mesa: 4, esBoss: false, plata: 48,
+      { id: "r-sapo", nombre: "Sapo Reyes", nivel: "avanzado", mesa: 4, esBoss: false, plata: 48, habilidad: SOPLADO,
         presentacion: "Sapo Reyes le cuenta todo al jefe. Hoy te toca a ti ser su informe. 'De ti todavía no tengo nada bueno', dice, afilando el lápiz.",
         relato: "El Sapo se va a cantar lo que vio. Y lo que vio fue una paliza. Al fondo del matadero, El Carnicero deja de filetear un segundo para escuchar tu nombre.",
         dialogos: d("Yo le cuento todo al jefe. Y de ti… todavía no tengo nada bueno.", "Ya, ya. Le voy a decir que tenga cuidado contigo.", "El sapo siempre canta primero, cabro.") },
@@ -535,7 +560,7 @@ export const CAMPANA: Escenario[] = [
       premio: { plata: 250 },
     },
     rivales: [
-      { id: "r-notario", nombre: "El Notario", nivel: "avanzado", mesa: 3, esBoss: false, plata: 70,
+      { id: "r-notario", nombre: "El Notario", nivel: "avanzado", mesa: 3, esBoss: false, plata: 70, habilidad: LETRA_CHICA,
         presentacion: "Bajo el foco amarillo, El Notario anota cada jugada en una libreta grasienta. 'Todo queda registrado, joven. Hasta su derrota de hoy.'",
         relato: "El Notario cierra su libreta. 'Que conste en acta', suspira. Tu nombre ya está escrito en la trastienda, y de ahí no se borra fácil.",
         dialogos: d("Todo queda registrado, joven. Hasta su derrota de hoy.", "Objeto… objeto, pero perdí. Que conste en acta.", "Caso cerrado. El siguiente.") },
@@ -624,11 +649,11 @@ export const CAMPANA: Escenario[] = [
       premio: { item: "cargado", plata: 150 },
     },
     rivales: [
-      { id: "r-madame", nombre: "Madame Ruiz", nivel: "experto", mesa: 6, esBoss: false, plata: 90,
+      { id: "r-madame", nombre: "Madame Ruiz", nivel: "experto", mesa: 6, esBoss: false, plata: 90, habilidad: CARTAS_VISTAS,
         presentacion: "Terciopelo gastado y seis sillas. Madame Ruiz preside lo profundo con anillos que valen más que toda la mesa. 'Pocos llegan tan abajo, querido.'",
         relato: "Madame Ruiz aplaude bajito, encantada. 'Tienes hambre de verdad', ronronea. 'Eso aquí se huele… y atrae a las fieras grandes.'",
         dialogos: d("Seis a la mesa, querido. Bienvenido a lo profundo: pocos llegan tan abajo.", "Tienes hambre de verdad. Me agrada… y me asusta.", "Lo profundo se traga a los ambiciosos, mi amor.") },
-      { id: "r-turco", nombre: "El Turco Fino", nivel: "experto", mesa: 3, esBoss: false, plata: 105,
+      { id: "r-turco", nombre: "El Turco Fino", nivel: "experto", mesa: 3, esBoss: false, plata: 105, habilidad: CORTESIA,
         presentacion: "El Turco Fino no se quita el traje ni los cachos. Elegancia hasta para robarte. 'Las dos cosas que nunca suelto.'",
         relato: "El Turco se sacude una arruga invisible. 'Me ganaste limpio, cabro.' Viniendo de un tramposo de seda, es casi un honor.",
         dialogos: d("Traje y cachos: las dos cosas que nunca me quito.", "Me arrugaste el traje, desgraciado. Bien jugado.", "Elegancia, cabro. Eso es lo que te falta.") },
@@ -878,9 +903,12 @@ export const ATRIBUTOS: {
   { clave: "suerte", nombre: "Suerte", desc: "Re-tira TU mano completa, una vez por partida (por nivel).", max: 3, costos: [50, 110, 190] },
 ];
 
-export function costoMejora(clave: ClaveAtributo, nivelActual: number): number {
+export function costoMejora(clave: ClaveAtributo, nivelActual: number, oficio?: OficioId): number {
   const a = ATRIBUTOS.find((x) => x.clave === clave)!;
-  return a.costos[nivelActual] ?? Infinity;
+  const base = a.costos[nivelActual];
+  if (base === undefined) return Infinity;
+  // El oficio abarata SU atributo un 25% (el gremio cuida a los suyos).
+  return oficio && OFICIO_ATRIBUTO[oficio] === clave ? Math.round(base * 0.75) : base;
 }
 
 function atributosLimpios(a: Partial<AtributosJugador> | undefined): AtributosJugador {
@@ -889,6 +917,43 @@ function atributosLimpios(a: Partial<AtributosJugador> | undefined): AtributosJu
 
 function inventarioLimpio(inv: Partial<Inventario> | undefined): Inventario {
   return { cargado: inv?.cargado ?? 0, marcado: inv?.marcado ?? 0, soplon: inv?.soplon ?? 0 };
+}
+
+// ---------------------------------------------------------------------------
+// El OFICIO del tahúr: cómo te ganabas la vida antes del cacho. Se elige al
+// empezar una campaña y marca tu estilo: un atributo de partida y una ventaja
+// económica propia. Personalización de verdad, no sólo cosmética.
+// ---------------------------------------------------------------------------
+
+export type OficioId = "relojero" | "charlatan" | "cabalista" | "contrabandista" | "buenacuna";
+
+export interface Oficio {
+  id: OficioId;
+  nombre: string;
+  /** Glifo tipográfico para la UI (sin emojis). */
+  glifo: string;
+  desc: string;
+}
+
+export const OFICIOS: Oficio[] = [
+  { id: "relojero", nombre: "El Relojero", glifo: "◉", desc: "Ojo clínico: partes con Ojo 1 y afinarlo en la tienda cuesta un cuarto menos." },
+  { id: "charlatan", nombre: "El Charlatán", glifo: "♠", desc: "Lengua de oro: partes con Colmillo 1 y afilarlo cuesta un cuarto menos." },
+  { id: "cabalista", nombre: "El Cabalista", glifo: "♣", desc: "Cábala propia: partes con Suerte 1 y comprarla cuesta un cuarto menos." },
+  { id: "contrabandista", nombre: "El Contrabandista", glifo: "♦", desc: "Bolsillos hondos: partes con un item de cada tipo y te cuestan un quinto menos." },
+  { id: "buenacuna", nombre: "De Buena Cuna", glifo: "$", desc: "Apellido con peso: partes con $250 y los desafíos de la casa te pagan un cuarto más." },
+];
+
+/** Qué atributo de partida regala cada oficio (si corresponde). */
+const OFICIO_ATRIBUTO: Partial<Record<OficioId, ClaveAtributo>> = {
+  relojero: "ojo",
+  charlatan: "colmillo",
+  cabalista: "suerte",
+};
+
+/** Costo de un item en la tienda, con el descuento del oficio si aplica. */
+export function costoItem(id: ItemId, oficio?: OficioId): number {
+  const base = ITEMS.find((x) => x.id === id)!.costo;
+  return oficio === "contrabandista" ? Math.round(base * 0.8) : base;
 }
 
 // ---------------------------------------------------------------------------
@@ -915,6 +980,8 @@ export interface EstadoHistoria {
   marcas: string[];
   /** Ventaja/desventaja para la PRÓXIMA mesa (de una lectura o pelea). */
   efectoPendiente?: EfectoMesa | null;
+  /** El oficio elegido al empezar la campaña (estilo del personaje). */
+  oficio?: OficioId;
   /** Nueva Partida+: cuántas veces coronaste y volviste a empezar. Cada nivel
    *  de Leyenda sube un escalón la dificultad de TODOS los rivales. */
   leyenda?: number;
@@ -922,19 +989,33 @@ export interface EstadoHistoria {
   version?: number;
 }
 
-export function historiaNueva(nombre: string, leyenda = 0): EstadoHistoria {
+export function historiaNueva(nombre: string, leyenda = 0, oficio?: OficioId): EstadoHistoria {
+  const atributos: AtributosJugador = { ojo: 0, colmillo: 0, suerte: 0 };
+  const inventario: Inventario = { cargado: 0, marcado: 0, soplon: 0 };
+  // La fama abre puertas: cada vuelta de Leyenda parte con un colchón chico.
+  let plata = leyenda * 100;
+  if (oficio) {
+    const atr = OFICIO_ATRIBUTO[oficio];
+    if (atr) atributos[atr] = 1;
+    if (oficio === "contrabandista") {
+      inventario.cargado = 1;
+      inventario.marcado = 1;
+      inventario.soplon = 1;
+    }
+    if (oficio === "buenacuna") plata += 250;
+  }
   return {
     nombre: nombre.trim() || "Forastero",
-    atributos: { ojo: 0, colmillo: 0, suerte: 0 },
-    inventario: { cargado: 0, marcado: 0, soplon: 0 },
-    // La fama abre puertas: cada vuelta de Leyenda parte con un colchón chico.
-    plata: leyenda * 100,
+    atributos,
+    inventario,
+    plata,
     escenarioIdx: 0,
     rivalIdx: 0,
     completado: false,
     prologoVisto: false,
     dilemasResueltos: [],
     marcas: [],
+    ...(oficio ? { oficio } : {}),
     leyenda,
     version: HISTORIA_VERSION,
   };
@@ -1148,7 +1229,7 @@ export function armarMesa(h: EstadoHistoria): {
 
 /** Objetivo opcional de una mesa. Si lo cumples al ganar, la casa paga el bono. */
 export interface Desafio {
-  clave: "impecable" | "calzador" | "sobrado" | "manolimpia" | "relampago" | "resucitado" | "alfilo" | "doblete";
+  clave: "impecable" | "calzador" | "sobrado" | "manolimpia" | "relampago" | "resucitado" | "alfilo" | "doblete" | "temerario" | "maraton" | "cabalero";
   nombre: string;
   desc: string;
   /** Regla de la casa que este desafío necesita para ser posible (ver ReglasCasa). */
@@ -1164,6 +1245,9 @@ const DESAFIOS: Desafio[] = [
   { clave: "resucitado", nombre: "Resucitado", desc: "Gana habiendo pasado por el obligado (remontada desde 1 dado).", requiere: "obligadoActivo" },
   { clave: "alfilo", nombre: "Al filo", desc: "Gana con un solo dado en la mano: te salvaste raspando." },
   { clave: "doblete", nombre: "Doblete", desc: "Gana con dos calzos acertados o más.", requiere: "calzarPermitido" },
+  { clave: "temerario", nombre: "Temerario", desc: "Gana con la apuesta de la mesa doblada al máximo." },
+  { clave: "maraton", nombre: "Maratón", desc: "Aguanta una mesa larga, de esas que muelen, y gánala igual." },
+  { clave: "cabalero", nombre: "Con la cábala", desc: "Gana habiendo usado el poder Suerte." },
 ];
 
 function hashTexto(s: string): number {
@@ -1192,9 +1276,15 @@ export function umbralRelampago(tamMesa: number): number {
   return 5 * (tamMesa - 1) + 2;
 }
 
-/** Bono que paga el desafío: dobla el premio base del rival. */
-export function bonoDesafio(rival: RivalHistoria): number {
-  return rival.plata;
+/** Desde cuántas rondas una mesa cuenta como "Maratón" (la mediana observada
+ *  jugando partidas según el tamaño de la mesa). */
+export function umbralMaraton(tamMesa: number): number {
+  return 5 * tamMesa - 1;
+}
+
+/** Bono que paga el desafío: el premio base del rival (De Buena Cuna cobra +25%). */
+export function bonoDesafio(rival: RivalHistoria, oficio?: OficioId): number {
+  return oficio === "buenacuna" ? Math.round(rival.plata * 1.25) : rival.plata;
 }
 
 /** Montos de apuesta disponibles antes de sentarse (doblar o nada): nada, la
@@ -1348,6 +1438,8 @@ export interface VistaHistoria {
   comentarioMesa: { texto: string; n: number } | null;
   /** Nivel de Nueva Partida+ (0 = primera vuelta). */
   leyenda: number;
+  /** El oficio del tahur (estilo elegido al empezar la campana). */
+  oficio: Oficio | null;
   /** La apuesta de la mesa (en la intro): monto elegido y opciones. */
   apuesta: { elegida: number; opciones: number[]; premioBase: number } | null;
   /** El desafío de la casa de esta mesa (intro, mesa y victoria). */

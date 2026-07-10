@@ -9,7 +9,7 @@ import { Avatar, fijarCaraJugador, CARA_DEFECTO } from "./Avatar";
 import { invitarWhatsApp, copiarInvitacion, salaDesdeURL, limpiarURLSala } from "./invitacion";
 import { TransporteLocal, type Transporte } from "./transporte";
 import { TransporteHistoria } from "./transporteHistoria";
-import { historiaNueva, escenarioActual, normalizar } from "./historia";
+import { historiaNueva, escenarioActual, normalizar, OFICIOS, type OficioId } from "./historia";
 import { onlineConfigurado, crearTransporteOnline } from "./online";
 import { useInstantanea } from "./util";
 import { leerPrefs, guardarPrefs } from "./prefs";
@@ -300,6 +300,7 @@ function ConfigHistoria({ onListo, volver }: { onListo: (t: Transporte) => void;
   const coronada = prefs.historia?.completado ? prefs.historia : null;
   const leyendaSiguiente = (coronada?.leyenda ?? 0) + 1;
   const [nombre, setNombre] = useState(prefs.nombre ?? guardada?.nombre ?? "Forastero");
+  const [oficio, setOficio] = useState<OficioId>("relojero");
   const [cuaderno, setCuaderno] = useState(false);
 
   if (cuaderno) return <Cuaderno volver={() => setCuaderno(false)} />;
@@ -318,6 +319,26 @@ function ConfigHistoria({ onListo, volver }: { onListo: (t: Transporte) => void;
         contra peces cada vez más gordos. Gana plata, sube tus atributos… y sobrevive.
       </p>
       <CampoJugador nombre={nombre} setNombre={setNombre} />
+
+      <div className="campo-label">Tu oficio (para partidas nuevas)</div>
+      <div className="oficios" role="radiogroup" aria-label="Oficio del tahur">
+        {OFICIOS.map((o) => (
+          <button
+            key={o.id}
+            className={"oficio-card" + (oficio === o.id ? " sel" : "")}
+            role="radio"
+            aria-checked={oficio === o.id}
+            onClick={() => setOficio(o.id)}
+          >
+            <span className="of-glifo" aria-hidden="true">{o.glifo}</span>
+            <span className="of-cuerpo">
+              <span className="of-nombre">{o.nombre}</span>
+              <span className="of-desc">{o.desc}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+
       {guardada ? (
         <>
           <div className="hist-continuar">
@@ -326,12 +347,12 @@ function ConfigHistoria({ onListo, volver }: { onListo: (t: Transporte) => void;
           <button className="btn btn--apostar grande" onClick={() => comenzar(guardada)}>
             Continuar tu historia
           </button>
-          <button className="btn-link" onClick={() => comenzar(historiaNueva(nombre))}>
+          <button className="btn-link" onClick={() => comenzar(historiaNueva(nombre, 0, oficio))}>
             Empezar de cero
           </button>
         </>
       ) : (
-        <button className="btn btn--apostar grande" onClick={() => comenzar(historiaNueva(nombre))}>
+        <button className="btn btn--apostar grande" onClick={() => comenzar(historiaNueva(nombre, 0, oficio))}>
           Comenzar la aventura
         </button>
       )}
@@ -341,7 +362,7 @@ function ConfigHistoria({ onListo, volver }: { onListo: (t: Transporte) => void;
             Ya coronaste el cacho{(coronada.leyenda ?? 0) > 0 ? ` (Leyenda ${"I".repeat(Math.min(coronada.leyenda ?? 0, 3))})` : ""}.
             La Leyenda endurece a TODOS los rivales un escalón.
           </div>
-          <button className="btn btn--apostar grande" onClick={() => comenzar(historiaNueva(nombre, leyendaSiguiente))}>
+          <button className="btn btn--apostar grande" onClick={() => comenzar(historiaNueva(nombre, leyendaSiguiente, oficio))}>
             Nueva Partida+ · Leyenda {"I".repeat(Math.min(leyendaSiguiente, 3))}
           </button>
         </>

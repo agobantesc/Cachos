@@ -149,6 +149,19 @@ export function caraDe(id: string, nombre: string): Cara {
 }
 
 // --- Dibujo (viewBox 0..64; cara centrada en x=32) -------------------------
+
+/** Bigote de manubrio: dos lóbulos que nacen bajo la nariz y caen hacia los
+ *  lados, claramente ARRIBA de la boca (que se pinta aparte, más abajo). */
+function Bigote({ pelo }: { pelo: string }) {
+  return (
+    <g>
+      <path d="M32 40.6 q-2 -1.3 -4.6 -0.9 q-3.2 0.5 -4.6 2.9 q2.6 1.1 5.4 0.5 q2.6 -0.6 3.8 -2.5 z" fill={pelo} />
+      <path d="M32 40.6 q2 -1.3 4.6 -0.9 q3.2 0.5 4.6 2.9 q-2.6 1.1 -5.4 0.5 q-2.6 -0.6 -3.8 -2.5 z" fill={pelo} />
+      <path d="M28 40.6 q2 -0.5 3.4 0.4 M36 40.6 q-2 -0.5 -3.4 0.4" stroke="#ffffff" strokeWidth="0.6" fill="none" opacity="0.14" />
+    </g>
+  );
+}
+
 function Ojo({ x, tipo }: { x: number; tipo: Cara["ojos"] }) {
   if (tipo === "entrecerrado")
     return (
@@ -262,10 +275,40 @@ export const Avatar = memo(function Avatar({
         </>
       )}
 
-      {/* nariz */}
+      {/* nariz: tabique, ala y fosa, con un hilo de luz en el puente */}
       <path d="M32 34 v4.2 l1.9 1.3" stroke={sombra} strokeWidth="1.4" fill="none" strokeLinecap="round" opacity="0.4" />
+      <path d="M30.2 39.3 q1 0.9 2.2 0.9" stroke={sombra} strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.22" />
+      <circle cx="33.7" cy="39.8" r="0.55" fill={sombra} opacity="0.3" />
+      <path d="M31.2 34.5 v3.4" stroke="#ffffff" strokeWidth="0.8" strokeLinecap="round" opacity="0.12" />
+      {/* pómulos: un beso de luz a la izquierda (donde pega la lámpara) */}
+      <ellipse cx="24" cy="37.6" rx="2.8" ry="1.7" fill="#ffffff" opacity="0.06" />
 
-      {/* boca (con diente de oro si corresponde) */}
+      {/* vello facial (bajo la boca en el orden de pintado: la enmarca, no la tapa) */}
+      {c.vello === "bigote" && <Bigote pelo={c.pelo} />}
+      {c.vello === "perilla" && (
+        <>
+          <path d="M29.6 46.6 q2.4 1.8 4.8 0 q0.2 4 -2.4 4 q-2.6 0 -2.4 -4 z" fill={c.pelo} />
+          <path d="M30.6 47.6 q1.4 0.9 2.8 0" stroke="#ffffff" strokeWidth="0.6" opacity="0.1" fill="none" />
+        </>
+      )}
+      {c.vello === "candado" && (
+        <>
+          <Bigote pelo={c.pelo} />
+          {/* rieles que bajan del bigote al mentón, dejando la boca a la vista */}
+          <path d="M26.6 43.2 q-0.6 3.4 0.8 5.8 M37.4 43.2 q0.6 3.4 -0.8 5.8" stroke={c.pelo} strokeWidth="2" fill="none" strokeLinecap="round" />
+          <path d="M27.2 48.4 q4.8 4.4 9.6 0 q-0.9 4.6 -4.8 4.6 q-3.9 0 -4.8 -4.6 z" fill={c.pelo} />
+        </>
+      )}
+      {c.vello === "barba" && (
+        <>
+          <path d="M21 38 q1 13.5 11 14.5 q10 -1 11 -14.5 q-3 7.2 -11 7.2 q-8 0 -11 -7.2 z" fill={c.pelo} />
+          <path d="M24 46 q8 4 16 0 q-8 6 -16 0 z" fill={sombra} opacity="0.12" />
+          {/* claro para la boca dentro de la barba */}
+          <ellipse cx="32" cy="44.6" rx="4.6" ry="2" fill={c.piel} />
+        </>
+      )}
+
+      {/* boca (con diente de oro si corresponde) — siempre sobre el vello */}
       {c.boca === "seria" ? (
         <path d="M28 44.5 h8" stroke="#7a4636" strokeWidth="1.7" strokeLinecap="round" />
       ) : c.boca === "torcida" ? (
@@ -275,20 +318,9 @@ export const Avatar = memo(function Avatar({
       ) : (
         <path d="M28 44 q4 2.2 8 0" stroke="#7a4636" strokeWidth="1.7" fill="none" strokeLinecap="round" />
       )}
+      {/* brillo del labio inferior: da vida sin dibujar labios completos */}
+      <path d="M29.8 46.4 q2.2 1.1 4.4 0" stroke="#ffffff" strokeWidth="0.8" fill="none" strokeLinecap="round" opacity="0.1" />
       {c.extra === "diente" && <rect x="31.2" y="43.4" width="1.9" height="2.2" rx="0.4" fill={ORO} />}
-
-      {/* vello facial */}
-      {c.vello === "bigote" && <path d="M27 42.6 q5 2.5 10 0 q-3 1.5 -5 1.5 q-2 0 -5 -1.5 z" fill={c.pelo} />}
-      {c.vello === "perilla" && <path d="M30 47 q2 2 4 0 q0 3.2 -2 3.2 q-2 0 -2 -3.2 z" fill={c.pelo} />}
-      {c.vello === "candado" && (
-        <path d="M22 40 q2 10.5 10 11.5 q8 -1 10 -11.5 q-2 4.2 -10 4.2 q-8 0 -10 -4.2 z" fill="none" stroke={c.pelo} strokeWidth="2.1" />
-      )}
-      {c.vello === "barba" && (
-        <>
-          <path d="M21 38 q1 13.5 11 14.5 q10 -1 11 -14.5 q-3 7.2 -11 7.2 q-8 0 -11 -7.2 z" fill={c.pelo} />
-          <path d="M24 46 q8 4 16 0 q-8 6 -16 0 z" fill={sombra} opacity="0.12" />
-        </>
-      )}
 
       {/* pelo / sombrero / capucha (encima) */}
       {c.top === "corto" && (

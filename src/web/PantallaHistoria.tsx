@@ -68,6 +68,11 @@ function BarraStats({ t }: { t: VistaHistoria }) {
       <span className="hist-atr">Ojo {t.atributos.ojo}</span>
       <span className="hist-atr">Colmillo {t.atributos.colmillo}</span>
       <span className="hist-atr">Suerte {t.atributos.suerte}</span>
+      {t.oficio && (
+        <span className="hist-atr hist-oficio" title={t.oficio.desc}>
+          {t.oficio.glifo} {t.oficio.nombre}
+        </span>
+      )}
     </div>
   );
 }

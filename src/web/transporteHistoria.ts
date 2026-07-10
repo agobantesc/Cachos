@@ -27,6 +27,9 @@ import {
   armarMesaSecreta,
   desafioDe,
   umbralRelampago,
+  umbralMaraton,
+  costoItem,
+  OFICIOS,
   bonoDesafio,
   opcionesApuesta,
   ATRIBUTOS,
@@ -229,6 +232,12 @@ export class TransporteHistoria implements Transporte {
         return yo.cantidadDados === 1;
       case "doblete":
         return yo.stats.calzosAcertados >= 2;
+      case "temerario":
+        return this.apuestaMonto > 0 && this.apuestaMonto === rivalActual(this.h).plata * 2;
+      case "maraton":
+        return pub.numeroRonda >= umbralMaraton(pub.jugadores.length);
+      case "cabalero":
+        return this.suerteUsadaEnMesa;
     }
   }
 
@@ -264,7 +273,7 @@ export class TransporteHistoria implements Transporte {
         this.itemsGastados = { cargado: 0, marcado: 0, soplon: 0 };
         // El botín: premio base + la apuesta doblada + el bono del desafío.
         const rival = this.rivalEnCurso();
-        const bono = desafioCumplido ? bonoDesafio(rival) : 0;
+        const bono = desafioCumplido ? bonoDesafio(rival, this.h.oficio) : 0;
         const total = rival.plata + this.apuestaMonto + bono;
         this.botin = { premioBase: rival.plata, apuestaExtra: this.apuestaMonto, bono, desafioCumplido, total };
         this.h.plata += total;
@@ -473,7 +482,7 @@ export class TransporteHistoria implements Transporte {
     if (!meta) return;
     const nivel = this.h.atributos[c];
     if (nivel >= meta.max) return;
-    const costo = costoMejora(c, nivel);
+    const costo = costoMejora(c, nivel, this.h.oficio);
     if (this.h.plata < costo) return;
     this.h.plata -= costo;
     this.h.atributos[c] = nivel + 1;
@@ -484,9 +493,10 @@ export class TransporteHistoria implements Transporte {
     if (this.fase !== "tienda") return;
     const meta = ITEMS.find((x) => x.id === id);
     if (!meta) return;
+    const costo = costoItem(meta.id, this.h.oficio);
     const cantidad = this.h.inventario[meta.id];
-    if (cantidad >= meta.max || this.h.plata < meta.costo) return;
-    this.h.plata -= meta.costo;
+    if (cantidad >= meta.max || this.h.plata < costo) return;
+    this.h.plata -= costo;
     this.h.inventario[meta.id] = cantidad + 1;
     this.guardar();
     this.emitir();
@@ -576,7 +586,7 @@ export class TransporteHistoria implements Transporte {
       this.fase === "tienda"
         ? ATRIBUTOS.map((a) => {
             const nivel = this.h.atributos[a.clave];
-            const costo = costoMejora(a.clave, nivel);
+            const costo = costoMejora(a.clave, nivel, this.h.oficio);
             return { clave: a.clave, nombre: a.nombre, desc: a.desc, nivel, max: a.max, costo, alcanzable: nivel < a.max && this.h.plata >= costo };
           })
         : [];
@@ -585,7 +595,8 @@ export class TransporteHistoria implements Transporte {
       this.fase === "tienda"
         ? ITEMS.map((it) => {
             const cantidad = this.h.inventario[it.id];
-            return { id: it.id, nombre: it.nombre, desc: it.desc, costo: it.costo, cantidad, max: it.max, alcanzable: cantidad < it.max && this.h.plata >= it.costo };
+            const costo = costoItem(it.id, this.h.oficio);
+            return { id: it.id, nombre: it.nombre, desc: it.desc, costo, cantidad, max: it.max, alcanzable: cantidad < it.max && this.h.plata >= costo };
           })
         : [];
 
@@ -658,6 +669,7 @@ export class TransporteHistoria implements Transporte {
       haySecreto,
       comentarioMesa: this.fase === "mesa" ? this.comentario : null,
       leyenda: this.h.leyenda ?? 0,
+      oficio: (this.h.oficio && OFICIOS.find((o) => o.id === this.h.oficio)) || null,
       apuesta:
         this.fase === "intro"
           ? { elegida: this.apuestaMonto, opciones: opcionesApuesta(this.h.plata, rival.plata), premioBase: rival.plata }
@@ -666,7 +678,7 @@ export class TransporteHistoria implements Transporte {
         !this.secretoActivo && (this.fase === "intro" || this.fase === "mesa" || this.fase === "victoria")
           ? (() => {
               const d = desafioDe(rival);
-              return { nombre: d.nombre, desc: d.desc, bono: bonoDesafio(rival) };
+              return { nombre: d.nombre, desc: d.desc, bono: bonoDesafio(rival, this.h.oficio) };
             })()
           : null,
       botin: this.fase === "victoria" ? this.botin : null,

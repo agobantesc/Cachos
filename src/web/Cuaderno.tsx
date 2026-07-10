@@ -2,7 +2,7 @@
 // recorridos, las marcas que dejaron tus decisiones, los secretos del bajo
 // mundo (candados de cifra) y los finales que ya viste. Lo que no has vivido
 // aparece como "???": el cuaderno se escribe jugando.
-import { CAMPANA, FINALES, MARCAS_INFO, SECRETOS, normalizar } from "./historia";
+import { CAMPANA, FINALES, MARCAS_INFO, SECRETOS, OFICIOS, normalizar } from "./historia";
 import type { EstadoHistoria, TipoFinal } from "./historia";
 import { leerPalmares } from "./palmares";
 import { leerPrefs } from "./prefs";
@@ -31,6 +31,7 @@ export function Cuaderno({ volver }: { volver: () => void }) {
       </header>
       <p className="ayuda">
         Todo lo que viviste en el bajo mundo, anotado con letra chueca.
+        {h?.oficio && <span className="leyenda-badge"> {OFICIOS.find((o) => o.id === h.oficio)?.nombre ?? ""}</span>}
         {(h?.leyenda ?? 0) > 0 && <span className="leyenda-badge"> Leyenda {"I".repeat(Math.min(h!.leyenda ?? 0, 3))}</span>}
       </p>
 
