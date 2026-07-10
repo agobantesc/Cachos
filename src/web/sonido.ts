@@ -474,6 +474,12 @@ export const Ambiente = {
     apagarLatido();
   },
 
+  /** Calla SÓLO el paisaje del barrio (p. ej. mientras se juega la mesa),
+   *  dejando vivos el drone del jefe y el latido de tensión. */
+  detenerPaisaje(): void {
+    apagarPaisaje();
+  },
+
   /** Drone de amenaza mientras juegas contra un JEFE. */
   jefe(activo: boolean): void {
     if (!activo || !activado) {

@@ -127,6 +127,12 @@ export function Mesa({
     return () => clearTimeout(timer);
   }, [snap.historia?.comentarioMesa]);
 
+  // En la mesa se calla el paisaje del barrio: que manden los dados (y el
+  // drone del jefe, si toca). Al volver a las pantallas de historia, vuelve.
+  useEffect(() => {
+    if (snap.historia) Ambiente.detenerPaisaje();
+  }, [snap.historia?.rival.id]);
+
   // Tensión del modo historia: drone grave contra un JEFE, y latido cuando
   // quedas al filo (último dado, o dos dados / ronda de obligado).
   useEffect(() => {

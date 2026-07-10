@@ -171,8 +171,9 @@ export function PantallaHistoria({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [t.faseHistoria, t.evento?.titulo, r.id, r.esBoss, t.finalTipo]);
 
-  // Paisaje sonoro continuo del capítulo (olas, fierro, terciopelo…). Es un
-  // singleton global: sigue sonando durante la mesa y cambia con el capítulo.
+  // Paisaje sonoro del capítulo (olas, fierro, terciopelo…). Suena en las
+  // pantallas de historia; en la mesa se calla (Mesa lo apaga al montarse) y
+  // acá vuelve, porque esta pantalla se re-monta al salir de la mesa.
   useEffect(() => {
     Ambiente.iniciar(escenaCapitulo(t.escenario.idx));
   }, [t.escenario.idx]);
