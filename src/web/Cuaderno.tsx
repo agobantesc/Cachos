@@ -29,7 +29,10 @@ export function Cuaderno({ volver }: { volver: () => void }) {
         </button>
         <h2>Cuaderno del Tahúr</h2>
       </header>
-      <p className="ayuda">Todo lo que viviste en el bajo mundo, anotado con letra chueca.</p>
+      <p className="ayuda">
+        Todo lo que viviste en el bajo mundo, anotado con letra chueca.
+        {(h?.leyenda ?? 0) > 0 && <span className="leyenda-badge"> Leyenda {"I".repeat(Math.min(h!.leyenda ?? 0, 3))}</span>}
+      </p>
 
       <section className="cua-seccion" aria-label="Capítulos">
         <h3 className="cua-titulo">El camino</h3>

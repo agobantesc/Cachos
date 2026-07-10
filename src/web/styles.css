@@ -1045,3 +1045,45 @@ button { touch-action: manipulation; }
 @media (prefers-reduced-motion: reduce) {
   .beat { animation: none; }
 }
+
+/* ============================================================
+   HISTORIA VIVA: el jefe habla en la mesa, ecos del camino y Leyenda.
+   ============================================================ */
+
+/* Bocadillo del jefe durante la mesa: aparece, respira y se va. */
+@keyframes toast-vive {
+  0% { opacity: 0; transform: translateY(-6px); }
+  6% { opacity: 1; transform: none; }
+  88% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.jefe-toast {
+  width: 100%; margin-top: 6px; padding: 9px 13px; text-align: left;
+  font-style: italic; font-size: 14px; line-height: 1.45; color: #e8c8bc;
+  background: linear-gradient(180deg, rgba(143, 45, 36, 0.2), rgba(21, 22, 27, 0.92));
+  border: 1px solid rgba(178, 58, 46, 0.45); border-left: 3px solid var(--sangre-viva);
+  border-radius: 0 12px 12px 0;
+  animation: toast-vive 5s ease forwards;
+}
+.jefe-toast i { font-style: normal; font-size: 12px; color: var(--tenue); }
+
+/* Los ecos del camino: el final recuerda TUS decisiones. */
+.ecos {
+  display: flex; flex-direction: column; gap: 7px; width: 100%; max-width: 380px;
+  background: var(--humo); border: 1px solid var(--linea); border-radius: 14px;
+  padding: 12px 14px; text-align: left;
+}
+.ecos-tit {
+  font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--oro);
+  border-bottom: 1px solid var(--linea); padding-bottom: 6px;
+}
+.ecos-linea { font-size: 13px; font-style: italic; color: var(--texto); line-height: 1.45; }
+.ecos-linea::before { content: "— "; color: var(--oro); }
+
+/* Insignia de Nueva Partida+ (Leyenda). */
+.leyenda-badge {
+  display: inline-block; margin-left: 8px; padding: 2px 9px; border-radius: 999px;
+  font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; font-style: normal;
+  color: #15110a; background: linear-gradient(180deg, var(--oro-claro), var(--oro));
+  vertical-align: middle;
+}

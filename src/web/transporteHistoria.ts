@@ -81,6 +81,10 @@ export class TransporteHistoria implements Transporte {
   private finalBeatIdx = 0;
   /** Pasaje de la cinemática de entrada del jefe actual (fase "intro"). */
   private cinematicaIdx = 0;
+  /** El jefe habla en la mesa: última frase y de qué ronda fue. */
+  private comentario: { texto: string; n: number } | null = null;
+  private comentarioN = 0;
+  private rondaComentada = 0;
   /** Pasaje del epílogo de capítulo, tras vencer al jefe (fase "victoria"). */
   private epilogoIdx = 0;
   /** El candado del barrio: último fallo y desenlace al abrirlo. */
@@ -165,6 +169,8 @@ export class TransporteHistoria implements Transporte {
     this.eventoEnCurso = null;
     this.botin = null;
     this.apuestaPerdida = 0;
+    this.comentario = null;
+    this.rondaComentada = 0;
     // La apuesta no puede superar la plata en mano (p.ej. tras una derrota cara).
     this.apuestaMonto = Math.min(this.apuestaMonto, this.h.plata);
 
@@ -226,9 +232,28 @@ export class TransporteHistoria implements Transporte {
     }
   }
 
+  /** El jefe comenta la ronda recién resuelta (una frase por ronda, si aplica). */
+  private comentarRonda(pub: NonNullable<Instantanea["publico"]>) {
+    const rival = this.rivalEnCurso();
+    const frases = rival.frases;
+    const res = pub.ultimaResolucion;
+    if (!rival.esBoss || !frases || !res) return;
+    const yo = pub.jugadores.find((j) => j.id === HUMANO_ID);
+    let texto: string | null = null;
+    if (res.siciliana) texto = frases.siciliana;
+    else if (res.perdedorId === HUMANO_ID && yo && yo.cantidadDados === 1) texto = frases.alFilo;
+    else if (res.perdedorId === HUMANO_ID) texto = frases.caza;
+    else if (res.perdedorId === rival.id) texto = frases.cae;
+    if (texto) this.comentario = { texto, n: ++this.comentarioN };
+  }
+
   private onInner() {
     if (this.detenido || !this.inner) return;
     const pub = this.inner.instantanea().publico;
+    if (this.fase === "mesa" && pub && pub.fase === "FIN_RONDA" && pub.ultimaResolucion && pub.numeroRonda !== this.rondaComentada) {
+      this.rondaComentada = pub.numeroRonda;
+      this.comentarRonda(pub);
+    }
     if (this.fase === "mesa" && pub && pub.fase === "FIN_JUEGO") {
       if (pub.ganadorId === HUMANO_ID) {
         const desafioCumplido = this.evaluarDesafio(pub);
@@ -631,6 +656,8 @@ export class TransporteHistoria implements Transporte {
       cinematica: this.cinematicaVista(),
       epilogoBeat: this.epilogoBeatVista(),
       haySecreto,
+      comentarioMesa: this.fase === "mesa" ? this.comentario : null,
+      leyenda: this.h.leyenda ?? 0,
       apuesta:
         this.fase === "intro"
           ? { elegida: this.apuestaMonto, opciones: opcionesApuesta(this.h.plata, rival.plata), premioBase: rival.plata }

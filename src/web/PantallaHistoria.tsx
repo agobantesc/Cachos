@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Avatar } from "./Avatar";
 import { Dado } from "./Dado";
 import { Escena } from "./Escena";
-import { FINALES, escenaCapitulo } from "./historia";
+import { FINALES, escenaCapitulo, ecosDelCamino } from "./historia";
 import type { Pinta } from "../engine";
 import { Sonidos, Ambiente, vibrar } from "./sonido";
 import { registrarFinal } from "./palmares";
@@ -219,6 +219,7 @@ export function PantallaHistoria({
         {t.narrativa.prologo && <p className="hist-prologo">{t.narrativa.prologo}</p>}
         <span className="hist-kicker">
           {t.escenario.lugar} · Cap. {t.escenario.idx + 1}/{t.escenario.total}
+          {t.leyenda > 0 && <span className="leyenda-badge">Leyenda {"I".repeat(Math.min(t.leyenda, 3))}</span>}
         </span>
         <h1 className="hist-titulo">{t.escenario.nombre}</h1>
         {t.narrativa.intro && <Escena escena={escenaCapitulo(t.escenario.idx)} />}
@@ -587,6 +588,14 @@ export function PantallaHistoria({
       )}
       {beat.esUltimo ? (
         <>
+          {ecosDelCamino(t.marcas).length > 0 && (
+            <div className="ecos" aria-label="Lo que dejaste atrás">
+              <span className="ecos-tit">Lo que dejaste atrás</span>
+              {ecosDelCamino(t.marcas).map((linea, i) => (
+                <span key={i} className="ecos-linea">{linea}</span>
+              ))}
+            </div>
+          )}
           <BarraStats t={t} />
           <div className="hist-acciones">
             <button className="btn btn--apostar grande" onClick={salir}>

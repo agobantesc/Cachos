@@ -17,6 +17,10 @@ const NIVELES: Nivel[] = ["facil", "medio", "avanzado", "experto", "brutal"];
 function nivelMenos(n: Nivel): Nivel {
   return NIVELES[Math.max(0, NIVELES.indexOf(n) - 1)]!;
 }
+/** N escalones más duro (Nueva Partida+: la Leyenda endurece a todos). */
+function nivelMas(n: Nivel, pasos: number): Nivel {
+  return NIVELES[Math.min(NIVELES.length - 1, NIVELES.indexOf(n) + pasos)]!;
+}
 
 /** Un pasaje narrativo: su estampa y su texto. Se usa para los epílogos de
  *  los finales, las cinemáticas de entrada de los jefes y el cierre de
@@ -136,6 +140,20 @@ export interface RivalHistoria {
   relato?: string;
   /** Cinemática de entrada (3 pasajes: plano general, medio y primer plano). Sólo bosses. */
   cinematica?: FinalBeat[];
+  /** Frases del jefe DURANTE la mesa (bocadillos por gatillo). Sólo bosses. */
+  frases?: FrasesMesa;
+}
+
+/** Lo que un jefe comenta en caliente, según lo que pasó en la ronda. */
+export interface FrasesMesa {
+  /** Te ganó una ronda (perdiste dados). */
+  caza: string;
+  /** Le ganaste una ronda (perdió un dado). */
+  cae: string;
+  /** Cayó la siciliana en su mesa. */
+  siciliana: string;
+  /** Quedaste con tu último dado. */
+  alFilo: string;
 }
 
 // --- Items (consumibles que el jugador junta y usa en la mesa) --------------
@@ -297,7 +315,7 @@ export const CAMPANA: Escenario[] = [
         titulo: "El cabro de la puerta",
         texto: "Un cabro chico, descalzo, te tira la manga. 'Tío, ¿le vigilo la puerta mientras juega? O si quiere… le consigo un dato de los que sirven.' Tiene cara de saber más de lo que aparenta, y un corte mal cosido en la ceja.",
         opciones: [
-          { etiqueta: "Págale por vigilar", plata: 40, resultado: "El cabro se planta en la puerta como perro guardián. Nadie te molesta, y de paso te llena los bolsillos con lo que le sobra a la casa. Primera plata de la noche." },
+          { etiqueta: "Págale por vigilar", plata: 40, marca: "cabro", resultado: "El cabro se planta en la puerta como perro guardián. Nadie te molesta, y de paso te llena los bolsillos con lo que le sobra a la casa. Primera plata de la noche. Al irte, te sigue media cuadra: te eligió, aunque tú no lo sepas todavía." },
           { etiqueta: "Mándalo por el dato", item: "soplon", resultado: "El cabro desaparece y vuelve con un soplón viejo que te susurra al oído cómo leer la mesa. 'Cuídese del que pierde y sonríe, tío.' Guárdate ese dato: vale más que la plata." },
         ],
       } },
@@ -321,6 +339,7 @@ export const CAMPANA: Escenario[] = [
           { escena: "jefe-berta", texto: "Doña Berta no levanta la vista de su cacho. Frente a ella, tres vasos vacíos alineados en el borde de la mesa: trofeos, no adornos. Cuando por fin te mira, sonríe como quien ya contó tus dientes. 'Siéntate, mijito. Vamos a ver de qué estás hecho.'" },
           { escena: "retrato-berta", texto: "De cerca, Doña Berta huele a humo de treinta años y a vino derramado. Se prende un cigarrillo sin apuro, te mira por encima de la brasa y empuja el cacho hacia ti. 'Dale, mijito. Sorpréndeme.'" },
         ],
+        frases: { caza: "Así se cocina a un novato, mijito.", cae: "Mmm… treinta años, y todavía hay noches que me sorprenden.", siciliana: "¡La siciliana, cabrito! En mi pocilga las dudas se pagan al contado.", alFilo: "Un dadito te queda… qué pena me das, mijito." },
         presentacion: "Al fondo, tras una cortina de humo, la mismísima Doña Berta acomoda su cacho. Treinta años reinando este chiquero. En su mesa no le gana nadie. Nadie.",
         dialogos: d("Soy la dueña de esta pocilga, mijito. Treinta años y nadie me gana en mi mesa.", "Treinta años invicta… y me la ganó este forastero. Anda, sigue subiendo.", "La casa siempre gana, cabrito. Vuelve cuando seas grande.") },
     ],
@@ -345,6 +364,16 @@ export const CAMPANA: Escenario[] = [
         opciones: [
           { etiqueta: "Quédatela", plata: 90, marca: "saqueador", resultado: "Le sueltas los dedos al muerto y te embolsas el fajo sin pestañear. Plata es plata. Pero al levantar la vista, un cargador joven te clava los ojos desde el fondo: vio todo, y se queda mirándote el rostro como quien aprende una cara de memoria." },
           { etiqueta: "Déjala donde está", atributo: "colmillo", marca: "honrado", resultado: "Le cierras la mano al finado sobre su plata y te persignas. El Carnicero, que miraba de lejos, asiente lento: nadie respeta a los muertos en La Vega. Te susurra, al pasar, un consejo para oler la mentira ajena. 'Me acordaré de esto', dice. Y el Carnicero nunca olvida un favor." },
+        ],
+      } },
+      { antesDe: 1, requiere: "cabro", evento: {
+        tipo: "dilema",
+        clave: "vega-cabro",
+        titulo: "El cabro te siguió",
+        texto: "Entre los cajones aparece una cara conocida: el cabro de la pocilga, con los pies embarrados de caminar desde el puerto. 'Tío… me vine detrás suyo. Allá no hay nada pa' mí. Déjeme ser su campana: yo veo todo y nadie me ve a mí.' Le brillan los ojos de hambre y de otra cosa: de futuro.",
+        opciones: [
+          { etiqueta: "Tómalo de campana", item: "soplon", marca: "padrino", resultado: "Le pasas medio pan y un puesto: tus espaldas. El cabro desaparece entre los cajones como si hubiera nacido ahí, y a la media hora vuelve con el primer dato: 'La mesa del fondo juega con miedo, tío.' Ahora tienes un par de ojos más." },
+          { etiqueta: "Mándalo de vuelta", resultado: "Le pagas el micro de vuelta y le dices que el bajo mundo no es lugar pa' crecer. El cabro se va pateando piedras, sin mirar atrás. Quizás le salvaste la vida. Quizás le quitaste la única puerta que conocía. No vas a saberlo nunca." },
         ],
       } },
       { antesDe: 2, evento: {
@@ -388,6 +417,7 @@ export const CAMPANA: Escenario[] = [
           { escena: "jefe-carnicero", texto: "El Carnicero no te recibe con palabras. Sigue destazando algo que ya no importa qué es, mientras limpia el filo en su delantal manchado. Cuando termina, recién entonces te mira. 'Así que tú eres el que anda haciendo preguntas raras en mi mercado.'" },
           { escena: "retrato-carnicero", texto: "De cerca, El Carnicero es más grande que su leyenda. Tiene sangre seca en el delantal y una cicatriz que le parte la ceja. 'En mi mesa se juega limpio', dice, 'porque al que ensucia… lo despresa la casa.'" },
         ],
+        frases: { caza: "Otro corte limpio. Así se despresa.", cae: "…buen filo, cabro. Buen filo.", siciliana: "¡Sangre fácil! Te lo advertí: en mi mesa, dudar al que abre cuesta tres.", alFilo: "Ya estás pa'l gancho, cabro." },
         presentacion: "El olor a sangre se hace más fuerte. El Carnicero limpia su cuchillo en el delantal y te corre la silla. 'Despreso vacas y ambiciosos por igual.'",
         dialogos: d("Yo despresa vacas y ambiciosos por igual. En mi mesa, dudar al que abre se paga caro.", "…veinte años que no perdía. Sube nomás, te van a comer más arriba.", "Otro pa'l gancho. Límpienle la sangre a la mesa.") },
     ],
@@ -445,6 +475,7 @@ export const CAMPANA: Escenario[] = [
           { escena: "jefe-verdugo", texto: "Una mole de sombra desata un saco de género sobre la mesa: adentro, un cacho gastado de mil ejecuciones. No dice nada todavía. El fierro, alrededor, tampoco." },
           { escena: "retrato-verdugo", texto: "De cerca, El Verdugo no tiene cara: tiene un silencio con mandíbula. Sus ojos, dos puntas de fierro frío, te miden como se mide un tronco antes del hachazo. 'Empecemos', dice. Y el galpón entero obedece." },
         ],
+        frases: { caza: "Cae el hacha.", cae: "…interesante. Sigues vivo.", siciliana: "La siciliana. Sin llanto.", alFilo: "Un dado. La cuenta es corta." },
         presentacion: "Una mole de hombre desata el saco: adentro, un cacho gastado por mil ejecuciones. 'En mi mesa el as no salva a nadie.' El Verdugo no parpadea.",
         dialogos: d("En mi mesa el as no salva a nadie. Aquí la pinta vale lo que es, igual que la gente.", "Sin comodines me ganaste. Eso… eso es de los grandes. Baja, te están esperando.", "Sin comodines no eres nada, cabro. Como casi todos.") },
     ],
@@ -469,6 +500,16 @@ export const CAMPANA: Escenario[] = [
         opciones: [
           { etiqueta: "Firma el adelanto", plata: 120, resultado: "Firmas sin leer la letra chica —nunca hay que leerla— y te embolsas el fajo. Plata fresca para la mesa. La deuda, como todo aquí, ya verás con qué se paga." },
           { etiqueta: "No le debas a nadie", atributo: "ojo", resultado: "Le devuelves la lapicera sin firmar. El Notario sonríe de verdad por una vez: 'Hombre libre. Qué raro ver uno con vida.' Jugar sin deuda encima te aclara la vista como nada." },
+        ],
+      } },
+      { antesDe: 1, requiere: "sangre-fria", evento: {
+        tipo: "dilema",
+        clave: "trastienda-eco",
+        titulo: "El eco de los fierros",
+        texto: "Un parroquiano te reconoce y se le corta la voz: 'Tú… tú eres el de la Maestranza. El del Fundidor.' La trastienda entera baja el murmullo un tono. El cuento de lo que pasó entre los fierros llegó antes que tú, y creció por el camino. Ahora todos te miran distinto: con miedo del bueno.",
+        opciones: [
+          { etiqueta: "Deja que el miedo trabaje", efecto: "mano_cargada", resultado: "No confirmas ni desmientes: sostienes la mirada hasta que el parroquiano se estudia los zapatos. Te sientas a la próxima mesa con un silencio respetuoso alrededor y el pulso planchado. El miedo ajeno también es una ventaja." },
+          { etiqueta: "Baja el perfil", plata: 40, resultado: "Te encoges de hombros: 'Me confundes con otro.' El parroquiano, aliviado, te convida un trago y hasta te desliza unos billetes 'por la molestia'. Mejor así: los cuentos grandes atraen cuchillos grandes." },
         ],
       } },
       { antesDe: 2, evento: {
@@ -512,6 +553,7 @@ export const CAMPANA: Escenario[] = [
           { escena: "jefe-croata", texto: "El Croata ya te lleva la cuenta antes de que te sientes: cuántas veces subiste de más, cuántas dudaste tarde. No fuma por vicio — fuma para tener las manos quietas. 'Siéntate', dice, sin levantar la vista. 'Veamos qué tan bien mientes.'" },
           { escena: "retrato-croata", texto: "De cerca, los ojos del Croata son de un gris que no existe en Chile. El cigarro le cuelga de los labios sin temblar, con la brasa quieta como un punto final. 'Tres manos', murmura. 'En tres manos voy a saber todo de ti.'" },
         ],
+        frases: { caza: "Te lo dije: tu cara habla antes que tú.", cae: "Frío. Mantengamos… la calma.", siciliana: "Directo al hielo. Valiente. O tonto.", alFilo: "Un dado. Ya sé cómo termina esto." },
         presentacion: "El Croata no te mira: te calcula. Frío como témpano, lleva cuenta de cada gesto tuyo. 'Veamos cuál pesa más: tu ojo o mi paciencia.'",
         dialogos: d("Dicen que tienes ojo. Yo tengo paciencia de hielo. Mano a mano: veamos cuál pesa más.", "Frío como soy, esto me hierve la sangre. Buen juego, forastero.", "Tu cara te delató tres manos atrás. Aprende a mentir.") },
     ],
@@ -600,6 +642,7 @@ export const CAMPANA: Escenario[] = [
           { escena: "jefe-senador", texto: "El Senador llega cuando ya nadie lo espera, como llegan los que mandan. No te mira mientras se sienta: mira el cacho, calculando. Bajo la mesa, algo brilla un segundo de más." },
           { escena: "retrato-senador", texto: "De cerca, El Senador sonríe como en los afiches, pero los lentes no alcanzan a taparle el cálculo. 'Muchacho', dice mientras acomoda el cacho sin mirarlo, 'esto no es un juego: es una elección. Y yo no pierdo elecciones.'" },
         ],
+        frases: { caza: "La ley soy yo, muchacho.", cae: "¡Recuento! Exijo… no importa. Sigamos.", siciliana: "¡Orden en la mesa! La siciliana cobra al contado.", alFilo: "Un consejo gratis: ríndete con dignidad." },
         presentacion: "El Senador llega tarde, como los que mandan. Se sienta sin saludar. 'Yo hago las leyes de esta mesa, muchacho. Y la primera es que yo gano.'",
         dialogos: d("Yo hago las leyes de esta mesa, muchacho. Y la primera es que yo gano.", "Esto… esto no se compra. Maldito talento. Te van a estar esperando arriba.", "El poder no se reparte, se quita. Y a ti te lo acabo de quitar.") },
     ],
@@ -636,6 +679,16 @@ export const CAMPANA: Escenario[] = [
           { etiqueta: "Sostenle la mirada", efecto: "sin_suerte", marca: "sin-alma", resultado: "No bajas la vista. El crío entiende que no hay perdón ni vergüenza en ti, y algo se le apaga en la cara. Confirmar lo que eres también te cuesta: subes a la mesa de la Jueza con la mano fría y el pulso peor." },
         ],
       } },
+      { antesDe: 1, requiere: "padrino", evento: {
+        tipo: "dilema",
+        clave: "cumbre-campana",
+        titulo: "Tu campana llegó a la cumbre",
+        texto: "Un mozo joven te intercepta con una bandeja que no pidió nadie. Te toma un segundo reconocerlo: el cabro del puerto, más alto, con el pelo peinado y los mismos ojos rápidos. 'Me colé, tío. ¿O creía que lo iba a dejar solo justo ahora? Llevo dos horas mirando a la Jueza: le tiembla la ceja cuando miente.'",
+        opciones: [
+          { etiqueta: "Escucha a tu campana", efecto: "suerte_extra", resultado: "Te sopla todo lo que vio: los tics, los tiempos, las manías de la mesa que viene. Subes al duelo sabiendo más de lo que deberías. El mejor dato de tu carrera te lo dio un cabro al que un día le pagaste por cuidar una puerta." },
+          { etiqueta: "Mándalo abajo, a salvo", plata: -100, resultado: "Le metes un fajo en el bolsillo del delantal y le ordenas esperarte abajo: 'Esto lo termino solo.' Protesta, pero obedece. Si esta noche sale mal, al menos él no la va a ver. Subes más liviano y más solo que nunca." },
+        ],
+      } },
       { antesDe: 2, requiere: "aliado", evento: {
         tipo: "dilema",
         clave: "cumbre-aliado",
@@ -662,6 +715,7 @@ export const CAMPANA: Escenario[] = [
           { escena: "jefe-rey", texto: "Treinta años sentado en el mismo sillón, contra el mismo ventanal, y ni una vez tuvo que levantarse. El Rey del Cacho no te mira con miedo ni con desprecio: te mira como quien ya ha visto morir a cien iguales a ti." },
           { escena: "retrato-rey", texto: "De cerca, el Rey del Cacho tiene la calma de los que nunca conocieron la derrota. Ni una arruga de miedo: puro oficio. 'Treinta años esperé un rival', dice, y por primera vez en la noche suena sincero. 'Ojalá seas tú.'" },
         ],
+        frases: { caza: "Treinta años no se improvisan.", cae: "Vaya… hacía décadas que no sentía esto.", siciliana: "La siciliana. El clásico de los impacientes.", alFilo: "Todos llegan hasta aquí. Y todos caen aquí." },
         presentacion: "Treinta años invicto, sentado contra el ventanal con todo Chile a sus pies. El Rey del Cacho sonríe como quien ya ganó. 'La leyenda termina aquí, mano a mano.'",
         dialogos: d("Subiste desde el barro hasta mi mesa. Eso ya es leyenda. Pero la leyenda termina aquí, mano a mano.", "Treinta años… y un don nadie del puerto me destrona. El cacho es tuyo. Chile es tuyo.", "Yo SOY el cacho, muchacho. Vuelve al barro de donde saliste.") },
     ],
@@ -692,6 +746,7 @@ export const REY_VERDADERO: RivalHistoria = {
     { escena: "jefe-patron", texto: "La puerta se abre a una pieza sin ventanas. No hay aplausos esperándote esta vez, ni ventanal con la ciudad. Sólo una ampolleta, un hombre sin edad, y treinta años de silencio esperando a que alguien cruzara ese umbral." },
           { escena: "retrato-patron", texto: "De cerca… no hay 'de cerca'. La ampolleta le queda encima y aun así la cara del Patrón sigue en sombra, como si la luz le tuviera miedo. Sólo se le ven los dientes cuando dice: 'Treinta años. Juguemos.'" },
   ],
+  frases: { caza: "La banca cobra.", cae: "…anota eso, porque nadie lo va a creer.", siciliana: "Siciliana. La banca aplaude a los osados… y después los entierra.", alFilo: "Un dado. La casa espera." },
   presentacion:
     "La pieza no tiene ventanas. Bajo una sola ampolleta, un hombre sin edad baraja un cacho más viejo que Santiago. No te mira: ya sabe cómo termina esto, o eso cree. 'Treinta años esperando a alguien que llegara hasta acá', dice la voz. 'Siéntate. La banca te recibe.'",
   dialogos: d(
@@ -860,22 +915,27 @@ export interface EstadoHistoria {
   marcas: string[];
   /** Ventaja/desventaja para la PRÓXIMA mesa (de una lectura o pelea). */
   efectoPendiente?: EfectoMesa | null;
+  /** Nueva Partida+: cuántas veces coronaste y volviste a empezar. Cada nivel
+   *  de Leyenda sube un escalón la dificultad de TODOS los rivales. */
+  leyenda?: number;
   /** Versión del formato (para migrar índices de escenario al crecer la campaña). */
   version?: number;
 }
 
-export function historiaNueva(nombre: string): EstadoHistoria {
+export function historiaNueva(nombre: string, leyenda = 0): EstadoHistoria {
   return {
     nombre: nombre.trim() || "Forastero",
     atributos: { ojo: 0, colmillo: 0, suerte: 0 },
     inventario: { cargado: 0, marcado: 0, soplon: 0 },
-    plata: 0,
+    // La fama abre puertas: cada vuelta de Leyenda parte con un colchón chico.
+    plata: leyenda * 100,
     escenarioIdx: 0,
     rivalIdx: 0,
     completado: false,
     prologoVisto: false,
     dilemasResueltos: [],
     marcas: [],
+    leyenda,
     version: HISTORIA_VERSION,
   };
 }
@@ -912,6 +972,7 @@ export function normalizar(h: EstadoHistoria): EstadoHistoria {
     inventario: inventarioLimpio(h.inventario),
     dilemasResueltos: Array.isArray(h.dilemasResueltos) ? h.dilemasResueltos : [],
     marcas: Array.isArray(h.marcas) ? h.marcas : [],
+    leyenda: Math.max(0, h.leyenda ?? 0),
     version: HISTORIA_VERSION,
   };
 }
@@ -980,6 +1041,8 @@ export const MARCAS_INFO: Record<string, { nombre: string; desc: string }> = {
   "sin-alma": { nombre: "Sin alma", desc: "Le sostuviste la mirada al huérfano sin pestañear." },
   aliado: { nombre: "Aliado del Carnicero", desc: "Hay una mano dura de tu lado en el bajo mundo." },
   verdad: { nombre: "La Verdad", desc: "Sabes que el Rey de la vitrina no es el que reparte." },
+  cabro: { nombre: "El cabro del puerto", desc: "Le diste pega al niño de la pocilga. Te eligió, aunque no lo sepas." },
+  padrino: { nombre: "Padrino", desc: "Tu campana ve todo y nadie lo ve a él. Alguien te cuida las espaldas." },
 };
 
 /** Los SECRETOS del bajo mundo (candados de cifra), para el Cuaderno. */
@@ -988,6 +1051,24 @@ export const SECRETOS: { clave: string; nombre: string; pista: string }[] = [
   { clave: "sec-notario", nombre: "La caja del Notario", pista: "Fierro viejo tras un estante de San Diego." },
   { clave: "sec-madame", nombre: "El cofre de Madame", pista: "Terciopelo con cerradura, bajo el río." },
 ];
+
+/** Los ECOS DEL CAMINO: una línea por marca notable, para el cierre del final.
+ *  Así el epílogo menciona TUS decisiones, no sólo el tipo de final. */
+const ECOS: Record<string, string> = {
+  honrado: "Cerraste la mano de un muerto sobre su plata. La Vega no lo olvidó.",
+  saqueador: "En La Vega hay una billetera vacía que todavía tiene dueño.",
+  cabro: "Un cabro del puerto aprendió de ti que había otro camino que el barro.",
+  padrino: "Tu campana ya no necesita padrino: aprendió mirándote.",
+  aliado: "El Carnicero cumplió su palabra hasta el final. Los favores, allá abajo, son sagrados.",
+  delator: "Bajo un puente del Mapocho, alguien pagó una deuda que era tuya.",
+  "sangre-fria": "En la Maestranza quedó un fierro torcido, y un cuento que todavía se cuenta bajito.",
+  asesino: "Dos hermanos duermen bajo el río. Tú sabes por qué.",
+  "sin-alma": "Hay un mozo en la cumbre que jamás va a olvidar tu mirada.",
+  verdad: "Supiste mirar detrás de la vitrina, donde nadie mira.",
+};
+export function ecosDelCamino(marcas: string[]): string[] {
+  return marcas.map((m) => ECOS[m]).filter((x): x is string => Boolean(x));
+}
 
 export function escenaDe(clave: string): string {
   return ESCENA_EVENTO[clave] ?? "generico";
@@ -1033,13 +1114,15 @@ export function armarMesa(h: EstadoHistoria): {
   acompanantes: string[];
 } {
   const rival = rivalActual(h);
-  const nivelPorJugador: Record<string, Nivel> = { [rival.id]: rival.nivel };
+  const leyenda = h.leyenda ?? 0;
+  const nivelRival = nivelMas(rival.nivel, leyenda);
+  const nivelPorJugador: Record<string, Nivel> = { [rival.id]: nivelRival };
   const jugadores = [
     { id: HUMANO_ID, nombre: h.nombre },
     { id: rival.id, nombre: rival.nombre },
   ];
   const nRelleno = Math.max(0, rival.mesa - 2);
-  const nivelR = nivelMenos(rival.nivel);
+  const nivelR = nivelMenos(nivelRival);
   const off = h.escenarioIdx * 3 + h.rivalIdx * 2;
   const acompanantes: string[] = [];
   for (let i = 0; i < nRelleno; i++) {
@@ -1260,6 +1343,11 @@ export interface VistaHistoria {
   epilogoBeat: BeatVista | null;
   /** En la victoria del Rey "público", se desbloqueó el jefe secreto. */
   haySecreto: boolean;
+  /** El jefe te habla EN la mesa (bocadillo): texto y un número que cambia
+   *  con cada frase nueva (para re-disparar el aviso en la UI). */
+  comentarioMesa: { texto: string; n: number } | null;
+  /** Nivel de Nueva Partida+ (0 = primera vuelta). */
+  leyenda: number;
   /** La apuesta de la mesa (en la intro): monto elegido y opciones. */
   apuesta: { elegida: number; opciones: number[]; premioBase: number } | null;
   /** El desafío de la casa de esta mesa (intro, mesa y victoria). */

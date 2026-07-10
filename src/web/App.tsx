@@ -296,6 +296,9 @@ function ConfigSolo({ onListo, volver }: { onListo: (t: Transporte) => void; vol
 function ConfigHistoria({ onListo, volver }: { onListo: (t: Transporte) => void; volver: () => void }) {
   const prefs = leerPrefs();
   const guardada = prefs.historia && !prefs.historia.completado ? prefs.historia : null;
+  // Campaña coronada: se ofrece la Nueva Partida+ (Leyenda).
+  const coronada = prefs.historia?.completado ? prefs.historia : null;
+  const leyendaSiguiente = (coronada?.leyenda ?? 0) + 1;
   const [nombre, setNombre] = useState(prefs.nombre ?? guardada?.nombre ?? "Forastero");
   const [cuaderno, setCuaderno] = useState(false);
 
@@ -331,6 +334,17 @@ function ConfigHistoria({ onListo, volver }: { onListo: (t: Transporte) => void;
         <button className="btn btn--apostar grande" onClick={() => comenzar(historiaNueva(nombre))}>
           Comenzar la aventura
         </button>
+      )}
+      {!guardada && coronada && (
+        <>
+          <div className="hist-continuar">
+            Ya coronaste el cacho{(coronada.leyenda ?? 0) > 0 ? ` (Leyenda ${"I".repeat(Math.min(coronada.leyenda ?? 0, 3))})` : ""}.
+            La Leyenda endurece a TODOS los rivales un escalón.
+          </div>
+          <button className="btn btn--apostar grande" onClick={() => comenzar(historiaNueva(nombre, leyendaSiguiente))}>
+            Nueva Partida+ · Leyenda {"I".repeat(Math.min(leyendaSiguiente, 3))}
+          </button>
+        </>
       )}
       <button className="btn-link" onClick={() => setCuaderno(true)}>
         Cuaderno del Tahúr

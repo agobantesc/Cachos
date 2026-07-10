@@ -18,6 +18,7 @@ import {
   MARCAS_INFO,
   escenaCapitulo,
   escenaFinal,
+  ecosDelCamino,
   type EstadoHistoria,
   type TipoFinal,
 } from "../historia";
@@ -185,6 +186,66 @@ describe("campaña", () => {
         expect(beat.texto, `${e.clave} texto`).toBeTruthy();
       }
     }
+  });
+
+  it("todos los jefes (y el Patrón) tienen frases de mesa completas (los 4 gatillos)", () => {
+    const bosses = [...CAMPANA.map((e) => e.rivales[e.rivales.length - 1]!), REY_VERDADERO];
+    for (const b of bosses) {
+      expect(b.frases, `${b.id} frases`).toBeTruthy();
+      for (const g of ["caza", "cae", "siciliana", "alFilo"] as const) {
+        expect(b.frases![g], `${b.id} frase ${g}`).toBeTruthy();
+      }
+    }
+  });
+
+  it("el cabro del puerto vuelve: pocilga deja la marca, La Vega la usa y la Cumbre paga el arco", () => {
+    // La opción de darle pega al cabro deja la marca "cabro".
+    const pocilga = CAMPANA[0]!.eventos!.find((e) => e.evento.clave === "pocilga-cabro")!.evento;
+    expect(pocilga.tipo !== "lectura" && pocilga.opciones[0]!.marca).toBe("cabro");
+    // Con la marca, en La Vega aparece el evento del reencuentro…
+    const h = historiaNueva("Padrino");
+    h.escenarioIdx = 1;
+    h.rivalIdx = 1;
+    h.marcas = ["cabro"];
+    expect(eventoActual(h)?.clave).toBe("vega-cabro");
+    // …y sin la marca, no.
+    h.marcas = [];
+    expect(eventoActual(h)?.clave).not.toBe("vega-cabro");
+    // Tomarlo de campana deja "padrino", que gatilla el cierre del arco en la Cumbre.
+    const vega = CAMPANA[1]!.eventos!.find((e) => e.evento.clave === "vega-cabro")!.evento;
+    expect(vega.tipo !== "lectura" && vega.opciones[0]!.marca).toBe("padrino");
+    const cumbre = CAMPANA[5]!.eventos!.find((e) => e.evento.clave === "cumbre-campana")!;
+    expect(cumbre.requiere).toBe("padrino");
+  });
+
+  it("ecosDelCamino traduce las marcas notables a líneas del epílogo (e ignora las desconocidas)", () => {
+    const ecos = ecosDelCamino(["honrado", "verdad", "marca-inventada"]);
+    expect(ecos.length).toBe(2);
+    for (const linea of ecos) expect(linea.length).toBeGreaterThan(10);
+    expect(ecosDelCamino([])).toEqual([]);
+  });
+
+  it("Nueva Partida+ (Leyenda): endurece a todos los rivales un escalón y parte con un colchón", () => {
+    const h0 = historiaNueva("Novato");
+    expect(h0.leyenda).toBe(0);
+    expect(armarMesa(h0).nivelPorJugador["r-pulga"]).toBe("facil");
+
+    const h1 = historiaNueva("Leyenda", 1);
+    expect(h1.leyenda).toBe(1);
+    expect(h1.plata).toBe(100);
+    expect(armarMesa(h1).nivelPorJugador["r-pulga"]).toBe("medio"); // facil + 1
+
+    const h2 = historiaNueva("Doble", 2);
+    expect(armarMesa(h2).nivelPorJugador["r-pulga"]).toBe("avanzado"); // facil + 2
+    h2.escenarioIdx = 5;
+    h2.rivalIdx = 2;
+    expect(armarMesa(h2).nivelPorJugador["b-rey"]).toBe("brutal"); // ya estaba al tope
+
+    // normalizar preserva la leyenda y le pone 0 a los saves viejos.
+    expect(normalizar(h1).leyenda).toBe(1);
+    const viejo = historiaNueva("Viejo");
+    delete (viejo as { leyenda?: number }).leyenda;
+    expect(normalizar(viejo).leyenda).toBe(0);
   });
 
   it("la cinemática del jefe se recorre pasaje a pasaje antes de mostrar su presentación", () => {

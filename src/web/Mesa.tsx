@@ -114,6 +114,19 @@ export function Mesa({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p.fase, p.numeroRonda]);
 
+  // El jefe te habla en la mesa (modo historia): un bocadillo que aparece
+  // con cada frase nueva y se desvanece solo.
+  const [bocadillo, setBocadillo] = useState<string | null>(null);
+  const bocadilloN = useRef(0);
+  useEffect(() => {
+    const c = snap.historia?.comentarioMesa;
+    if (!c || c.n === bocadilloN.current) return;
+    bocadilloN.current = c.n;
+    setBocadillo(c.texto);
+    const timer = setTimeout(() => setBocadillo(null), 5000);
+    return () => clearTimeout(timer);
+  }, [snap.historia?.comentarioMesa]);
+
   // Tensión del modo historia: drone grave contra un JEFE, y latido cuando
   // quedas al filo (último dado, o dos dados / ronda de obligado).
   useEffect(() => {
@@ -249,6 +262,11 @@ export function Mesa({
                   {it.corto} ({it.cantidad})
                 </button>
               ))}
+            </div>
+          )}
+          {bocadillo && (
+            <div className="jefe-toast" role="status">
+              “{bocadillo}” <i>— {snap.historia.rival.nombre}</i>
             </div>
           )}
         </div>
