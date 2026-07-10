@@ -134,7 +134,7 @@ export interface RivalHistoria {
   /** Narración del NARRADOR tras vencerlo (puente a lo que viene). Sólo no-boss;
    *  los jefes cierran con el epílogo del escenario. */
   relato?: string;
-  /** Cinemática de entrada (2 pasajes) antes de la ficha y la mesa. Sólo bosses. */
+  /** Cinemática de entrada (3 pasajes: plano general, medio y primer plano). Sólo bosses. */
   cinematica?: FinalBeat[];
 }
 
@@ -319,6 +319,7 @@ export const CAMPANA: Escenario[] = [
         cinematica: [
           { escena: "cap-muelle", texto: "Tres mesas caíste ganando, y la pocilga entera lo sabe. Los parroquianos se corren para dejarte paso hacia el fondo, donde el humo es más espeso y las apuestas dejan de ser un juego. Ahí, tras la cortina, alguien lleva treinta años sin perder." },
           { escena: "jefe-berta", texto: "Doña Berta no levanta la vista de su cacho. Frente a ella, tres vasos vacíos alineados en el borde de la mesa: trofeos, no adornos. Cuando por fin te mira, sonríe como quien ya contó tus dientes. 'Siéntate, mijito. Vamos a ver de qué estás hecho.'" },
+          { escena: "retrato-berta", texto: "De cerca, Doña Berta huele a humo de treinta años y a vino derramado. Se prende un cigarrillo sin apuro, te mira por encima de la brasa y empuja el cacho hacia ti. 'Dale, mijito. Sorpréndeme.'" },
         ],
         presentacion: "Al fondo, tras una cortina de humo, la mismísima Doña Berta acomoda su cacho. Treinta años reinando este chiquero. En su mesa no le gana nadie. Nadie.",
         dialogos: d("Soy la dueña de esta pocilga, mijito. Treinta años y nadie me gana en mi mesa.", "Treinta años invicta… y me la ganó este forastero. Anda, sigue subiendo.", "La casa siempre gana, cabrito. Vuelve cuando seas grande.") },
@@ -385,6 +386,7 @@ export const CAMPANA: Escenario[] = [
         cinematica: [
           { escena: "cap-vega", texto: "El Charqui, la Quintrala, Sapo Reyes: todos caen. Y todos, al perder, te mandan al mismo lugar: hacia el fondo del mercado, donde el aire huele a sangre fresca y nadie mira lo que hace El Carnicero con las manos." },
           { escena: "jefe-carnicero", texto: "El Carnicero no te recibe con palabras. Sigue destazando algo que ya no importa qué es, mientras limpia el filo en su delantal manchado. Cuando termina, recién entonces te mira. 'Así que tú eres el que anda haciendo preguntas raras en mi mercado.'" },
+          { escena: "retrato-carnicero", texto: "De cerca, El Carnicero es más grande que su leyenda. Tiene sangre seca en el delantal y una cicatriz que le parte la ceja. 'En mi mesa se juega limpio', dice, 'porque al que ensucia… lo despresa la casa.'" },
         ],
         presentacion: "El olor a sangre se hace más fuerte. El Carnicero limpia su cuchillo en el delantal y te corre la silla. 'Despreso vacas y ambiciosos por igual.'",
         dialogos: d("Yo despresa vacas y ambiciosos por igual. En mi mesa, dudar al que abre se paga caro.", "…veinte años que no perdía. Sube nomás, te van a comer más arriba.", "Otro pa'l gancho. Límpienle la sangre a la mesa.") },
@@ -441,6 +443,7 @@ export const CAMPANA: Escenario[] = [
         cinematica: [
           { escena: "cap-maestranza", texto: "El Fundidor, La Trenza, Mecha Corta: todos te avisaron, cada uno a su manera, que El Verdugo no juega — ejecuta. Entre los rieles muertos, el galpón se abre a un espacio más grande, y más oscuro." },
           { escena: "jefe-verdugo", texto: "Una mole de sombra desata un saco de género sobre la mesa: adentro, un cacho gastado de mil ejecuciones. No dice nada todavía. El fierro, alrededor, tampoco." },
+          { escena: "retrato-verdugo", texto: "De cerca, El Verdugo no tiene cara: tiene un silencio con mandíbula. Sus ojos, dos puntas de fierro frío, te miden como se mide un tronco antes del hachazo. 'Empecemos', dice. Y el galpón entero obedece." },
         ],
         presentacion: "Una mole de hombre desata el saco: adentro, un cacho gastado por mil ejecuciones. 'En mi mesa el as no salva a nadie.' El Verdugo no parpadea.",
         dialogos: d("En mi mesa el as no salva a nadie. Aquí la pinta vale lo que es, igual que la gente.", "Sin comodines me ganaste. Eso… eso es de los grandes. Baja, te están esperando.", "Sin comodines no eres nada, cabro. Como casi todos.") },
@@ -507,6 +510,7 @@ export const CAMPANA: Escenario[] = [
         cinematica: [
           { escena: "cap-trastienda", texto: "El Notario, Pituto, la Viuda Alegre: cada uno con su parte del rumor. Hay un hombre al fondo que no suda, no parpadea, no pierde. Bajo el foco amarillo, el paño verde te espera para la última mesa de la trastienda." },
           { escena: "jefe-croata", texto: "El Croata ya te lleva la cuenta antes de que te sientes: cuántas veces subiste de más, cuántas dudaste tarde. No fuma por vicio — fuma para tener las manos quietas. 'Siéntate', dice, sin levantar la vista. 'Veamos qué tan bien mientes.'" },
+          { escena: "retrato-croata", texto: "De cerca, los ojos del Croata son de un gris que no existe en Chile. El cigarro le cuelga de los labios sin temblar, con la brasa quieta como un punto final. 'Tres manos', murmura. 'En tres manos voy a saber todo de ti.'" },
         ],
         presentacion: "El Croata no te mira: te calcula. Frío como témpano, lleva cuenta de cada gesto tuyo. 'Veamos cuál pesa más: tu ojo o mi paciencia.'",
         dialogos: d("Dicen que tienes ojo. Yo tengo paciencia de hielo. Mano a mano: veamos cuál pesa más.", "Frío como soy, esto me hierve la sangre. Buen juego, forastero.", "Tu cara te delató tres manos atrás. Aprende a mentir.") },
@@ -594,6 +598,7 @@ export const CAMPANA: Escenario[] = [
         cinematica: [
           { escena: "cap-club", texto: "Madame Ruiz, el Turco Fino, El Comisario: todos, a su manera, te dejaron ver lo mismo. Acá abajo el que manda no se sienta a jugar limpio. Se sienta a cobrar." },
           { escena: "jefe-senador", texto: "El Senador llega cuando ya nadie lo espera, como llegan los que mandan. No te mira mientras se sienta: mira el cacho, calculando. Bajo la mesa, algo brilla un segundo de más." },
+          { escena: "retrato-senador", texto: "De cerca, El Senador sonríe como en los afiches, pero los lentes no alcanzan a taparle el cálculo. 'Muchacho', dice mientras acomoda el cacho sin mirarlo, 'esto no es un juego: es una elección. Y yo no pierdo elecciones.'" },
         ],
         presentacion: "El Senador llega tarde, como los que mandan. Se sienta sin saludar. 'Yo hago las leyes de esta mesa, muchacho. Y la primera es que yo gano.'",
         dialogos: d("Yo hago las leyes de esta mesa, muchacho. Y la primera es que yo gano.", "Esto… esto no se compra. Maldito talento. Te van a estar esperando arriba.", "El poder no se reparte, se quita. Y a ti te lo acabo de quitar.") },
@@ -655,6 +660,7 @@ export const CAMPANA: Escenario[] = [
         cinematica: [
           { escena: "cap-cumbre", texto: "El Heredero, la Jueza: los últimos peldaños antes del trono. Cada mesa que ganaste en esta ciudad, cada capítulo, te trajo hasta este ventanal con todo Chile encendido a tus pies." },
           { escena: "jefe-rey", texto: "Treinta años sentado en el mismo sillón, contra el mismo ventanal, y ni una vez tuvo que levantarse. El Rey del Cacho no te mira con miedo ni con desprecio: te mira como quien ya ha visto morir a cien iguales a ti." },
+          { escena: "retrato-rey", texto: "De cerca, el Rey del Cacho tiene la calma de los que nunca conocieron la derrota. Ni una arruga de miedo: puro oficio. 'Treinta años esperé un rival', dice, y por primera vez en la noche suena sincero. 'Ojalá seas tú.'" },
         ],
         presentacion: "Treinta años invicto, sentado contra el ventanal con todo Chile a sus pies. El Rey del Cacho sonríe como quien ya ganó. 'La leyenda termina aquí, mano a mano.'",
         dialogos: d("Subiste desde el barro hasta mi mesa. Eso ya es leyenda. Pero la leyenda termina aquí, mano a mano.", "Treinta años… y un don nadie del puerto me destrona. El cacho es tuyo. Chile es tuyo.", "Yo SOY el cacho, muchacho. Vuelve al barro de donde saliste.") },
@@ -684,6 +690,7 @@ export const REY_VERDADERO: RivalHistoria = {
   cinematica: [
     { escena: "cap-cumbre", texto: "El giro todavía te zumba en los oídos: el Rey de la vitrina era una fachada. Sigues a tu aliado por un pasillo que el penthouse escondía, hasta una puerta sin número, al fondo de todo." },
     { escena: "jefe-patron", texto: "La puerta se abre a una pieza sin ventanas. No hay aplausos esperándote esta vez, ni ventanal con la ciudad. Sólo una ampolleta, un hombre sin edad, y treinta años de silencio esperando a que alguien cruzara ese umbral." },
+          { escena: "retrato-patron", texto: "De cerca… no hay 'de cerca'. La ampolleta le queda encima y aun así la cara del Patrón sigue en sombra, como si la luz le tuviera miedo. Sólo se le ven los dientes cuando dice: 'Treinta años. Juguemos.'" },
   ],
   presentacion:
     "La pieza no tiene ventanas. Bajo una sola ampolleta, un hombre sin edad baraja un cacho más viejo que Santiago. No te mira: ya sabe cómo termina esto, o eso cree. 'Treinta años esperando a alguien que llegara hasta acá', dice la voz. 'Siéntate. La banca te recibe.'",

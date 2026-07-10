@@ -114,6 +114,18 @@ function FichaRival({ t, tam = 96 }: { t: VistaHistoria; tam?: number }) {
   );
 }
 
+/** Placa de cine al entrar a un capítulo: se muestra sola y se desvanece. */
+function PlacaCapitulo({ idx, nombre, lugar }: { idx: number; nombre: string; lugar: string }) {
+  return (
+    <div className="placa-capitulo" aria-hidden="true">
+      <span className="pc-num">Capítulo {idx + 1}</span>
+      <span className="pc-nombre">{nombre}</span>
+      <span className="pc-filete" />
+      <span className="pc-lugar">{lugar}</span>
+    </div>
+  );
+}
+
 export function PantallaHistoria({
   snap,
   transporte,
@@ -125,6 +137,19 @@ export function PantallaHistoria({
 }) {
   const t = snap.historia!;
   const r = t.rival;
+
+  // La placa de capítulo: una vez por capítulo, al pisar el barrio nuevo.
+  const placaVista = useRef(-1);
+  const [placa, setPlaca] = useState(false);
+  useEffect(() => {
+    if (t.faseHistoria === "intro" && t.narrativa.intro && placaVista.current !== t.escenario.idx) {
+      placaVista.current = t.escenario.idx;
+      setPlaca(true);
+      const timer = setTimeout(() => setPlaca(false), 2600);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [t.faseHistoria, t.narrativa.intro, t.escenario.idx]);
 
   // Ambiente sonoro de la campaña: sting de evento, sting de jefe, y el final
   // (que además queda registrado en el palmarés). Una vez por pantalla.
@@ -163,8 +188,10 @@ export function PantallaHistoria({
             {t.escenario.lugar} · Cap. {t.escenario.idx + 1}/{t.escenario.total}
           </span>
           <h1 className="hist-titulo">{t.escenario.nombre}</h1>
-          <Escena escena={c.escena} />
-          <p className="hist-ambiente">{c.texto}</p>
+          <div className="beat" key={c.idx}>
+            <Escena escena={c.escena} />
+            <p className="hist-ambiente">{c.texto}</p>
+          </div>
           {c.total > 1 && (
             <div className="pasaje-dots" aria-label={`Pasaje ${c.idx + 1} de ${c.total}`}>
               {Array.from({ length: c.total }).map((_, i) => (
@@ -188,6 +215,7 @@ export function PantallaHistoria({
     }
     return (
       <div className="pantalla historia-pantalla" style={estiloCapitulo(t.escenario.idx)}>
+        {placa && <PlacaCapitulo idx={t.escenario.idx} nombre={t.escenario.nombre} lugar={t.escenario.lugar} />}
         {t.narrativa.prologo && <p className="hist-prologo">{t.narrativa.prologo}</p>}
         <span className="hist-kicker">
           {t.escenario.lugar} · Cap. {t.escenario.idx + 1}/{t.escenario.total}
@@ -263,8 +291,10 @@ export function PantallaHistoria({
         <div className="pantalla historia-pantalla hist-boss-caido" style={estiloCapitulo(t.escenario.idx)}>
           <span className="hist-kicker">{t.escenario.nombre}</span>
           <h1 className="hist-titulo hist-gano">Cayó el jefe</h1>
-          <Escena escena={b.escena} />
-          <p className="hist-ambiente">{b.texto}</p>
+          <div className="beat" key={b.idx}>
+            <Escena escena={b.escena} />
+            <p className="hist-ambiente">{b.texto}</p>
+          </div>
           {b.total > 1 && (
             <div className="pasaje-dots" aria-label={`Pasaje ${b.idx + 1} de ${b.total}`}>
               {Array.from({ length: b.total }).map((_, i) => (
@@ -544,8 +574,10 @@ export function PantallaHistoria({
     <div className={"pantalla historia-pantalla hist-final" + (esMalo ? " hist-final-malo" : "")} style={estiloCapitulo(t.escenario.idx)}>
       <span className="hist-kicker">{esMalo ? "Penthouse, lo más alto de Santiago" : t.escenario.lugar}</span>
       <h1 className={"hist-titulo " + (esMalo ? "hist-perdio" : "hist-gano")}>{fin.titulo}</h1>
-      <Escena escena={beat.escena} />
-      <p className="hist-ambiente">{beat.texto}</p>
+      <div className="beat" key={beat.idx}>
+        <Escena escena={beat.escena} />
+        <p className="hist-ambiente">{beat.texto}</p>
+      </div>
       {beat.total > 1 && (
         <div className="pasaje-dots" aria-label={`Pasaje ${beat.idx + 1} de ${beat.total}`}>
           {Array.from({ length: beat.total }).map((_, i) => (

@@ -958,3 +958,90 @@ button { touch-action: manipulation; }
 .cua-cuerpo b { font-family: var(--display); font-size: 15px; color: var(--hueso); font-weight: 600; letter-spacing: 0.3px; }
 .cua-cuerpo i { font-size: 12.5px; color: var(--tenue); font-style: italic; line-height: 1.45; }
 .cua-vacio { margin: 0; font-size: 13px; color: var(--tenue); font-style: italic; line-height: 1.5; }
+
+/* ============================================================
+   NIVEL DE CINE: estampas que respiran, placas de capítulo y
+   fundidos entre pasajes.
+   ============================================================ */
+
+/* Las estampas respiran: luces que titilan, humo que sube, chispas. */
+@keyframes esc-flicker {
+  0%, 84%, 100% { opacity: 1; }
+  86% { opacity: 0.5; }
+  88% { opacity: 0.92; }
+  93% { opacity: 0.62; }
+  96% { opacity: 1; }
+}
+@keyframes esc-brilla {
+  0%, 100% { opacity: 0.65; }
+  50% { opacity: 1; }
+}
+@keyframes esc-humo {
+  0% { transform: translateY(0); opacity: 0.38; }
+  60% { opacity: 0.2; }
+  100% { transform: translateY(-8px); opacity: 0.04; }
+}
+@keyframes esc-titila {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+@keyframes esc-chispa {
+  0% { transform: translateY(0); opacity: 0.85; }
+  100% { transform: translateY(-11px); opacity: 0; }
+}
+.esc-flicker { animation: esc-flicker 3.8s linear infinite; }
+.esc-brilla { animation: esc-brilla 3.2s ease-in-out infinite; }
+.esc-humo { animation: esc-humo 4.2s ease-out infinite; }
+.esc-titila { animation: esc-titila 2.8s ease-in-out infinite; }
+.esc-chispa { animation: esc-chispa 1.7s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .escena * { animation: none !important; }
+}
+
+/* La placa de capítulo: un cartel de cine a pantalla completa que se
+   desvanece solo (no bloquea nada: pointer-events none). */
+@keyframes placa-cine {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes placa-texto {
+  0% { opacity: 0; transform: translateY(10px); letter-spacing: 6px; }
+  18% { opacity: 1; transform: none; }
+  100% { letter-spacing: 8px; }
+}
+.placa-capitulo {
+  position: fixed; inset: 0; z-index: 60; pointer-events: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  background:
+    radial-gradient(700px 420px at 50% 40%, rgba(143, 45, 36, 0.16), transparent 70%),
+    var(--tinta);
+  animation: placa-cine 2.5s ease forwards;
+}
+.pc-num {
+  font-size: 12px; letter-spacing: 5px; text-transform: uppercase; color: var(--sangre-viva);
+  animation: placa-texto 2.5s ease forwards;
+}
+.pc-nombre {
+  font-family: var(--display); font-size: 34px; color: var(--hueso); letter-spacing: 2px;
+  animation: placa-texto 2.5s ease forwards;
+}
+.pc-lugar { font-size: 13px; font-style: italic; color: var(--tenue); animation: placa-texto 2.5s ease forwards; }
+.pc-filete { width: 60px; height: 1px; background: linear-gradient(90deg, transparent, var(--oro), transparent); }
+@media (prefers-reduced-motion: reduce) {
+  .placa-capitulo, .pc-num, .pc-nombre, .pc-lugar { animation-duration: 1.2s; }
+}
+
+/* Fundido entre pasajes de una cinemática (la clave del contenedor cambia). */
+@keyframes beat-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.beat {
+  display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%;
+  animation: beat-in 0.45s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .beat { animation: none; }
+}

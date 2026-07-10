@@ -163,17 +163,16 @@ describe("campaña", () => {
     expect(new Set(huellas).size).toBe(bosses.length);
   });
 
-  it("todos los jefes (y el Patrón) traen una cinemática de entrada de 2 pasajes, cada uno con su estampa", () => {
+  it("todos los jefes (y el Patrón) traen una cinemática de 3 pasajes que cierra en primer plano", () => {
     const bosses = [...CAMPANA.map((e) => e.rivales[e.rivales.length - 1]!), REY_VERDADERO];
-    const escenas = new Set<string>();
     for (const b of bosses) {
       expect(b.cinematica, `${b.id} cinemática`).toBeTruthy();
-      expect(b.cinematica!.length).toBe(2);
+      expect(b.cinematica!.length).toBe(3); // plano general -> plano medio -> primer plano
       for (const beat of b.cinematica!) {
         expect(beat.escena, `${b.id} escena`).toBeTruthy();
         expect(beat.texto, `${b.id} texto`).toBeTruthy();
-        escenas.add(beat.escena);
       }
+      expect(b.cinematica![2]!.escena.startsWith("retrato-"), `${b.id} cierra en retrato`).toBe(true);
     }
   });
 
@@ -198,12 +197,13 @@ describe("campaña", () => {
     expect(v.faseHistoria).toBe("intro");
     expect(v.cinematica).toBeTruthy();
     expect(v.cinematica!.idx).toBe(0);
-    expect(v.cinematica!.total).toBe(2);
+    expect(v.cinematica!.total).toBe(3);
     expect(v.cinematica!.esUltimo).toBe(false);
 
     th.historiaContinuar!();
+    th.historiaContinuar!();
     v = th.instantanea().historia!;
-    expect(v.cinematica!.idx).toBe(1);
+    expect(v.cinematica!.idx).toBe(2);
     expect(v.cinematica!.esUltimo).toBe(true);
 
     th.historiaContinuar!(); // se acabó la cinemática: no quedan más pasajes

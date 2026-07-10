@@ -358,7 +358,7 @@ function Escenas({ escena }: { escena: string }) {
           {/* taberna con ventana encendida */}
           <path d="M8 30 h96 v62 H8 z" fill={NEGRO} />
           <path d="M4 30 L56 12 L108 30 Z" fill="#070609" />
-          <rect x="26" y="46" width="22" height="26" fill={ORO} opacity="0.55" />
+          <g className="esc-flicker"><rect x="26" y="46" width="22" height="26" fill={ORO} opacity="0.55" /></g>
           <rect x="30" y="50" width="6" height="8" fill={NEGRO} opacity="0.6" />
           <path d="M26 72 l60 22" stroke={ORO} strokeOpacity="0.14" strokeWidth="10" />
           {/* gaviota lejana */}
@@ -389,7 +389,7 @@ function Escenas({ escena }: { escena: string }) {
           {/* farol colgante */}
           <line x1="160" y1="0" x2="160" y2="34" stroke={NEGRO} strokeWidth="2.4" />
           <circle cx="160" cy="40" r="7" fill={ORO} opacity="0.85" />
-          <circle cx="160" cy="40" r="16" fill={ORO} opacity="0.14" />
+          <g className="esc-brilla"><circle cx="160" cy="40" r="16" fill={ORO} opacity="0.14" /></g>
           <path d="M160 48 L128 132 L192 132 Z" fill={ORO} opacity="0.07" />
         </g>
       );
@@ -420,7 +420,7 @@ function Escenas({ escena }: { escena: string }) {
           <circle cx="168" cy="112" r="5" fill="#211d29" />
           {/* farol delantero apagado y chispas al fondo */}
           <circle cx="240" cy="58" r="5" fill="#3a3038" stroke={ORO} strokeOpacity="0.4" />
-          <g fill={ORO}>
+          <g className="esc-chispa" fill={ORO}>
             <circle cx="277" cy="86" r="1.6" opacity="0.9" />
             <circle cx="284" cy="94" r="1.1" opacity="0.7" />
             <circle cx="271" cy="96" r="1" opacity="0.6" />
@@ -445,7 +445,7 @@ function Escenas({ escena }: { escena: string }) {
           {/* foco colgante */}
           <line x1="200" y1="0" x2="200" y2="30" stroke={NEGRO} strokeWidth="2.5" />
           <path d="M192 30 h16 l-3 8 h-10 z" fill={NEGRO} />
-          <circle cx="200" cy="44" r="6" fill={ORO} opacity="0.95" />
+          <circle className="esc-brilla" cx="200" cy="44" r="6" fill={ORO} opacity="0.95" />
           <path d="M200 50 L146 128 L254 128 Z" fill={ORO} opacity="0.1" />
           {/* mesa de paño */}
           <ellipse cx="200" cy="112" rx="86" ry="20" fill="#15251a" />
@@ -457,7 +457,7 @@ function Escenas({ escena }: { escena: string }) {
           <rect x="226" y="104" width="9" height="9" rx="2" fill="#e9e3d2" transform="rotate(14 230 108)" />
           <circle cx="216.5" cy="104.5" r="1.2" fill="#15110a" />
           {/* humo */}
-          <path d="M70 118 q10 -14 2 -28 q-8 -12 2 -24" stroke="#7a7484" strokeWidth="2" fill="none" opacity="0.35" strokeLinecap="round" />
+          <path className="esc-humo" d="M70 118 q10 -14 2 -28 q-8 -12 2 -24" stroke="#7a7484" strokeWidth="2" fill="none" opacity="0.35" strokeLinecap="round" />
         </g>
       );
 
@@ -476,17 +476,19 @@ function Escenas({ escena }: { escena: string }) {
           {/* lámpara de tres brazos */}
           <line x1="160" y1="0" x2="160" y2="22" stroke={NEGRO} strokeWidth="2.4" />
           <path d="M136 30 q24 -16 48 0" stroke={NEGRO} strokeWidth="3" fill="none" />
-          <circle cx="136" cy="33" r="3.6" fill={ORO} opacity="0.9" />
-          <circle cx="160" cy="26" r="3.6" fill={ORO} opacity="0.9" />
-          <circle cx="184" cy="33" r="3.6" fill={ORO} opacity="0.9" />
+          <g className="esc-brilla">
+            <circle cx="136" cy="33" r="3.6" fill={ORO} opacity="0.9" />
+            <circle cx="160" cy="26" r="3.6" fill={ORO} opacity="0.9" />
+            <circle cx="184" cy="33" r="3.6" fill={ORO} opacity="0.9" />
+          </g>
           <path d="M160 36 L108 128 L212 128 Z" fill={ORO} opacity="0.08" />
           {/* mesa redonda con copas */}
           <ellipse cx="160" cy="110" rx="64" ry="16" fill="#241016" />
           <ellipse cx="160" cy="106" rx="64" ry="16" fill="#33161b" />
           <ellipse cx="160" cy="106" rx="64" ry="16" fill="none" stroke={ORO} strokeOpacity="0.3" />
-          <g stroke="#e9e3d2" strokeWidth="1.4" opacity="0.7" fill="none">
-            <path d="M134 98 v-8 m-4 -3 h8 m-4 0 v3" />
-            <path d="M186 100 v-8 m-4 -3 h8 m-4 0 v3" />
+          <g stroke="#e9e3d2" strokeWidth="1.2" opacity="0.7" fill="none">
+            <path d="M130 84 h8 l-2.5 6 h-3 Z M134 90 v6 M131 96 h6" />
+            <path d="M182 86 h8 l-2.5 6 h-3 Z M186 92 v6 M183 98 h6" />
           </g>
         </g>
       );
@@ -501,11 +503,11 @@ function Escenas({ escena }: { escena: string }) {
           {/* cordillera al fondo */}
           <path d="M16 58 L70 34 L120 54 L170 30 L220 52 L270 38 L304 50 V114 H16 Z" fill="#10151d" />
           {/* skyline encendido */}
-          <g fill={ORO} opacity="0.65">
+          <g className="esc-titila"><g fill={ORO} opacity="0.65">
             {Array.from({ length: 24 }).map((_, i) => (
               <rect key={i} x={22 + i * 12} y={96 - ((i * 41) % 34)} width="7" height={((i * 41) % 34) + 18} opacity={0.25 + ((i * 17) % 6) / 10} />
             ))}
-          </g>
+          </g></g>
           {/* marco del ventanal */}
           <rect x="16" y="10" width="288" height="104" fill="none" stroke="#0a0810" strokeWidth="7" />
           <line x1="160" y1="10" x2="160" y2="114" stroke="#0a0810" strokeWidth="5" />
@@ -610,7 +612,7 @@ function Escenas({ escena }: { escena: string }) {
           <rect x="140" y="64" width="8" height="8" rx="1.8" fill="#e9e3d2" />
           <circle cx="144" cy="68" r="1.1" fill={SANGRE} />
           {/* humo de un cigarro dejado */}
-          <path d="M160 120 q8 -12 2 -24 q-6 -10 2 -20" stroke="#7a7484" strokeWidth="1.8" fill="none" opacity="0.4" strokeLinecap="round" />
+          <path className="esc-humo" d="M160 120 q8 -12 2 -24 q-6 -10 2 -20" stroke="#7a7484" strokeWidth="1.8" fill="none" opacity="0.4" strokeLinecap="round" />
         </g>
       );
 
@@ -759,7 +761,7 @@ function Escenas({ escena }: { escena: string }) {
           <rect x="0" y="0" width="320" height="96" fill="#1a1520" />
           <rect x="0" y="40" width="320" height="56" fill="#2a1d1a" opacity="0.8" />
           <circle cx="160" cy="92" r="26" fill={ORO} opacity="0.75" />
-          <circle cx="160" cy="92" r="44" fill={ORO} opacity="0.16" />
+          <g className="esc-brilla"><circle cx="160" cy="92" r="44" fill={ORO} opacity="0.16" /></g>
           {/* el río */}
           <rect x="0" y="92" width="320" height="24" fill="#141019" />
           <g stroke={ORO} strokeOpacity="0.4" strokeWidth="1.2">
@@ -864,7 +866,7 @@ function Escenas({ escena }: { escena: string }) {
         <g>
           <Suelo />
           <line x1="160" y1="0" x2="160" y2="28" stroke={NEGRO} strokeWidth="2.5" />
-          <circle cx="160" cy="36" r="6" fill={ORO} opacity="0.9" />
+          <circle className="esc-brilla" cx="160" cy="36" r="6" fill={ORO} opacity="0.9" />
           <path d="M160 42 L110 118 L210 118 Z" fill={ORO} opacity="0.1" />
           <path d="M0 128 h320 M0 134 h320" stroke="#241a12" strokeWidth="2" opacity="0.6" />
           <path d="M140 96 q20 -14 40 0 q4 14 -4 20 q-16 8 -32 0 q-8 -6 -4 -20 z" fill="#2a2118" stroke="#4a3c22" />
@@ -887,7 +889,7 @@ function Escenas({ escena }: { escena: string }) {
             <path d="M148 74 q12 -6 24 0 l4 38 q-16 6 -32 0 z" />
           </g>
           <path d="M178 90 l10 -3" stroke={NEGRO} strokeWidth="3" strokeLinecap="round" />
-          <path d="M189 88 q1 -18 0 -34" stroke="#9fb3c2" strokeWidth="1.4" fill="none" opacity="0.5" />
+          <path className="esc-humo" d="M189 88 q1 -18 0 -34" stroke="#9fb3c2" strokeWidth="1.4" fill="none" opacity="0.5" />
           <circle cx="190" cy="87" r="1.6" fill={SANGRE} opacity="0.8" />
         </g>
       );
@@ -936,14 +938,163 @@ function Escenas({ escena }: { escena: string }) {
           <rect x="0" y="0" width="320" height="140" fill="#050408" />
           <rect x="90" y="8" width="140" height="124" fill="#0a0810" />
           <rect x="90" y="8" width="140" height="124" fill="none" stroke="#000000" strokeWidth="8" />
-          <circle cx="160" cy="52" r="4" fill={ORO} opacity="0.85" />
-          <path d="M160 56 L136 110 L184 110 Z" fill={ORO} opacity="0.08" />
+          <g className="esc-flicker">
+            <circle cx="160" cy="52" r="4" fill={ORO} opacity="0.85" />
+            <path d="M160 56 L136 110 L184 110 Z" fill={ORO} opacity="0.08" />
+          </g>
           <g fill={NEGRO} opacity="0.9">
             <circle cx="160" cy="86" r="8" />
             <path d="M149 96 q11 -5 22 0 l3 22 q-14 5 -28 0 z" />
           </g>
           <rect x="0" y="0" width="20" height="140" fill="#050408" />
           <rect x="300" y="0" width="20" height="140" fill="#050408" />
+        </g>
+      );
+
+    // ---- Retratos de primer plano (tercer pasaje de la cinemática) ----
+
+    // Doña Berta: moño, arete de oro y un cigarrillo sin apuro.
+    case "retrato-berta":
+      return (
+        <g>
+          <ellipse cx="160" cy="64" rx="92" ry="58" fill={ORO} opacity="0.06" />
+          <path d="M88 140 q12 -44 72 -46 q60 2 72 46 z" fill={NEGRO} />
+          <ellipse cx="160" cy="60" rx="27" ry="31" fill={NEGRO} />
+          <ellipse cx="160" cy="26" rx="14" ry="10" fill={NEGRO} />
+          <path d="M148 26 q12 -7 24 0" stroke="#3a3440" strokeWidth="1.4" fill="none" />
+          {/* media cara iluminada, arrugas de treinta años */}
+          <path d="M160 32 q25 4 25 29 q0 22 -14 28 q-9 2 -11 -3 z" fill={PIEL} opacity="0.85" />
+          <path d="M170 52 q6 1 9 4 M169 66 q7 2 9 6 M172 78 q4 2 5 5" stroke="#8a6a4a" strokeWidth="1.1" fill="none" opacity="0.8" />
+          <path d="M168 50 h9" stroke={NEGRO} strokeWidth="2.4" strokeLinecap="round" />
+          <circle cx="134" cy="66" r="3" fill="none" stroke={ORO} strokeWidth="1.3" />
+          {/* cigarrillo con brasa */}
+          <path d="M172 84 l16 5" stroke="#e9e3d2" strokeWidth="2.6" strokeLinecap="round" />
+          <circle className="esc-brilla" cx="189" cy="89.5" r="1.8" fill={SANGRE} />
+          <path className="esc-humo" d="M190 86 q3 -10 -1 -18 q-3 -8 1 -14" stroke="#7a7484" strokeWidth="1.3" fill="none" opacity="0.45" />
+        </g>
+      );
+
+    // El Carnicero: cuello de toro, cicatriz en la ceja y el delantal manchado.
+    case "retrato-carnicero":
+      return (
+        <g>
+          <ellipse cx="160" cy="64" rx="96" ry="60" fill={SANGRE} opacity="0.05" />
+          <path d="M74 140 q10 -50 86 -52 q76 2 86 52 z" fill={NEGRO} />
+          {/* tira del delantal y mancha */}
+          <path d="M126 108 l14 32 M194 108 l-14 32" stroke="#2a2118" strokeWidth="7" />
+          <path d="M150 122 q12 -4 22 2 q6 8 -4 12 q-14 2 -20 -4 z" fill={SANGRE} opacity="0.4" />
+          <path d="M160 20 q30 0 30 34 q0 14 -6 22 q-10 12 -24 12 q-14 0 -24 -12 q-6 -8 -6 -22 q0 -34 30 -34 z" fill={NEGRO} />
+          {/* media cara: pomulo ancho y mandibula de piedra */}
+          <path d="M160 26 q26 2 26 30 q0 18 -9 26 q-9 8 -17 6 z" fill={PIEL} opacity="0.85" />
+          <path d="M166 44 h14" stroke={NEGRO} strokeWidth="3.4" strokeLinecap="round" />
+          <path d="M170 38 l7 -5" stroke={PIEL} strokeWidth="1.6" opacity="0.9" />
+          <path d="M167 52 q4 2 7 1" stroke={NEGRO} strokeWidth="2" strokeLinecap="round" />
+          <path d="M164 74 q8 2 12 -1" stroke="#6a4a34" strokeWidth="1.6" fill="none" />
+        </g>
+      );
+
+    // El Verdugo: un silencio con mandibula. Dos puntas de fierro por ojos.
+    case "retrato-verdugo":
+      return (
+        <g>
+          <path d="M160 4 L104 132 L216 132 Z" fill={ORO} opacity="0.05" />
+          <path d="M64 140 q14 -54 96 -56 q82 2 96 56 z" fill={NEGRO} />
+          <path d="M160 14 q34 0 34 38 q0 18 -8 28 q-12 14 -26 14 q-14 0 -26 -14 q-8 -10 -8 -28 q0 -38 34 -38 z" fill="#070609" />
+          {/* solo la mandibula recibe luz */}
+          <path d="M138 82 q22 14 44 0 q-6 12 -22 12 q-16 0 -22 -12 z" fill={PIEL} opacity="0.5" />
+          {/* dos puntas de fierro frio */}
+          <circle className="esc-brilla" cx="147" cy="56" r="1.8" fill="#7a95a5" />
+          <circle className="esc-brilla" cx="173" cy="56" r="1.8" fill="#7a95a5" />
+        </g>
+      );
+
+    // El Croata: pomulos de hielo, ojo gris y el cigarro que no tiembla.
+    case "retrato-croata":
+      return (
+        <g>
+          <rect x="0" y="0" width="320" height="140" fill="#0c1622" opacity="0.35" />
+          <ellipse cx="160" cy="62" rx="80" ry="56" fill="#9fb3c2" opacity="0.05" />
+          <path d="M96 140 q10 -40 64 -42 q54 2 64 42 z" fill={NEGRO} />
+          <path d="M160 18 q24 0 24 34 q0 20 -8 30 q-8 10 -16 10 q-8 0 -16 -10 q-8 -10 -8 -30 q0 -34 24 -34 z" fill={NEGRO} />
+          {/* el filo del pomulo, iluminado desde un costado */}
+          <path d="M160 26 q20 4 20 28 q0 18 -8 26 l-6 4 q-4 -2 -4 -6 z" fill={PIEL} opacity="0.7" />
+          <path d="M164 48 l12 0" stroke={NEGRO} strokeWidth="2.6" strokeLinecap="round" />
+          <circle className="esc-brilla" cx="170" cy="48" r="1.6" fill="#9fb3c2" />
+          {/* cigarro perfectamente quieto */}
+          <path d="M170 78 l14 2" stroke="#e9e3d2" strokeWidth="2.4" strokeLinecap="round" />
+          <circle cx="185" cy="80.5" r="1.6" fill={SANGRE} />
+          <path className="esc-humo" d="M186 77 q1 -14 0 -26" stroke="#9fb3c2" strokeWidth="1.2" fill="none" opacity="0.5" />
+        </g>
+      );
+
+    // El Senador: sombrero fino, lentes con reflejo y sonrisa de afiche.
+    case "retrato-senador":
+      return (
+        <g>
+          <path d="M0 0 q10 70 0 140 h30 q-12 -70 0 -140 z" fill="#3a1a2e" opacity="0.5" />
+          <path d="M320 0 q-10 70 0 140 h-30 q12 -70 0 -140 z" fill="#3a1a2e" opacity="0.5" />
+          <ellipse cx="160" cy="64" rx="90" ry="58" fill={ORO} opacity="0.06" />
+          <path d="M92 140 q12 -42 68 -44 q56 2 68 44 z" fill={NEGRO} />
+          {/* solapa y prendedor */}
+          <path d="M144 104 l16 20 l16 -20" stroke="#211d29" strokeWidth="3" fill="none" />
+          <circle className="esc-brilla" cx="140" cy="116" r="2.2" fill={ORO} />
+          <ellipse cx="160" cy="62" rx="25" ry="28" fill={NEGRO} />
+          {/* sombrero fino */}
+          <path d="M126 40 q34 -10 68 0 l-6 -6 q-28 -20 -56 0 z" fill="#070609" />
+          <ellipse cx="160" cy="41" rx="36" ry="5" fill="#070609" />
+          <path d="M132 36 q28 -8 56 0" stroke={ORO} strokeOpacity="0.5" strokeWidth="1.4" fill="none" />
+          {/* media cara con lentes redondos */}
+          <path d="M160 46 q22 4 22 24 q0 16 -10 22 q-8 4 -12 0 z" fill={PIEL} opacity="0.8" />
+          <circle cx="149" cy="60" r="6.5" fill="none" stroke="#211d29" strokeWidth="1.6" />
+          <circle cx="171" cy="60" r="6.5" fill="none" stroke="#211d29" strokeWidth="1.6" />
+          <path d="M155 60 h10" stroke="#211d29" strokeWidth="1.4" />
+          <path className="esc-brilla" d="M167 57 l5 3" stroke={ORO} strokeWidth="1.4" opacity="0.8" />
+          <path d="M152 82 q8 4 16 0" stroke="#6a4a34" strokeWidth="1.6" fill="none" />
+        </g>
+      );
+
+    // El Rey del Cacho: canas de tres decadas, ojo de halcon, prendedor de oro.
+    case "retrato-rey":
+      return (
+        <g>
+          <g className="esc-titila"><g fill={ORO} opacity="0.3">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <rect key={i} x={12 + i * 32} y={90 - ((i * 29) % 40)} width="6" height={((i * 29) % 40) + 12} />
+            ))}
+          </g></g>
+          <ellipse cx="160" cy="62" rx="92" ry="58" fill={ORO} opacity="0.07" />
+          <path d="M90 140 q12 -44 70 -46 q58 2 70 46 z" fill={NEGRO} />
+          {/* corbata y prendedor */}
+          <path d="M160 96 l-7 18 l7 22 l7 -22 z" fill="#211d29" />
+          <circle className="esc-brilla" cx="160" cy="112" r="2.4" fill={ORO} />
+          <ellipse cx="160" cy="58" rx="26" ry="30" fill={NEGRO} />
+          {/* canas peinadas hacia atras */}
+          <path d="M136 44 q6 -22 24 -22 q18 0 24 22 q-10 -10 -24 -10 q-14 0 -24 10 z" fill="#c8c4bc" opacity="0.85" />
+          {/* media cara: el ojo que lo ha visto todo */}
+          <path d="M160 32 q24 4 24 28 q0 20 -12 27 q-9 4 -12 -1 z" fill={PIEL} opacity="0.85" />
+          <path d="M166 50 l12 -2" stroke={NEGRO} strokeWidth="2.2" strokeLinecap="round" />
+          <circle cx="172" cy="52" r="1.7" fill="#0a0810" />
+          <circle cx="172.6" cy="51.4" r="0.5" fill="#e9e3d2" />
+          <path d="M164 76 q8 2 13 -2" stroke="#6a4a34" strokeWidth="1.5" fill="none" />
+        </g>
+      );
+
+    // El Patron: la luz le tiene miedo. Solo el menton y dos brillos de ojos.
+    case "retrato-patron":
+      return (
+        <g>
+          <rect x="0" y="0" width="320" height="140" fill="#050408" />
+          <g className="esc-flicker">
+            <circle cx="160" cy="10" r="5" fill={ORO} opacity="0.9" />
+            <path d="M160 14 L112 130 L208 130 Z" fill={ORO} opacity="0.06" />
+          </g>
+          <path d="M84 140 q14 -46 76 -48 q62 2 76 48 z" fill="#070609" />
+          <path d="M160 20 q30 0 30 36 q0 18 -9 28 q-10 12 -21 12 q-11 0 -21 -12 q-9 -10 -9 -28 q0 -36 30 -36 z" fill="#030205" />
+          {/* el menton, lo unico que la ampolleta alcanza */}
+          <path d="M144 86 q16 10 32 0 q-4 10 -16 10 q-12 0 -16 -10 z" fill={PIEL} opacity="0.35" />
+          {/* dos brillos donde deberian ir los ojos */}
+          <circle className="esc-brilla" cx="149" cy="58" r="1.2" fill="#e9e3d2" opacity="0.7" />
+          <circle className="esc-brilla" cx="171" cy="58" r="1.2" fill="#e9e3d2" opacity="0.7" />
         </g>
       );
 
@@ -1024,7 +1175,7 @@ function Escenas({ escena }: { escena: string }) {
             ))}
           </g>
           <path d="M150 96 l8 -3 7 3 -2 8 -6 2 -6 -3 z" fill="#241a12" stroke={ORO} strokeOpacity="0.5" transform="rotate(40 154 100)" />
-          <g fill={ORO}>
+          <g className="esc-chispa" fill={ORO}>
             {Array.from({ length: 6 }).map((_, i) => (
               <circle key={i} cx={210 + i * 8} cy={70 - ((i * 13) % 20)} r="1.4" opacity={0.5 - i * 0.07} />
             ))}
