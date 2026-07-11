@@ -11,6 +11,7 @@
 //     poder "Suerte" (re-tira tu mano).
 import { TransporteLocal, type Instantanea, type Transporte } from "./transporte";
 import { guardarPrefs } from "./prefs";
+import { registrarLogro } from "./palmares";
 import {
   rivalActual,
   escenarioActual,
@@ -30,6 +31,8 @@ import {
   umbralMaraton,
   costoItem,
   OFICIOS,
+  LOGROS,
+  SECRETOS,
   bonoDesafio,
   opcionesApuesta,
   ATRIBUTOS,
@@ -88,6 +91,9 @@ export class TransporteHistoria implements Transporte {
   private comentario: { texto: string; n: number } | null = null;
   private comentarioN = 0;
   private rondaComentada = 0;
+  /** Logros recién desbloqueados (para el aviso en pantalla). */
+  private logro: { nombres: string[]; n: number } | null = null;
+  private logroN = 0;
   /** Pasaje del epílogo de capítulo, tras vencer al jefe (fase "victoria"). */
   private epilogoIdx = 0;
   /** El candado del barrio: último fallo y desenlace al abrirlo. */
@@ -241,6 +247,18 @@ export class TransporteHistoria implements Transporte {
     }
   }
 
+  /** Desbloquea logros (si son nuevos) y prepara el aviso para la UI. */
+  private otorgar(...ids: (string | false | null | undefined)[]): void {
+    const nuevos: string[] = [];
+    for (const id of ids) {
+      if (id && registrarLogro(id)) {
+        const meta = LOGROS.find((l) => l.id === id);
+        if (meta) nuevos.push(meta.nombre);
+      }
+    }
+    if (nuevos.length > 0) this.logro = { nombres: nuevos, n: ++this.logroN };
+  }
+
   /** El jefe comenta la ronda recién resuelta (una frase por ronda, si aplica). */
   private comentarRonda(pub: NonNullable<Instantanea["publico"]>) {
     const rival = this.rivalEnCurso();
@@ -278,6 +296,15 @@ export class TransporteHistoria implements Transporte {
         this.botin = { premioBase: rival.plata, apuestaExtra: this.apuestaMonto, bono, desafioCumplido, total };
         this.h.plata += total;
         this.guardar();
+        // Hazañas de la mesa ganada (persisten en el palmarés).
+        const yo = pub.jugadores.find((j) => j.id === HUMANO_ID);
+        this.otorgar(
+          "primera-sangre",
+          yo && yo.stats.dadosPerdidos === 0 && "sin-un-rasguno",
+          yo && yo.stats.calzosAcertados >= 1 && "calzo-fino",
+          this.apuestaMonto > 0 && this.apuestaMonto === rival.plata * 2 && "doblar-o-nada",
+          yo && yo.yaJugoObligado && "desde-el-barro",
+        );
         this.epilogoIdx = 0;
         this.fase = "victoria";
       } else {
@@ -314,6 +341,10 @@ export class TransporteHistoria implements Transporte {
       this.acertijoDesenlace = a.desenlace;
       this.acertijoFallo = null;
       this.guardar();
+      this.otorgar(
+        "ganzua",
+        SECRETOS.every((sec) => this.h.dilemasResueltos.includes(sec.clave)) && "tres-llaves",
+      );
     } else {
       this.acertijoFallo = a.fallo; // sin castigo: el candado espera
     }
@@ -373,6 +404,7 @@ export class TransporteHistoria implements Transporte {
     this.eventoResultado = op.resultado;
     this.eventoEfecto = op.efecto ?? null;
     if (!this.h.dilemasResueltos.includes(ev.clave)) this.h.dilemasResueltos.push(ev.clave);
+    if (ev.clave === "cumbre-campana") this.otorgar("padrino-cumplido"); // el arco del cabro, cerrado
     this.guardar();
     this.emitir();
   }
@@ -441,6 +473,7 @@ export class TransporteHistoria implements Transporte {
         this.finalTipo = "verdadero";
         this.finalBeatIdx = 0;
         this.secretoActivo = false;
+        this.otorgar("rey-caido", "detras-vitrina", (this.h.leyenda ?? 0) > 0 && "leyenda-viva");
         this.desmontar();
         this.fase = "final";
         this.guardar();
@@ -459,6 +492,7 @@ export class TransporteHistoria implements Transporte {
           } else {
             this.finalTipo = tipo; // completado=true lo dejó avanzar()
             this.finalBeatIdx = 0;
+            this.otorgar("rey-caido", (this.h.leyenda ?? 0) > 0 && "leyenda-viva");
             this.desmontar();
             this.fase = "final";
           }
@@ -670,6 +704,7 @@ export class TransporteHistoria implements Transporte {
       comentarioMesa: this.fase === "mesa" ? this.comentario : null,
       leyenda: this.h.leyenda ?? 0,
       oficio: (this.h.oficio && OFICIOS.find((o) => o.id === this.h.oficio)) || null,
+      logro: this.logro,
       apuesta:
         this.fase === "intro"
           ? { elegida: this.apuestaMonto, opciones: opcionesApuesta(this.h.plata, rival.plata), premioBase: rival.plata }

@@ -1133,6 +1133,59 @@ export const SECRETOS: { clave: string; nombre: string; pista: string }[] = [
   { clave: "sec-madame", nombre: "El cofre de Madame", pista: "Terciopelo con cerradura, bajo el río." },
 ];
 
+// ---------------------------------------------------------------------------
+// LOGROS: hazañas persistentes (viven en el palmarés, se lucen en el Cuaderno)
+// ---------------------------------------------------------------------------
+
+export interface Logro {
+  id: string;
+  nombre: string;
+  desc: string;
+}
+
+export const LOGROS: Logro[] = [
+  { id: "primera-sangre", nombre: "Primera sangre", desc: "Gana tu primera mesa de la campaña." },
+  { id: "sin-un-rasguno", nombre: "Sin un rasguño", desc: "Gana una mesa sin perder ni un dado." },
+  { id: "calzo-fino", nombre: "Calzo fino", desc: "Gana una mesa con un calzo acertado." },
+  { id: "doblar-o-nada", nombre: "Doblar o nada", desc: "Gana una mesa con la apuesta doblada al máximo." },
+  { id: "desde-el-barro", nombre: "Desde el barro", desc: "Gana una mesa habiendo pasado por el obligado." },
+  { id: "ganzua", nombre: "Ganzúa", desc: "Abre tu primer candado de cifra." },
+  { id: "tres-llaves", nombre: "Las tres llaves", desc: "Abre los tres candados del bajo mundo." },
+  { id: "padrino-cumplido", nombre: "Padrino de verdad", desc: "Completa el arco del cabro del puerto, hasta la cumbre." },
+  { id: "rey-caido", nombre: "El Rey ha caído", desc: "Corona la campaña, con el final que sea." },
+  { id: "detras-vitrina", nombre: "Detrás de la vitrina", desc: "Alcanza el final verdadero." },
+  { id: "leyenda-viva", nombre: "Leyenda viva", desc: "Corona la campaña en Nueva Partida+ (Leyenda)." },
+];
+
+// ---------------------------------------------------------------------------
+// EL FIADOR: el hombre que atiende la tienda entre capítulos. Comenta tu
+// camino (y tus marcas) con oficio de prestamista viejo.
+// ---------------------------------------------------------------------------
+
+const FIADOR_POR_CAPITULO: Record<number, string> = {
+  1: "Primera vez en años que veo a alguien salir de la pocilga con los bolsillos sonando. Gasta con cabeza, forastero: en La Vega los dados pegan más fuerte y los muertos guardan menos silencio.",
+  2: "¿Así que la Maestranza? Fierro, hollín y mala leche. Llévate algo bajo la manga, que entre los rieles la honestidad no abriga a nadie.",
+  3: "San Diego de noche es una libreta de deudas con patas. Yo que tú invierto en Ojo: en la trastienda, la letra chica mata más gente que el cuchillo.",
+  4: "¿Bajas al Subterráneo? Ahí el terciopelo tapa las armas y las sonrisas cobran interés. Ándate elegante… y desconfiado.",
+  5: "La Cumbre. Treinta años vendiendo y jamás le vendí dos veces al mismo que subió. Que seas el primero en volver a comprarme, forastero.",
+};
+
+/** Extras del Fiador según tus marcas (una sola, la primera que calce). */
+const FIADOR_POR_MARCA: [string, string][] = [
+  ["aliado", "Ah, y el Carnicero manda saludos. A los amigos de mis amigos les atiendo con las dos manos."],
+  ["padrino", "El cabro ese que te sigue vino a comprarme cordones. Tienes buen ojo para la gente, no sólo para los dados."],
+  ["saqueador", "Y cuida esa fama tuya: hasta acá llegó el cuento de la billetera de La Vega. Yo no juzgo. Yo cobro."],
+  ["delator", "Dicen que en San Diego alguien pagó una deuda ajena bajo el puente. Feo asunto. En fin: ¿qué va a llevar?"],
+  ["honrado", "Y me contaron lo del finado de La Vega. Respetar a los muertos sale gratis y paga toda la vida. Bien ahí."],
+];
+
+/** Lo que dice el Fiador al recibirte en la tienda (según capítulo y marcas). */
+export function fraseFiador(escenarioIdx: number, marcas: string[]): string {
+  const base = FIADOR_POR_CAPITULO[escenarioIdx] ?? "Sobreviviste otra cuadra, forastero. Con plata se compra de todo aquí… hasta una vida más larga.";
+  const extra = FIADOR_POR_MARCA.find(([marca]) => marcas.includes(marca));
+  return extra ? base + " " + extra[1] : base;
+}
+
 /** Los ECOS DEL CAMINO: una línea por marca notable, para el cierre del final.
  *  Así el epílogo menciona TUS decisiones, no sólo el tipo de final. */
 const ECOS: Record<string, string> = {
@@ -1440,6 +1493,8 @@ export interface VistaHistoria {
   leyenda: number;
   /** El oficio del tahur (estilo elegido al empezar la campana). */
   oficio: Oficio | null;
+  /** Logros recién desbloqueados (para el aviso; n cambia con cada tanda). */
+  logro: { nombres: string[]; n: number } | null;
   /** La apuesta de la mesa (en la intro): monto elegido y opciones. */
   apuesta: { elegida: number; opciones: number[]; premioBase: number } | null;
   /** El desafío de la casa de esta mesa (intro, mesa y victoria). */

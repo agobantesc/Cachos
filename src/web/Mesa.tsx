@@ -369,6 +369,16 @@ export function Mesa({
           const j = p.jugadores.find((x) => x.id === id)!;
           const esTurno = p.turnoJugadorId === id && p.fase === "EN_RONDA";
           const ev = ultimoEventoDe(id);
+          // Reacción de la cara al resolverse la ronda: mueca del que perdió,
+          // sonrisa del que calzó justo.
+          const res = p.fase === "FIN_RONDA" ? p.ultimaResolucion : null;
+          const animo = res
+            ? res.perdedorId === id
+              ? ("molesto" as const)
+              : res.tipo === "CALZO" && res.perdedorId === null && res.calzadorId === id
+                ? ("feliz" as const)
+                : null
+            : null;
           return (
             <div
               key={id}
@@ -381,7 +391,7 @@ export function Mesa({
             >
               {esTurno && <span className="vaso-turno" aria-hidden="true">juega</span>}
               <div className="vaso-cara">
-                <Avatar id={id} nombre={j.nombre} tam={38} anillo={id === snap.miId} />
+                <Avatar id={id} nombre={j.nombre} tam={38} anillo={id === snap.miId} animo={animo} />
               </div>
               <div className="vaso-nombre">
                 {j.nombre} {id === snap.miId && <span className="yo">(tú)</span>}
@@ -514,7 +524,7 @@ function Revelacion({
 
   return (
     <div className="revelacion">
-      <div className="revelacion-caja">
+      <div className={"revelacion-caja" + (res.siciliana ? " sacudida" : "")}>
         <h2>{esPaso ? "Paso dudado" : "Revelación"}</h2>
         <p className="resultado">{texto}</p>
         {res.siciliana && (

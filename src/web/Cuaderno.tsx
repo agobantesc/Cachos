@@ -2,7 +2,7 @@
 // recorridos, las marcas que dejaron tus decisiones, los secretos del bajo
 // mundo (candados de cifra) y los finales que ya viste. Lo que no has vivido
 // aparece como "???": el cuaderno se escribe jugando.
-import { CAMPANA, FINALES, MARCAS_INFO, SECRETOS, OFICIOS, normalizar } from "./historia";
+import { CAMPANA, FINALES, MARCAS_INFO, SECRETOS, OFICIOS, LOGROS, normalizar } from "./historia";
 import type { EstadoHistoria, TipoFinal } from "./historia";
 import { leerPalmares } from "./palmares";
 import { leerPrefs } from "./prefs";
@@ -19,6 +19,7 @@ export function Cuaderno({ volver }: { volver: () => void }) {
   const secretosAbiertos = secretos.filter((s) => h?.dilemasResueltos.includes(s.acertijo.clave)).length;
   const tiposFinal = Object.keys(FINALES) as TipoFinal[];
   const finalesVistos = tiposFinal.filter((tf) => palmares.finales.includes(tf)).length;
+  const logrosGanados = LOGROS.filter((l) => palmares.logros.includes(l.id)).length;
   const marcas = h?.marcas ?? [];
 
   return (
@@ -99,6 +100,24 @@ export function Cuaderno({ volver }: { volver: () => void }) {
                   <i>Hay algo escondido en un barrio que no conoces.</i>
                 </span>
               )}
+            </div>
+          );
+        })}
+      </section>
+
+      <section className="cua-seccion" aria-label="Logros">
+        <h3 className="cua-titulo">
+          Logros <span className="cua-cuenta">{logrosGanados}/{LOGROS.length}</span>
+        </h3>
+        {LOGROS.map((l) => {
+          const ganado = palmares.logros.includes(l.id);
+          return (
+            <div key={l.id} className={"cua-item" + (ganado ? "" : " cua-item--incognita")}>
+              <span className="cua-glifo" aria-hidden="true">{ganado ? "★" : "·"}</span>
+              <span className="cua-cuerpo">
+                <b>{l.nombre}</b>
+                <i>{l.desc}</i>
+              </span>
             </div>
           );
         })}

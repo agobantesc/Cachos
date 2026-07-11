@@ -1098,6 +1098,47 @@ function Escenas({ escena }: { escena: string }) {
         </g>
       );
 
+    // El Fiador: el prestamista de la tienda. Lentes chicos, chaleco y pluma.
+    case "retrato-fiador":
+      return (
+        <g>
+          {/* estantes de la tienda al fondo */}
+          <g fill="#1c160f" stroke="#4a3c22" strokeWidth="1">
+            <rect x="10" y="18" width="70" height="8" />
+            <rect x="10" y="44" width="70" height="8" />
+            <rect x="240" y="18" width="70" height="8" />
+            <rect x="240" y="44" width="70" height="8" />
+          </g>
+          <g fill={NEGRO}>
+            <path d="M20 8 h7 v5 l2.5 3 v2 h-12 v-2 l2.5 -3 z" />
+            <path d="M44 6 h6 v6 l2.5 3 v3 h-11 v-3 l2.5 -3 z" />
+            <path d="M252 8 h7 v5 l2.5 3 v2 h-12 v-2 l2.5 -3 z" />
+            <path d="M282 6 h6 v6 l2.5 3 v3 h-11 v-3 l2.5 -3 z" />
+          </g>
+          <ellipse cx="160" cy="62" rx="88" ry="56" fill={ORO} opacity="0.07" />
+          {/* hombros con chaleco y reloj de bolsillo */}
+          <path d="M94 140 q12 -42 66 -44 q54 2 66 44 z" fill={NEGRO} />
+          <path d="M146 104 l14 24 l14 -24" stroke="#2e2a24" strokeWidth="3.5" fill="none" />
+          <circle className="esc-brilla" cx="146" cy="120" r="2.4" fill={ORO} />
+          <path d="M146 120 q6 5 13 7" stroke={ORO} strokeOpacity="0.55" strokeWidth="1" fill="none" />
+          {/* cabeza: calvo con canas a los lados */}
+          <ellipse cx="160" cy="60" rx="25" ry="29" fill={NEGRO} />
+          <path d="M160 32 q24 4 24 28 q0 20 -12 27 q-9 4 -12 -1 z" fill={PIEL} opacity="0.85" />
+          <path d="M136 54 q-2 14 6 22 q-2 -12 0 -22 z M184 54 q2 14 -6 22 q2 -12 0 -22 z" fill="#c8c4bc" opacity="0.8" />
+          {/* lentes chicos de prestamista, caídos sobre la nariz */}
+          <circle cx="150" cy="63" r="5" fill="none" stroke={ORO} strokeWidth="1.3" />
+          <circle cx="170" cy="63" r="5" fill="none" stroke={ORO} strokeWidth="1.3" />
+          <path d="M155 63 h10 M145 62 l-8 -3 M175 62 l8 -3" stroke={ORO} strokeWidth="1.1" fill="none" />
+          {/* ojos por encima de los lentes (siempre midiendo) */}
+          <circle cx="150" cy="58" r="1.3" fill="#0a0810" />
+          <circle cx="170" cy="58" r="1.3" fill="#0a0810" />
+          {/* boca de vendedor: media sonrisa profesional */}
+          <path d="M153 80 q7 3 14 0" stroke="#6a4a34" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+          {/* pluma detrás de la oreja */}
+          <path d="M182 46 l14 -10 l-3 12 z" fill="#e9e3d2" opacity="0.85" />
+        </g>
+      );
+
     // ---- Cierre de capítulo: la caída del jefe y su secuela ----
 
     // La Pocilga cae: el cacho rebota sobre la mesa pegajosa de vino.

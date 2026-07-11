@@ -14,9 +14,11 @@ export interface Palmares {
   copas: number;
   /** Finales de la campaña vistos ("estandar" | "malo" | "verdadero"). */
   finales: string[];
+  /** Logros desbloqueados (ids del catálogo LOGROS de la historia). */
+  logros: string[];
 }
 
-const VACIO: Palmares = { jugadas: 0, ganadas: 0, racha: 0, mejorRacha: 0, copas: 0, finales: [] };
+const VACIO: Palmares = { jugadas: 0, ganadas: 0, racha: 0, mejorRacha: 0, copas: 0, finales: [], logros: [] };
 
 export function leerPalmares(): Palmares {
   try {
@@ -28,6 +30,7 @@ export function leerPalmares(): Palmares {
       mejorRacha: p.mejorRacha ?? 0,
       copas: p.copas ?? 0,
       finales: Array.isArray(p.finales) ? p.finales : [],
+      logros: Array.isArray(p.logros) ? p.logros : [],
     };
   } catch {
     return { ...VACIO };
@@ -54,6 +57,15 @@ export function registrarPartida(gano: boolean): void {
     p.racha = 0;
   }
   guardar(p);
+}
+
+/** Registra un logro desbloqueado. Devuelve true si es NUEVO (para avisar). */
+export function registrarLogro(id: string): boolean {
+  const p = leerPalmares();
+  if (p.logros.includes(id)) return false;
+  p.logros.push(id);
+  guardar(p);
+  return true;
 }
 
 /** Registra un final de la campaña visto (una sola vez por tipo). */

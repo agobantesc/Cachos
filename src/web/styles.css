@@ -1199,3 +1199,38 @@ button { touch-action: manipulation; }
   font-style: italic; animation: frase-pop 3.8s ease forwards; z-index: 4;
   max-width: 140%;
 }
+
+/* ============================================================
+   LOGROS Y REACCIONES: el aviso de hazaña y la mesa que reacciona.
+   ============================================================ */
+
+/* Aviso de logro desbloqueado: cartel dorado arriba, se va solo. */
+@keyframes logro-vive {
+  0% { opacity: 0; transform: translate(-50%, -10px); }
+  8% { opacity: 1; transform: translate(-50%, 0); }
+  88% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.logro-toast {
+  position: fixed; top: 12px; left: 50%; z-index: 70; max-width: 92vw;
+  padding: 9px 16px; border-radius: 999px; font-size: 13px; color: var(--texto);
+  background: linear-gradient(180deg, #26221a, #171712);
+  border: 1px solid var(--oro); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), 0 0 18px rgba(200, 162, 74, 0.25);
+  animation: logro-vive 4.2s ease forwards; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.logro-toast b { color: var(--oro-claro); font-family: var(--display); letter-spacing: 0.4px; }
+
+/* La siciliana sacude la caja de la revelación. */
+@keyframes sacudida {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-7px) rotate(-0.5deg); }
+  30% { transform: translateX(6px) rotate(0.4deg); }
+  45% { transform: translateX(-5px); }
+  60% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+}
+.revelacion-caja.sacudida { animation: sacudida 0.55s ease; }
+@media (prefers-reduced-motion: reduce) {
+  .revelacion-caja.sacudida { animation: none; }
+  .logro-toast { animation-duration: 2s; }
+}

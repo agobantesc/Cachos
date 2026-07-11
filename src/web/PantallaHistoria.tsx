@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Avatar } from "./Avatar";
 import { Dado } from "./Dado";
 import { Escena } from "./Escena";
-import { FINALES, escenaCapitulo, ecosDelCamino } from "./historia";
+import { FINALES, escenaCapitulo, ecosDelCamino, fraseFiador } from "./historia";
 import type { Pinta } from "../engine";
 import { Sonidos, Ambiente, vibrar } from "./sonido";
 import { registrarFinal } from "./palmares";
@@ -142,6 +142,19 @@ export function PantallaHistoria({
 }) {
   const t = snap.historia!;
   const r = t.rival;
+
+  // Aviso de LOGRO desbloqueado: cartel arriba, se va solo.
+  const [logroAviso, setLogroAviso] = useState<string | null>(null);
+  const logroN = useRef(0);
+  useEffect(() => {
+    const l = t.logro;
+    if (!l || l.n === logroN.current) return;
+    logroN.current = l.n;
+    setLogroAviso(l.nombres.join(" · "));
+    Sonidos.calzar();
+    const timer = setTimeout(() => setLogroAviso(null), 4200);
+    return () => clearTimeout(timer);
+  }, [t.logro]);
 
   // La placa de capítulo: una vez por capítulo, al pisar el barrio nuevo.
   const placaVista = useRef(-1);
@@ -325,6 +338,7 @@ export function PantallaHistoria({
     }
     return (
       <div className={"pantalla historia-pantalla" + (r.esBoss ? " hist-boss-caido" : "")} style={estiloCapitulo(t.escenario.idx)}>
+        {logroAviso && <div className="logro-toast" role="status">Logro desbloqueado · <b>{logroAviso}</b></div>}
         <span className="hist-kicker">{t.escenario.nombre}</span>
         <h1 className="hist-titulo hist-gano">{r.esBoss ? "Cayó el jefe" : "Le ganaste a " + r.nombre}</h1>
         <FichaRival t={t} tam={84} />
@@ -393,6 +407,7 @@ export function PantallaHistoria({
     const a = t.acertijo;
     return (
       <div className="pantalla historia-pantalla" style={estiloCapitulo(t.escenario.idx)}>
+        {logroAviso && <div className="logro-toast" role="status">Logro desbloqueado · <b>{logroAviso}</b></div>}
         <span className="hist-kicker">Un secreto del bajo mundo</span>
         <h1 className="hist-titulo">{a.titulo}</h1>
         <Escena escena="cifra" />
@@ -500,11 +515,10 @@ export function PantallaHistoria({
   if (t.faseHistoria === "tienda") {
     return (
       <div className="pantalla historia-pantalla" style={estiloCapitulo(t.escenario.idx)}>
-        <span className="hist-kicker">La Trastienda</span>
-        <h1 className="hist-titulo">El fiador</h1>
-        <p className="hist-ambiente">
-          “Sobreviviste otra cuadra, forastero. Con plata se compra de todo aquí… hasta una vida más larga.”
-        </p>
+        <span className="hist-kicker">La tienda del bajo mundo</span>
+        <h1 className="hist-titulo">El Fiador</h1>
+        <Escena escena="retrato-fiador" />
+        <p className="hist-relato">“{fraseFiador(t.escenario.idx, t.marcas)}”</p>
         <div className="hist-plata-grande">
           Tienes <Plata n={t.plata} />
         </div>
@@ -579,6 +593,7 @@ export function PantallaHistoria({
   };
   return (
     <div className={"pantalla historia-pantalla hist-final" + (esMalo ? " hist-final-malo" : "")} style={estiloCapitulo(t.escenario.idx)}>
+      {logroAviso && <div className="logro-toast" role="status">Logro desbloqueado · <b>{logroAviso}</b></div>}
       <span className="hist-kicker">{esMalo ? "Penthouse, lo más alto de Santiago" : t.escenario.lugar}</span>
       <h1 className={"hist-titulo " + (esMalo ? "hist-perdio" : "hist-gano")}>{fin.titulo}</h1>
       <div className="beat" key={beat.idx}>

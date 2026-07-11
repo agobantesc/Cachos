@@ -188,6 +188,7 @@ export const Avatar = memo(function Avatar({
   tam = 40,
   anillo = false,
   cara,
+  animo = null,
 }: {
   id: string;
   nombre: string;
@@ -195,8 +196,15 @@ export const Avatar = memo(function Avatar({
   anillo?: boolean;
   /** Cara explícita (para el editor); si no, se deriva del id/nombre. */
   cara?: Cara;
+  /** Reacción pasajera: sonríe (ganó) o hace mueca (perdió). Pisa boca y cejas. */
+  animo?: "feliz" | "molesto" | null;
 }) {
-  const c = cara ?? (id === "humano" && _caraJugador ? _caraJugador : caraDe(id, nombre));
+  const base = cara ?? (id === "humano" && _caraJugador ? _caraJugador : caraDe(id, nombre));
+  const c: Cara = animo === "feliz"
+    ? { ...base, cejas: "alta", boca: "neutra" }
+    : animo === "molesto"
+      ? { ...base, cejas: "sinistra", boca: "mueca" }
+      : base;
   const sombra = "#000000";
 
   return (
@@ -317,6 +325,9 @@ export const Avatar = memo(function Avatar({
         <path d="M28 45 q4 -2.2 8 0.6" stroke="#7a4636" strokeWidth="1.7" fill="none" strokeLinecap="round" />
       ) : (
         <path d="M28 44 q4 2.2 8 0" stroke="#7a4636" strokeWidth="1.7" fill="none" strokeLinecap="round" />
+      )}
+      {animo === "feliz" && (
+        <path d="M27.5 43.2 q4.5 4.6 9 0 q-1.4 3.4 -4.5 3.4 q-3.1 0 -4.5 -3.4 z" fill="#5a2d24" stroke="#7a4636" strokeWidth="0.8" />
       )}
       {/* brillo del labio inferior: da vida sin dibujar labios completos */}
       <path d="M29.8 46.4 q2.2 1.1 4.4 0" stroke="#ffffff" strokeWidth="0.8" fill="none" strokeLinecap="round" opacity="0.1" />
