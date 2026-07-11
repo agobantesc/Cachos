@@ -49,6 +49,8 @@ export class TransporteRender implements TransporteOnline {
   private cerrado = false;
   private reconectando = false;
   private intentos = 0;
+  /** Última frase rápida recibida (se muestra como globo en la mesa). */
+  private frase: NonNullable<Instantanea["frase"]> | null = null;
   /** Sala y nombre actuales, para poder reconectar al mismo asiento. */
   private codigo: string | null = null;
   private nombre = "";
@@ -102,10 +104,15 @@ export class TransporteRender implements TransporteOnline {
   }
 
   private alRecibir(ev: MessageEvent): void {
-    let msg: { tipo?: string; mensaje?: string } & Partial<EstadoServidor>;
+    let msg: { tipo?: string; mensaje?: string; deId?: string; nombre?: string; idx?: number; n?: number } & Partial<EstadoServidor>;
     try {
       msg = JSON.parse(String(ev.data));
     } catch {
+      return;
+    }
+    if (msg.tipo === "frase" && typeof msg.idx === "number") {
+      this.frase = { deId: String(msg.deId ?? ""), nombre: String(msg.nombre ?? ""), idx: msg.idx, n: Number(msg.n ?? Date.now()) };
+      this.emitir();
       return;
     }
     if (msg.tipo === "estado") {
@@ -201,6 +208,17 @@ export class TransporteRender implements TransporteOnline {
     /* sin efecto en línea */
   }
 
+  // --- Extras de la mesa en línea ---
+  agregarBot(): void {
+    this.enviar({ tipo: "agregarBot" });
+  }
+  quitarBot(): void {
+    this.enviar({ tipo: "quitarBot" });
+  }
+  enviarFrase(idx: number): void {
+    this.enviar({ tipo: "frase", idx });
+  }
+
   suscribir(cb: () => void): () => void {
     this.subs.add(cb);
     return () => this.subs.delete(cb);
@@ -230,6 +248,7 @@ export class TransporteRender implements TransporteOnline {
       esLocal: false,
       esSolo: false,
       conexion: this.reconectando ? "reconectando" : "ok",
+      frase: this.frase,
     };
   }
 }

@@ -1155,3 +1155,47 @@ button { touch-action: manipulation; }
 
 /* El chip del oficio en la barra de stats de la campaña. */
 .hist-oficio { color: var(--oro); border-color: rgba(200, 162, 74, 0.45); }
+
+/* ============================================================
+   MESA EN LÍNEA: bots de la casa y frases rápidas.
+   ============================================================ */
+
+/* Botones de bots en el lobby (sólo el anfitrión los ve). */
+.bots-lobby { display: flex; gap: 8px; }
+.bot-btn {
+  flex: 1; padding: 9px 12px; border-radius: 12px; font-size: 13px; font-weight: 700;
+  background: linear-gradient(180deg, #22242d, #16171d); color: var(--oro);
+  border: 1px dashed rgba(200, 162, 74, 0.45);
+}
+.bot-btn:disabled { opacity: 0.35; }
+.badge--bot { background: rgba(59, 85, 99, 0.35); border-color: rgba(122, 149, 165, 0.5); color: #b9cbd6; }
+
+/* El botón de frases en la cabecera de la mesa. */
+.frases-btn { font-family: var(--display); font-size: 19px; }
+.frases-btn.abierto { color: var(--oro-claro); text-shadow: 0 0 10px rgba(230, 200, 120, 0.6); }
+
+/* El panel de frases: pullas listas para tirar a la mesa. */
+.frases-panel {
+  display: flex; flex-wrap: wrap; gap: 7px; padding: 9px 10px;
+  background: linear-gradient(180deg, #1e2027, #15161b);
+  border: 1px solid var(--linea); border-radius: 14px;
+  animation: beat-in 0.2s ease;
+}
+.frase-chip {
+  padding: 7px 12px; border-radius: 999px; font-size: 13px; font-weight: 600;
+  background: rgba(0, 0, 0, 0.32); color: var(--texto); border: 1px solid var(--linea);
+}
+.frase-chip:active { background: var(--oro); color: #15110a; border-color: var(--oro); }
+
+/* El globo de una frase dicha: le gana al globo de la apuesta unos segundos. */
+@keyframes frase-pop {
+  0% { opacity: 0; transform: translateX(-50%) translateY(4px) scale(0.85); }
+  10% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+  85% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.burbuja--frase {
+  background: linear-gradient(180deg, var(--oro-claro), var(--oro)); color: #15110a;
+  font-style: italic; animation: frase-pop 3.8s ease forwards; z-index: 4;
+  max-width: 140%;
+}

@@ -21,10 +21,19 @@ import {
   type Sentido,
 } from "../engine/index.js";
 import { decidirBot, type JugadaBot } from "../web/bots.js";
+import { FRASES } from "../web/frases.js";
 
 /** Tras este tiempo sin que un jugador desconectado vuelva, un bot juega por él
  *  para que la partida no se cuelgue esperando su turno. */
 const GRACIA_AUSENTE_MS = Number(process.env.GRACIA_AUSENTE_MS ?? 12000);
+/** Los BOTS de la sala juegan rápido (pausa corta, que se sienta natural). */
+const BOT_JUGADA_MS = Number(process.env.BOT_JUGADA_MS ?? 1200);
+/** Si el abridor de la próxima ronda es un bot, deja leer la revelación antes de avanzar. */
+const BOT_AVANCE_MS = Number(process.env.BOT_AVANCE_MS ?? 6000);
+/** Anti-spam de frases rápidas: mínimo entre frases del mismo jugador. */
+const FRASE_CADA_MS = 1500;
+/** Nombres de la banca para los bots de la sala (se toma el primero libre). */
+const NOMBRES_BOT = ["El Tuerto", "La Sombra", "Doña Suerte", "El Croata", "Patas Negras", "La Cantinera", "El Cojo"];
 
 const PUERTO = Number(process.env.PORT ?? 8787);
 const ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sin O/0/I/1
@@ -33,6 +42,8 @@ interface JugadorSala {
   id: string;
   nombre: string;
   clienteId: string;
+  /** Bot de la casa agregado por el anfitrión (juega solo, nunca se conecta). */
+  esBot?: boolean;
 }
 interface Sala {
   codigo: string;
@@ -43,6 +54,8 @@ interface Sala {
   ultimaActividad: number;
   /** Timer para que un bot juegue por un jugador ausente. */
   timerBot: ReturnType<typeof setTimeout> | null;
+  /** Anti-spam de frases rápidas: última frase de cada jugador. */
+  ultimaFrase: Map<string, number>;
 }
 interface InfoConn {
   codigo: string;
@@ -74,7 +87,7 @@ function errorA(ws: WebSocket, mensaje: string): void {
 
 /** Instantánea personalizada para un jugador (mesa pública + SU mano). */
 function snapshot(sala: Sala, jugadorId: string) {
-  const jugadoresLobby = sala.jugadores.map((j) => ({ id: j.id, nombre: j.nombre }));
+  const jugadoresLobby = sala.jugadores.map((j) => ({ id: j.id, nombre: j.nombre, esBot: j.esBot ?? false }));
   const base = {
     tipo: "estado",
     codigo: sala.codigo,
@@ -100,6 +113,10 @@ function difundir(sala: Sala): void {
 function conectado(sala: Sala, jugadorId: string): boolean {
   const set = sala.conns.get(jugadorId);
   return !!set && set.size > 0;
+}
+
+function esBot(sala: Sala, jugadorId: string): boolean {
+  return sala.jugadores.find((j) => j.id === jugadorId)?.esBot ?? false;
 }
 
 function accionDeBot(j: JugadaBot, jugadorId: string): Accion {
@@ -129,12 +146,16 @@ function programarAusente(sala: Sala): void {
   if (e.fase === "EN_RONDA") {
     const turno = jugadorDeTurnoId(e);
     if (turno && !conectado(sala, turno)) {
-      sala.timerBot = setTimeout(() => jugarPorAusente(sala, turno), GRACIA_AUSENTE_MS);
+      // Un bot de la sala juega al tiro (con una pausa natural); un jugador
+      // desconectado recibe la gracia completa por si vuelve.
+      const espera = esBot(sala, turno) ? BOT_JUGADA_MS : GRACIA_AUSENTE_MS;
+      sala.timerBot = setTimeout(() => jugarPorAusente(sala, turno), espera);
     }
   } else if (e.fase === "FIN_RONDA") {
     const ab = e.abridorRondaId;
     if (ab && !conectado(sala, ab)) {
-      sala.timerBot = setTimeout(() => avanzarPorAusente(sala), GRACIA_AUSENTE_MS);
+      const espera = esBot(sala, ab) ? BOT_AVANCE_MS : GRACIA_AUSENTE_MS;
+      sala.timerBot = setTimeout(() => avanzarPorAusente(sala), espera);
     }
   }
 }
@@ -198,6 +219,7 @@ function manejar(ws: WebSocket, msg: { tipo?: string; [k: string]: unknown }): v
         conns: new Map(),
         ultimaActividad: Date.now(),
         timerBot: null,
+        ultimaFrase: new Map(),
       };
       salas.set(codigo, sala);
       adjuntar(ws, sala, jugadorId);
@@ -246,6 +268,54 @@ function manejar(ws: WebSocket, msg: { tipo?: string; [k: string]: unknown }): v
         return errorA(ws, e instanceof Error ? e.message : "Jugada inválida.");
       }
       difundir(ctx.sala);
+      return;
+    }
+
+    case "agregarBot": {
+      const ctx = salaDe(ws);
+      if (!ctx) return;
+      const { sala, jugadorId } = ctx;
+      if (sala.anfitrionId !== jugadorId) return errorA(ws, "Sólo el anfitrión maneja los bots.");
+      if (sala.estado) return errorA(ws, "La partida ya empezó.");
+      if (sala.jugadores.length >= 8) return errorA(ws, "La sala está llena.");
+      const usados = new Set(sala.jugadores.map((j) => j.nombre));
+      const nombre = NOMBRES_BOT.find((n) => !usados.has(n)) ?? `La Banca ${sala.jugadores.length}`;
+      sala.jugadores.push({ id: crypto.randomUUID(), nombre, clienteId: "", esBot: true });
+      difundir(sala);
+      return;
+    }
+
+    case "quitarBot": {
+      const ctx = salaDe(ws);
+      if (!ctx) return;
+      const { sala, jugadorId } = ctx;
+      if (sala.anfitrionId !== jugadorId) return errorA(ws, "Sólo el anfitrión maneja los bots.");
+      if (sala.estado) return errorA(ws, "La partida ya empezó.");
+      for (let i = sala.jugadores.length - 1; i >= 0; i--) {
+        if (sala.jugadores[i]!.esBot) {
+          sala.jugadores.splice(i, 1);
+          break;
+        }
+      }
+      difundir(sala);
+      return;
+    }
+
+    case "frase": {
+      const ctx = salaDe(ws);
+      if (!ctx) return;
+      const idx = Number(msg.idx);
+      if (!Number.isInteger(idx) || idx < 0 || idx >= FRASES.length) return;
+      const ahora = Date.now();
+      const ultima = ctx.sala.ultimaFrase.get(ctx.jugadorId) ?? 0;
+      if (ahora - ultima < FRASE_CADA_MS) return; // anti-spam: se ignora en silencio
+      ctx.sala.ultimaFrase.set(ctx.jugadorId, ahora);
+      ctx.sala.ultimaActividad = ahora;
+      const quien = ctx.sala.jugadores.find((j) => j.id === ctx.jugadorId);
+      const aviso = { tipo: "frase", deId: ctx.jugadorId, nombre: quien?.nombre ?? "", idx, n: ahora };
+      for (const sockets of ctx.sala.conns.values()) {
+        for (const socket of sockets) enviar(socket, aviso);
+      }
       return;
     }
 

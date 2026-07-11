@@ -114,10 +114,27 @@ function Lobby({
       <ul className="lista-jugadores">
         {snap.jugadoresLobby.map((j) => (
           <li key={j.id}>
-            {j.nombre} {j.id === snap.anfitrionId && <span className="badge">anfitrión</span>}
+            {j.nombre} {j.id === snap.anfitrionId && <span className="badge">anfitrión</span>}{" "}
+            {j.esBot && <span className="badge badge--bot">máquina</span>}
           </li>
         ))}
       </ul>
+      {soyAnfitrion && transporte.agregarBot && (
+        <div className="bots-lobby" role="group" aria-label="Bots de la casa">
+          <button
+            className="bot-btn"
+            onClick={() => transporte.agregarBot?.()}
+            disabled={snap.jugadoresLobby.length >= 8}
+          >
+            + Agregar bot
+          </button>
+          {snap.jugadoresLobby.some((j) => j.esBot) && (
+            <button className="bot-btn" onClick={() => transporte.quitarBot?.()}>
+              − Quitar bot
+            </button>
+          )}
+        </div>
+      )}
       {soyAnfitrion ? (
         <button
           className="btn btn--apostar grande"

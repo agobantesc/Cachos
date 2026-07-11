@@ -5,6 +5,7 @@ import { Avatar } from "./Avatar";
 import { IconoDado, IconoSonido } from "./Iconos";
 import { BarraAcciones } from "./BarraAcciones";
 import { nombrarApuesta, PLURAL_PINTA } from "./util";
+import { FRASES } from "./frases";
 import { Sonidos, Ambiente, sonidoActivado, alternarSonido, vibrar } from "./sonido";
 import { registrarPartida } from "./palmares";
 import type { Instantanea, Transporte } from "./transporte";
@@ -113,6 +114,27 @@ export function Mesa({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p.fase, p.numeroRonda]);
+
+  // FRASES RÁPIDAS (mesa en línea): panel para mandarlas y globos que
+  // aparecen sobre el vaso de quien la dijo, unos segundos.
+  const [panelFrases, setPanelFrases] = useState(false);
+  const [frasesVivas, setFrasesVivas] = useState<Record<string, { idx: number; n: number }>>({});
+  const fraseN = useRef(0);
+  useEffect(() => {
+    const f = snap.frase;
+    if (!f || f.n === fraseN.current) return;
+    fraseN.current = f.n;
+    Sonidos.carta();
+    setFrasesVivas((prev) => ({ ...prev, [f.deId]: { idx: f.idx, n: f.n } }));
+    const timer = setTimeout(() => {
+      setFrasesVivas((prev) => {
+        if (prev[f.deId]?.n !== f.n) return prev; // ya la pisó una más nueva
+        const { [f.deId]: _, ...resto } = prev;
+        return resto;
+      });
+    }, 3800);
+    return () => clearTimeout(timer);
+  }, [snap.frase]);
 
   // El jefe te habla en la mesa (modo historia): un bocadillo que aparece
   // con cada frase nueva y se desvanece solo.
@@ -283,6 +305,16 @@ export function Mesa({
         {p.esRondaCerrada && <span className="badge badge--cerrada">CERRADA · a ciegas</span>}
         <span className="badge">{p.sentido === 1 ? "derecha →" : "← izquierda"}</span>
         <span className="dados-mesa">{p.totalDadosEnMesa} dados</span>
+        {transporte.enviarFrase && (
+          <button
+            className={"mute frases-btn" + (panelFrases ? " abierto" : "")}
+            onClick={() => setPanelFrases((v) => !v)}
+            aria-label="Frases rápidas"
+            aria-expanded={panelFrases}
+          >
+            ❞
+          </button>
+        )}
         <button
           className="mute"
           onClick={() => setSonando(alternarSonido())}
@@ -294,6 +326,24 @@ export function Mesa({
           Salir
         </button>
       </header>
+
+      {panelFrases && transporte.enviarFrase && (
+        <div className="frases-panel" role="menu" aria-label="Frases rápidas">
+          {FRASES.map((f, i) => (
+            <button
+              key={i}
+              className="frase-chip"
+              role="menuitem"
+              onClick={() => {
+                transporte.enviarFrase?.(i);
+                setPanelFrases(false);
+              }}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+      )}
 
       {(p.fase === "EN_RONDA" || p.fase === "FIN_RONDA") && (
         <div className={"turno-barra" + (miTurno ? " turno-barra--yo" : "")} aria-live="polite">
@@ -345,8 +395,14 @@ export function Mesa({
                   </>
                 )}
               </div>
-              {ev && !esTurno && (
-                <div className={"burbuja" + (ev.tipo === "PASO" ? " burbuja--paso" : "")}>{textoEvento(ev)}</div>
+              {frasesVivas[id] ? (
+                <div className="burbuja burbuja--frase" key={frasesVivas[id]!.n}>
+                  {FRASES[frasesVivas[id]!.idx]}
+                </div>
+              ) : (
+                ev && !esTurno && (
+                  <div className={"burbuja" + (ev.tipo === "PASO" ? " burbuja--paso" : "")}>{textoEvento(ev)}</div>
+                )
               )}
             </div>
           );

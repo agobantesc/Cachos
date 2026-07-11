@@ -35,6 +35,8 @@ function accionDeJugada(jugada: JugadaBot, jugadorId: string): Accion {
 export interface JugadorLobby {
   id: string;
   nombre: string;
+  /** Bot de la casa agregado por el anfitrión (mesa en línea). */
+  esBot?: boolean;
 }
 
 /** Lo que la UI necesita para pintar la pantalla en cada momento. */
@@ -55,6 +57,8 @@ export interface Instantanea {
   conexion?: "ok" | "reconectando";
   /** Estado del modo historia, si se juega la campaña; null/undefined si no. */
   historia?: VistaHistoria | null;
+  /** Última frase rápida recibida en la mesa en línea (índice en FRASES). */
+  frase?: { deId: string; nombre: string; idx: number; n: number } | null;
 }
 
 export interface Transporte {
@@ -95,6 +99,13 @@ export interface Transporte {
   historiaSacarCarta?(cartaIdx: number): void;
   /** Usa el poder "Suerte": re-tira tu mano. */
   historiaSuerte?(): void;
+  // --- Mesa en línea (opcionales: la UI los muestra sólo si existen) ---
+  /** Anfitrión: agrega un bot de la casa a la sala (sólo en el lobby). */
+  agregarBot?(): void;
+  /** Anfitrión: quita el último bot agregado (sólo en el lobby). */
+  quitarBot?(): void;
+  /** Manda una frase rápida a toda la mesa (índice en FRASES). */
+  enviarFrase?(idx: number): void;
   /** Abandona: corta temporizadores/suscripciones (para volver al menú). */
   detener(): void;
 }
