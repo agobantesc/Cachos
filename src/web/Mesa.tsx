@@ -6,6 +6,7 @@ import { IconoDado, IconoSonido } from "./Iconos";
 import { BarraAcciones } from "./BarraAcciones";
 import { nombrarApuesta, PLURAL_PINTA } from "./util";
 import { FRASES } from "./frases";
+import { CONSEJOS, consejoPendiente, marcarConsejo, type ConsejoId } from "./consejos";
 import { Sonidos, Ambiente, sonidoActivado, alternarSonido, vibrar } from "./sonido";
 import { registrarPartida } from "./palmares";
 import type { Instantanea, Transporte } from "./transporte";
@@ -194,6 +195,22 @@ export function Mesa({
   }, [p.turnoJugadorId, p.fase, p.numeroRonda]);
 
   const miTurno = p.fase === "EN_RONDA" && p.turnoJugadorId === snap.miId;
+
+  // CONSEJOS DEL TAHÚR: el tutorial contextual. Un concepto a la vez, justo
+  // cuando aparece por primera vez, y nunca más después de "Entendido".
+  const [, setConsejoVer] = useState(0);
+  const consejo: ConsejoId | null = (() => {
+    if (p.fase === "FIN_RONDA" && p.ultimaResolucion?.siciliana && consejoPendiente("siciliana")) return "siciliana";
+    if (p.fase !== "EN_RONDA") return null;
+    if (p.esRondaObligado && consejoPendiente("obligado")) return "obligado";
+    if (!miTurno) return null;
+    if (consejoPendiente("apostar")) return "apostar";
+    if (p.apuestaActual && consejoPendiente("dudar")) return "dudar";
+    if (p.apuestaActual && p.calzoDisponible && consejoPendiente("calzar")) return "calzar";
+    if ((snap.miMano ?? []).includes(1) && p.asesComodin && consejoPendiente("ases")) return "ases";
+    if ((snap.miMano?.length ?? 0) === p.dadosIniciales && !p.pasoPendienteJugadorId && consejoPendiente("paso")) return "paso";
+    return null;
+  })();
 
   if (p.fase === "FIN_JUEGO") {
     // Puesto: el ganador es 1º; el resto según el orden de eliminación inverso
@@ -454,6 +471,22 @@ export function Mesa({
         )}
       </section>
 
+      {consejo && (
+        <aside className="consejo" role="note" aria-label="Consejo del Tahúr">
+          <span className="consejo-tit">Consejo del Tahúr · {CONSEJOS[consejo].titulo}</span>
+          <p className="consejo-texto">{CONSEJOS[consejo].texto}</p>
+          <button
+            className="consejo-ok"
+            onClick={() => {
+              marcarConsejo(consejo);
+              setConsejoVer((v) => v + 1);
+            }}
+          >
+            Entendido
+          </button>
+        </aside>
+      )}
+
       {p.fase === "EN_RONDA" && (
         <BarraAcciones
           publico={p}
@@ -526,6 +559,28 @@ function Revelacion({
     <div className="revelacion">
       <div className={"revelacion-caja" + (res.siciliana ? " sacudida" : "")}>
         <h2>{esPaso ? "Paso dudado" : "Revelación"}</h2>
+        {!esPaso && (
+          <div
+            className={
+              "veredicto " +
+              (res.tipo === "CALZO"
+                ? res.perdedorId === null
+                  ? "vd-bueno"
+                  : "vd-malo"
+                : res.cantidadReal >= res.cantidadDeclarada
+                  ? "vd-bueno"
+                  : "vd-malo")
+            }
+          >
+            {res.tipo === "CALZO"
+              ? res.perdedorId === null
+                ? "CALZO EXACTO"
+                : "CALZO FALLIDO"
+              : res.cantidadReal >= res.cantidadDeclarada
+                ? "LA APUESTA SE CUMPLÍA"
+                : "NO SE CUMPLÍA"}
+          </div>
+        )}
         <p className="resultado">{texto}</p>
         {res.siciliana && (
           <p className="siciliana">

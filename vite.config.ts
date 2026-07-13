@@ -15,9 +15,11 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: "autoUpdate",
-      injectRegister: "auto",
-      includeAssets: ["cacho.svg"],
+      // "prompt": las versiones nuevas avisan con un cartel (ver src/web/sw.ts)
+      // en vez de cambiar en silencio a mitad de una mesa.
+      registerType: "prompt",
+      injectRegister: false,
+      includeAssets: ["cacho.svg", "icono-192.png", "icono-512.png", "icono-180.png"],
       // Precachear también la tipografía embebida (woff2) para el modo offline.
       workbox: { globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"] },
       manifest: {
@@ -29,7 +31,9 @@ export default defineConfig({
         display: "standalone",
         orientation: "portrait",
         icons: [
-          { src: "cacho.svg", sizes: "any", type: "image/svg+xml", purpose: "any maskable" },
+          { src: "cacho.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
+          { src: "icono-192.png", sizes: "192x192", type: "image/png", purpose: "any maskable" },
+          { src: "icono-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },
         ],
       },
       devOptions: { enabled: false },

@@ -14,6 +14,7 @@ import { onlineConfigurado, crearTransporteOnline } from "./online";
 import { useInstantanea } from "./util";
 import { leerPrefs, guardarPrefs } from "./prefs";
 import { desbloquearAudio, Ambiente } from "./sonido";
+import { alHaberNuevaVersion, aplicarActualizacion } from "./sw";
 import type { Nivel } from "./bots";
 
 // Carga el rostro guardado del jugador (o la cara estándar limpia) para que
@@ -38,6 +39,8 @@ const DESC_NIVEL: Record<NivelSolo, string> = {
 
 export function App() {
   const [transporte, setTransporte] = useState<Transporte | null>(null);
+  const [hayVersion, setHayVersion] = useState(false);
+  useEffect(() => alHaberNuevaVersion(() => setHayVersion(true)), []);
   const salir = () => {
     transporte?.detener();
     Ambiente.detener(); // el paisaje sonoro de la campaña no sigue al salón
@@ -45,6 +48,12 @@ export function App() {
   };
   return (
     <>
+      {hayVersion && (
+        <div className="version-nueva" role="status">
+          Hay una versión nueva de la Asociación.
+          <button className="vn-btn" onClick={() => aplicarActualizacion()}>Actualizar</button>
+        </div>
+      )}
       {!transporte ? <Inicio onListo={setTransporte} /> : <Juego transporte={transporte} salir={salir} />}
       <div className="build">v{__BUILD_TIME__}</div>
     </>

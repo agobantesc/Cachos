@@ -1234,3 +1234,42 @@ button { touch-action: manipulation; }
   .revelacion-caja.sacudida { animation: none; }
   .logro-toast { animation-duration: 2s; }
 }
+
+/* ============================================================
+   PROFESIONAL: consejos del tahúr, veredicto y aviso de versión.
+   ============================================================ */
+
+/* El consejo del tahúr: tarjeta de tutor, una sola vez por concepto. */
+.consejo {
+  display: flex; flex-direction: column; gap: 6px; padding: 11px 14px;
+  background: linear-gradient(180deg, rgba(200, 162, 74, 0.1), rgba(21, 22, 27, 0.94));
+  border: 1px solid rgba(200, 162, 74, 0.5); border-left: 3px solid var(--oro);
+  border-radius: 0 14px 14px 0; animation: beat-in 0.3s ease;
+}
+.consejo-tit { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--oro); }
+.consejo-texto { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--texto); }
+.consejo-ok {
+  align-self: flex-end; padding: 6px 16px; border-radius: 999px; font-size: 12px; font-weight: 700;
+  background: linear-gradient(180deg, var(--oro-claro), var(--oro)); color: #15110a; border: none;
+}
+
+/* El veredicto de la revelación: la sentencia, clara y de un vistazo. */
+.veredicto {
+  display: inline-block; margin: 2px auto 6px; padding: 4px 14px; border-radius: 999px;
+  font-size: 12px; font-weight: 800; letter-spacing: 1.5px;
+}
+.vd-bueno { background: rgba(46, 160, 86, 0.18); color: #7fdca4; border: 1px solid rgba(46, 160, 86, 0.5); }
+.vd-malo { background: rgba(178, 58, 46, 0.18); color: #f0a396; border: 1px solid rgba(178, 58, 46, 0.55); }
+
+/* Aviso de versión nueva: banda fija arriba, con su botón. */
+.version-nueva {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 80;
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  padding: 9px 14px; font-size: 13px; color: #15110a;
+  background: linear-gradient(180deg, var(--oro-claro), var(--oro));
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+}
+.vn-btn {
+  padding: 4px 14px; border-radius: 999px; font-size: 12px; font-weight: 800;
+  background: #15110a; color: var(--oro-claro); border: none;
+}

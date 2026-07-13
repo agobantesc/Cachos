@@ -8,6 +8,9 @@ import "@fontsource/playfair-display/latin-700.css";
 import "@fontsource/playfair-display/latin-800.css";
 import "@fontsource/playfair-display/latin-500-italic.css";
 import "./styles.css";
+import { iniciarSW } from "./sw";
+
+iniciarSW();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
