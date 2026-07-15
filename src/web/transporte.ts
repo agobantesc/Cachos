@@ -89,6 +89,8 @@ export interface Transporte {
   historiaUsarItem?(id: string): void;
   /** Fija la apuesta de la mesa (doblar o nada), desde la intro del rival. */
   historiaApostar?(monto: number): void;
+  /** Acepta (true) o deja pasar (false) el encargo del barrio, en la puerta. */
+  historiaEncargo?(aceptar: boolean): void;
   /** Resuelve un evento de decisión (dilema/pelea) eligiendo una opción. */
   historiaElegir?(opcionIdx: number): void;
   /** Abre el candado del barrio (el secreto), desde la intro. */

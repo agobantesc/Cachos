@@ -119,6 +119,103 @@ function FichaRival({ t, tam = 96 }: { t: VistaHistoria; tam?: number }) {
   );
 }
 
+/** El camino del barrio: una mesa por nodo; la calavera, el jefe al fondo. */
+function CaminoBarrio({ t }: { t: VistaHistoria }) {
+  const { idx, total } = t.progresoRival;
+  return (
+    <div className="camino" aria-label={`Mesa ${idx + 1} de ${total} del barrio`}>
+      {Array.from({ length: total }).map((_, i) => (
+        <span
+          key={i}
+          className={
+            "camino-nodo" +
+            (i < idx ? " camino-nodo--pasado" : i === idx ? " camino-nodo--actual" : "") +
+            (i === total - 1 ? " camino-nodo--jefe" : "")
+          }
+          aria-hidden="true"
+        >
+          {i === total - 1 ? "☠" : i < idx ? "✓" : ""}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/** El ENCARGO del barrio: la oferta del contrato, o su estado mientras corre. */
+function EncargoChip({ t, transporte }: { t: VistaHistoria; transporte: Transporte }) {
+  const e = t.encargo;
+  if (!e) return null;
+  if (e.estado === "ofrecido") {
+    return (
+      <div className="encargo encargo--oferta">
+        <span className="en-tit">Encargo de {e.patron}</span>
+        <p className="en-texto">{e.texto}</p>
+        <span className="en-pago">
+          Paga <b>${e.plata.toLocaleString("es-CL")}</b>
+          {e.item ? <> + {e.item}</> : null} al caer el jefe del barrio.
+        </span>
+        <div className="en-acciones">
+          <button
+            className="btn btn--calzar en-btn"
+            onClick={() => {
+              Sonidos.apostar();
+              transporte.historiaEncargo?.(true);
+            }}
+          >
+            Acepta el encargo
+          </button>
+          <button className="btn-link" onClick={() => transporte.historiaEncargo?.(false)}>
+            Déjalo pasar
+          </button>
+        </div>
+      </div>
+    );
+  }
+  const detalle =
+    e.estado === "encurso"
+      ? e.meta !== null
+        ? `Cosecha: $${e.progreso.toLocaleString("es-CL")} de $${e.meta.toLocaleString("es-CL")} · paga $${e.plata.toLocaleString("es-CL")}`
+        : `El contrato sigue en pie · paga $${e.plata.toLocaleString("es-CL")}${e.item ? ` + ${e.item}` : ""}`
+      : e.estado === "roto"
+        ? "El contrato se rompió. En el barrio no se habla más del asunto."
+        : "Cumplido y pagado. Palabra es palabra.";
+  return (
+    <div className={"encargo encargo--" + e.estado} role="status">
+      <span className="en-tit">
+        Encargo de {e.patron}
+        {e.estado === "roto" ? " · ROTO" : e.estado === "pagado" ? " · PAGADO" : ""}
+      </span>
+      <span className="en-estado">{detalle}</span>
+    </div>
+  );
+}
+
+/** La corrida en números: el resumen de la campaña, al pie del final. */
+function ResumenCorrida({ t }: { t: VistaHistoria }) {
+  const c = t.cuentas;
+  const datos: [string, string][] = [
+    [String(c.ganadas), "mesas ganadas"],
+    [String(c.caidas), c.caidas === 1 ? "paliza recibida" : "palizas recibidas"],
+    ["$" + c.plataJuntada.toLocaleString("es-CL"), "plata juntada"],
+    [String(c.desafios), "desafíos cumplidos"],
+    [String(c.encargos), c.encargos === 1 ? "encargo pagado" : "encargos pagados"],
+    [String(t.marcas.length), t.marcas.length === 1 ? "marca del camino" : "marcas del camino"],
+  ];
+  return (
+    <div className="resumen-corrida" aria-label="La corrida en números">
+      <span className="rc-tit">La corrida en números</span>
+      <div className="rc-grid">
+        {datos.map(([valor, etiqueta]) => (
+          <span key={etiqueta} className="rc-dato">
+            <b>{valor}</b>
+            <i>{etiqueta}</i>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** Placa de cine al entrar a un capítulo: se muestra sola y se desvanece. */
 function PlacaCapitulo({ idx, nombre, lugar }: { idx: number; nombre: string; lugar: string }) {
   return (
@@ -241,6 +338,7 @@ export function PantallaHistoria({
           {t.leyenda > 0 && <span className="leyenda-badge">Leyenda {"I".repeat(Math.min(t.leyenda, 3))}</span>}
         </span>
         <h1 className="hist-titulo">{t.escenario.nombre}</h1>
+        {r.id !== "b-patron" && <CaminoBarrio t={t} />}
         {t.narrativa.intro && <Escena escena={escenaCapitulo(t.escenario.idx)} />}
         {t.narrativa.intro && <p className="hist-ambiente">{t.narrativa.intro}</p>}
         <FichaRival t={t} />
@@ -260,6 +358,7 @@ export function PantallaHistoria({
             {t.desafio.desc} <b className="dc-bono">Paga +${t.desafio.bono.toLocaleString("es-CL")}</b>
           </div>
         )}
+        <EncargoChip t={t} transporte={transporte} />
         <p className="hist-dialogo">“{r.dialogo}”</p>
         <BarraStats t={t} />
         <Bolsa t={t} />
@@ -346,7 +445,7 @@ export function PantallaHistoria({
         <div className="hist-premio">
           Te llevas <Plata n={t.botin?.total ?? r.plata ?? 0} />
         </div>
-        {t.botin && (t.botin.apuestaExtra > 0 || t.botin.desafioCumplido !== null) && (
+        {t.botin && (t.botin.apuestaExtra > 0 || t.botin.desafioCumplido !== null || t.botin.encargoPago > 0) && (
           <div className="botin-desglose">
             <span className="bd-linea">Premio de la mesa: ${t.botin.premioBase.toLocaleString("es-CL")}</span>
             {t.botin.apuestaExtra > 0 && (
@@ -359,6 +458,12 @@ export function PantallaHistoria({
             )}
             {t.botin.desafioCumplido === false && (
               <span className="bd-linea bd-mala">Desafío "{t.desafio?.nombre}" fallado</span>
+            )}
+            {t.botin.encargoPago > 0 && (
+              <span className="bd-linea bd-buena">
+                Encargo de {t.encargo?.patron ?? "la casa"} cumplido: +${t.botin.encargoPago.toLocaleString("es-CL")}
+                {t.botin.encargoItem ? <> y {t.botin.encargoItem}</> : null}
+              </span>
             )}
           </div>
         )}
@@ -617,6 +722,7 @@ export function PantallaHistoria({
               ))}
             </div>
           )}
+          <ResumenCorrida t={t} />
           <BarraStats t={t} />
           <div className="hist-acciones">
             <button className="btn btn--apostar grande" onClick={salir}>

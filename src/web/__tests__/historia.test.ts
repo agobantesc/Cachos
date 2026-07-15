@@ -24,6 +24,7 @@ import {
   costoItem,
   bonoDesafio,
   umbralMaraton,
+  ENCARGOS,
   type EstadoHistoria,
   type TipoFinal,
 } from "../historia";
@@ -799,6 +800,109 @@ describe("acertijos (candados de cifra)", () => {
   it("los barrios sin candado no ofrecen secreto (La Pocilga)", () => {
     const th = new TransporteHistoria(historiaNueva("Turista"));
     expect(th.instantanea().historia!.acertijoDisponible).toBeNull();
+    th.detener();
+  });
+});
+
+describe("encargos del barrio (contratos por capítulo)", () => {
+  it("cada barrio tiene su encargo, con patrón, contrato y pago válidos", () => {
+    for (const esc of CAMPANA) {
+      const e = ENCARGOS[esc.clave];
+      expect(e, `encargo de ${esc.clave}`).toBeTruthy();
+      expect(e!.patron, esc.clave).toBeTruthy();
+      expect(e!.texto, esc.clave).toBeTruthy();
+      expect(e!.plata, esc.clave).toBeGreaterThan(0);
+      if (e!.tipo === "cosecha") expect(e!.meta ?? 0, esc.clave).toBeGreaterThan(0);
+    }
+    // Hay variedad de contratos, no siempre el mismo truco.
+    const tipos = new Set(Object.values(ENCARGOS).map((e) => e.tipo));
+    expect(tipos.size).toBeGreaterThanOrEqual(3);
+  });
+
+  it("la oferta aparece en la puerta del barrio; aceptar la deja en curso", () => {
+    const th = new TransporteHistoria(historiaNueva("Contratista"));
+    let v = th.instantanea().historia!;
+    expect(v.encargo?.estado).toBe("ofrecido");
+    th.historiaEncargo!(true);
+    v = th.instantanea().historia!;
+    expect(v.encargo?.estado).toBe("encurso");
+    expect(v.encargo?.patron).toBe("Doña Berta");
+    th.detener();
+  });
+
+  it("dejarla pasar la borra, y no se vuelve a ofrecer en el barrio", () => {
+    const th = new TransporteHistoria(historiaNueva("Esquivo"));
+    th.historiaEncargo!(false);
+    expect(th.instantanea().historia!.encargo).toBeNull();
+    th.detener();
+  });
+
+  it("sentarse a la mesa sin firmar hace caducar la oferta", () => {
+    const th = new TransporteHistoria(historiaNueva("Distraído"));
+    th.historiaEmpezar(); // al evento del cabro, sin decidir el encargo
+    expect(th.instantanea().historia!.encargo).toBeNull();
+    // Y de vuelta en una intro del mismo barrio, tampoco reaparece.
+    th.detener();
+  });
+
+  it("en un barrio de 'manos quietas', usar un item rompe el contrato", () => {
+    const h = historiaNueva("Tramposo");
+    h.escenarioIdx = 2; // La Maestranza: el encargo de La Trenza
+    h.inventario.soplon = 1;
+    const th = new TransporteHistoria(h);
+    expect(ENCARGOS["maestranza"]!.tipo).toBe("manos-quietas");
+    th.historiaEncargo!(true);
+    th.historiaEmpezar(); // el quiltro entre los fierros
+    th.historiaElegir!(0);
+    th.historiaContinuar!(); // a la mesa
+    expect(th.instantanea().historia!.faseHistoria).toBe("mesa");
+    th.historiaUsarItem!("soplon");
+    expect(th.instantanea().historia!.encargo?.estado).toBe("roto");
+    th.detener();
+  });
+
+  it("la vista de la oferta trae el pago completo (plata + item si lo hay)", () => {
+    const th = new TransporteHistoria(historiaNueva("Lector"));
+    const v = th.instantanea().historia!;
+    expect(v.encargo?.plata).toBe(ENCARGOS["pocilga"]!.plata);
+    expect(v.encargo?.item).toBe("El dato del soplón"); // soplon, con nombre humano
+    expect(v.encargo?.meta).toBeNull(); // "sin-caer" no es cosecha
+    th.detener();
+  });
+
+  it("el encargo aceptado persiste en el estado (capítulo y progreso)", () => {
+    const th = new TransporteHistoria(historiaNueva("Firme"));
+    th.historiaEncargo!(true);
+    th.detener();
+    // El estado quedó guardado en prefs vía guardarPrefs (sin storage acá,
+    // pero el objeto en memoria del transporte ya lo refleja en la vista).
+    const th2 = new TransporteHistoria({ ...historiaNueva("Firme"), encargo: { capitulo: 0, aceptado: true, roto: false, pagado: false, progreso: 0 } });
+    expect(th2.instantanea().historia!.encargo?.estado).toBe("encurso");
+    th2.detener();
+  });
+});
+
+describe("la corrida en números (cuentas)", () => {
+  it("una campaña nueva parte con los contadores en cero", () => {
+    const h = historiaNueva("Contable");
+    expect(h.cuentas).toEqual({ ganadas: 0, caidas: 0, plataJuntada: 0, desafios: 0, encargos: 0 });
+  });
+
+  it("normalizar repone cuentas y encargo en saves viejos", () => {
+    const viejo = { ...historiaNueva("Antiguo") } as EstadoHistoria & { cuentas?: unknown; encargo?: unknown };
+    delete viejo.cuentas;
+    delete viejo.encargo;
+    const n = normalizar(viejo as EstadoHistoria);
+    expect(n.cuentas).toEqual({ ganadas: 0, caidas: 0, plataJuntada: 0, desafios: 0, encargos: 0 });
+    expect(n.encargo).toBeNull();
+    // y respeta contadores parciales de un save a medio migrar
+    const parcial = { ...historiaNueva("Parcial"), cuentas: { ganadas: 7 } } as unknown as EstadoHistoria;
+    expect(normalizar(parcial).cuentas).toEqual({ ganadas: 7, caidas: 0, plataJuntada: 0, desafios: 0, encargos: 0 });
+  });
+
+  it("la vista siempre expone las cuentas", () => {
+    const th = new TransporteHistoria(historiaNueva("Vista"));
+    expect(th.instantanea().historia!.cuentas.ganadas).toBe(0);
     th.detener();
   });
 });

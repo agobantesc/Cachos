@@ -18,7 +18,12 @@ export interface Palmares {
   logros: string[];
 }
 
-const VACIO: Palmares = { jugadas: 0, ganadas: 0, racha: 0, mejorRacha: 0, copas: 0, finales: [], logros: [] };
+// Un palmarés en blanco, SIEMPRE fresco: si fuera un objeto compartido, sus
+// arrays (finales, logros) se mutarían entre lecturas cuando no hay storage
+// (tests, SSR, modo privado) y los registros se "filtrarían" entre sesiones.
+function vacio(): Palmares {
+  return { jugadas: 0, ganadas: 0, racha: 0, mejorRacha: 0, copas: 0, finales: [], logros: [] };
+}
 
 export function leerPalmares(): Palmares {
   try {
@@ -33,7 +38,7 @@ export function leerPalmares(): Palmares {
       logros: Array.isArray(p.logros) ? p.logros : [],
     };
   } catch {
-    return { ...VACIO };
+    return vacio();
   }
 }
 

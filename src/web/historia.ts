@@ -957,6 +957,114 @@ export function costoItem(id: ItemId, oficio?: OficioId): number {
 }
 
 // ---------------------------------------------------------------------------
+// ENCARGOS del barrio: un contrato opcional que abarca TODO el capítulo.
+// Una cara del hampa te lo ofrece en la puerta; se cumple (o se rompe) mesa a
+// mesa y se paga al caer el jefe. Romperlo no castiga: sólo pierdes el pago.
+// ---------------------------------------------------------------------------
+
+export type TipoEncargo =
+  | "sin-caer" // cruza el barrio sin que te limpien ni una vez (sin revanchas)
+  | "manos-quietas" // cruza el barrio sin usar items (lo comprado, guardado)
+  | "cosecha"; // junta `meta` de plata en los botines del barrio
+
+export interface Encargo {
+  /** Quién te lo encarga (una cara del barrio). */
+  patron: string;
+  /** El contrato, en sus palabras. */
+  texto: string;
+  tipo: TipoEncargo;
+  /** Para "cosecha": plata que hay que juntar en botines antes del jefe. */
+  meta?: number;
+  /** El pago al caer el jefe con el contrato vivo. */
+  plata: number;
+  item?: ItemId;
+}
+
+/** El encargo de cada barrio (por clave de escenario). */
+export const ENCARGOS: Record<string, Encargo> = {
+  pocilga: {
+    patron: "Doña Berta",
+    tipo: "sin-caer",
+    plata: 60,
+    item: "soplon",
+    texto:
+      "“Los que valen, mijito, no piden revancha.” Cruza La Pocilga sin que te limpien ni una vez y la casa te tendrá algo preparado.",
+  },
+  vega: {
+    patron: "El Charqui",
+    tipo: "cosecha",
+    meta: 260,
+    plata: 120,
+    texto:
+      "“Aquí el que no cosecha, no come.” Junta $260 en botines de La Vega antes de que caiga el jefe y te sumo un fajo de los míos.",
+  },
+  maestranza: {
+    patron: "La Trenza",
+    tipo: "manos-quietas",
+    plata: 150,
+    item: "cargado",
+    texto:
+      "“El Verdugo huele los trucos a un galpón de distancia.” Cruza la Maestranza sin usar nada bajo la manga y te paso algo mejor que lo que guardas.",
+  },
+  trastienda: {
+    patron: "El Notario",
+    tipo: "sin-caer",
+    plata: 220,
+    texto:
+      "“Levanto acta: el postulante no caerá ni una sola vez en San Diego.” Fírmalo con hechos, joven, y la notaría paga contra entrega.",
+  },
+  club: {
+    patron: "Madame Ruiz",
+    tipo: "cosecha",
+    meta: 900,
+    plata: 350,
+    texto:
+      "“Los de abajo apostamos por ti, querido.” Junta $900 en botines del Subterráneo y la casa te lo devuelve con intereses.",
+  },
+  cumbre: {
+    patron: "La Jueza",
+    tipo: "manos-quietas",
+    plata: 500,
+    texto:
+      "“En la cumbre, que gane el talento: sin items, sin trucos.” Llega al Rey con las manos quietas y firmo tu sentencia… a favor.",
+  },
+};
+
+export function encargoDe(esc: Escenario): Encargo | null {
+  return ENCARGOS[esc.clave] ?? null;
+}
+
+/** Cómo va el encargo del capítulo (persistible en EstadoHistoria). */
+export interface EstadoEncargo {
+  /** De qué capítulo es este contrato. */
+  capitulo: number;
+  /** false = lo dejaste pasar (no se vuelve a ofrecer). */
+  aceptado: boolean;
+  /** El contrato se rompió (una caída, un item usado…). */
+  roto: boolean;
+  /** Ya se pagó (al caer el jefe del barrio). */
+  pagado: boolean;
+  /** Para "cosecha": plata juntada en botines del barrio. */
+  progreso: number;
+}
+
+/** La corrida en números: contadores de la campaña para el resumen final. */
+export interface CuentasCorrida {
+  /** Mesas ganadas y palizas recibidas (contando revanchas). */
+  ganadas: number;
+  caidas: number;
+  /** Plata bruta juntada en botines (sin descontar gastos). */
+  plataJuntada: number;
+  /** Desafíos de la casa cumplidos y encargos pagados. */
+  desafios: number;
+  encargos: number;
+}
+
+export function cuentasEnCero(): CuentasCorrida {
+  return { ganadas: 0, caidas: 0, plataJuntada: 0, desafios: 0, encargos: 0 };
+}
+
+// ---------------------------------------------------------------------------
 // Estado de la campaña (persistible)
 // ---------------------------------------------------------------------------
 
@@ -985,6 +1093,10 @@ export interface EstadoHistoria {
   /** Nueva Partida+: cuántas veces coronaste y volviste a empezar. Cada nivel
    *  de Leyenda sube un escalón la dificultad de TODOS los rivales. */
   leyenda?: number;
+  /** El encargo del barrio en curso (o el último resuelto). */
+  encargo?: EstadoEncargo | null;
+  /** La corrida en números (para el resumen del final). */
+  cuentas?: CuentasCorrida;
   /** Versión del formato (para migrar índices de escenario al crecer la campaña). */
   version?: number;
 }
@@ -1017,6 +1129,8 @@ export function historiaNueva(nombre: string, leyenda = 0, oficio?: OficioId): E
     marcas: [],
     ...(oficio ? { oficio } : {}),
     leyenda,
+    encargo: null,
+    cuentas: cuentasEnCero(),
     version: HISTORIA_VERSION,
   };
 }
@@ -1054,6 +1168,8 @@ export function normalizar(h: EstadoHistoria): EstadoHistoria {
     dilemasResueltos: Array.isArray(h.dilemasResueltos) ? h.dilemasResueltos : [],
     marcas: Array.isArray(h.marcas) ? h.marcas : [],
     leyenda: Math.max(0, h.leyenda ?? 0),
+    encargo: h.encargo && typeof h.encargo === "object" ? h.encargo : null,
+    cuentas: { ...cuentasEnCero(), ...(h.cuentas ?? {}) },
     version: HISTORIA_VERSION,
   };
 }
@@ -1150,6 +1266,7 @@ export const LOGROS: Logro[] = [
   { id: "doblar-o-nada", nombre: "Doblar o nada", desc: "Gana una mesa con la apuesta doblada al máximo." },
   { id: "desde-el-barro", nombre: "Desde el barro", desc: "Gana una mesa habiendo pasado por el obligado." },
   { id: "ganzua", nombre: "Ganzúa", desc: "Abre tu primer candado de cifra." },
+  { id: "de-palabra", nombre: "Hombre de palabra", desc: "Cumple un encargo del barrio, de punta a punta." },
   { id: "tres-llaves", nombre: "Las tres llaves", desc: "Abre los tres candados del bajo mundo." },
   { id: "padrino-cumplido", nombre: "Padrino de verdad", desc: "Completa el arco del cabro del puerto, hasta la cumbre." },
   { id: "rey-caido", nombre: "El Rey ha caído", desc: "Corona la campaña, con el final que sea." },
@@ -1499,8 +1616,30 @@ export interface VistaHistoria {
   apuesta: { elegida: number; opciones: number[]; premioBase: number } | null;
   /** El desafío de la casa de esta mesa (intro, mesa y victoria). */
   desafio: { nombre: string; desc: string; bono: number } | null;
+  /** El encargo del barrio: la oferta en la puerta, o su estado mientras corre. */
+  encargo: {
+    patron: string;
+    texto: string;
+    plata: number;
+    item: string | null;
+    /** Para "cosecha": la meta y lo juntado. */
+    meta: number | null;
+    progreso: number;
+    estado: "ofrecido" | "encurso" | "roto" | "pagado";
+  } | null;
+  /** La corrida en números (para el resumen del final). */
+  cuentas: CuentasCorrida;
   /** Desglose del botín (en victoria): base + apuesta doblada + bono. */
-  botin: { premioBase: number; apuestaExtra: number; bono: number; desafioCumplido: boolean | null; total: number } | null;
+  botin: {
+    premioBase: number;
+    apuestaExtra: number;
+    bono: number;
+    desafioCumplido: boolean | null;
+    /** Pago del encargo del barrio (si se cumplió al caer el jefe). */
+    encargoPago: number;
+    encargoItem: string | null;
+    total: number;
+  } | null;
   /** Plata que se comió la mesa (en derrota, si había apuesta). */
   apuestaPerdida: number;
 }

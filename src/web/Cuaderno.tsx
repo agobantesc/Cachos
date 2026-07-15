@@ -4,6 +4,7 @@
 // aparece como "???": el cuaderno se escribe jugando.
 import { CAMPANA, FINALES, MARCAS_INFO, SECRETOS, OFICIOS, LOGROS, normalizar } from "./historia";
 import type { EstadoHistoria, TipoFinal } from "./historia";
+import { MapaHampa } from "./Mapa";
 import { leerPalmares } from "./palmares";
 import { leerPrefs } from "./prefs";
 
@@ -38,6 +39,7 @@ export function Cuaderno({ volver }: { volver: () => void }) {
 
       <section className="cua-seccion" aria-label="Capítulos">
         <h3 className="cua-titulo">El camino</h3>
+        {h && <MapaHampa escenarioIdx={h.escenarioIdx} completado={h.completado} />}
         {CAMPANA.map((esc, i) => (
           <div key={esc.clave} className={"cua-item" + (capVisto(i) ? "" : " cua-item--incognita")}>
             <span className="cua-glifo" aria-hidden="true">

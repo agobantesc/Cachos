@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { leerPalmares, registrarPartida, registrarFinal } from "../palmares";
+import { leerPalmares, registrarPartida, registrarFinal, registrarLogro } from "../palmares";
 
 // Shim de localStorage para node (el módulo falla en silencio sin él).
 const store = new Map<string, string>();
@@ -37,5 +37,14 @@ describe("palmarés", () => {
     delete (globalThis as Record<string, unknown>).localStorage;
     expect(() => registrarPartida(true)).not.toThrow();
     expect(leerPalmares().jugadas).toBe(0);
+  });
+
+  it("sin almacenamiento, cada lectura llega en blanco (nada se filtra entre lecturas)", () => {
+    delete (globalThis as Record<string, unknown>).localStorage;
+    // registrarLogro muta el palmarés que leyó; si el "vacío" compartiera sus
+    // arrays, este logro quedaría pegado para la próxima lectura.
+    expect(registrarLogro("fantasma")).toBe(true);
+    expect(leerPalmares().logros).toEqual([]);
+    expect(registrarLogro("fantasma")).toBe(true); // sigue "nuevo": no hay dónde guardarlo
   });
 });

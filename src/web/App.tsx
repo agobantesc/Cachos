@@ -3,6 +3,7 @@ import { leerPalmares } from "./palmares";
 import { Mesa } from "./Mesa";
 import { PantallaHistoria } from "./PantallaHistoria";
 import { Cuaderno } from "./Cuaderno";
+import { MapaHampa } from "./Mapa";
 import { CampoJugador } from "./Personaje";
 import { Emblema, IconoCalavera, IconoWhatsApp, IconoDado, IconoPersonas } from "./Iconos";
 import { Avatar, fijarCaraJugador, CARA_DEFECTO } from "./Avatar";
@@ -367,6 +368,7 @@ function ConfigHistoria({ onListo, volver }: { onListo: (t: Transporte) => void;
 
       {guardada ? (
         <>
+          <MapaHampa escenarioIdx={normalizar(guardada).escenarioIdx} completado={false} />
           <div className="hist-continuar">
             Vas por <b>{escenarioActual(normalizar(guardada)).nombre}</b> · ${guardada.plata.toLocaleString("es-CL")}
           </div>

@@ -30,6 +30,8 @@ import {
   umbralRelampago,
   umbralMaraton,
   costoItem,
+  encargoDe,
+  cuentasEnCero,
   OFICIOS,
   LOGROS,
   SECRETOS,
@@ -44,6 +46,8 @@ import {
   TWIST_VERDADERO,
   FINALES,
   type EstadoHistoria,
+  type EstadoEncargo,
+  type Encargo,
   type FaseHistoria,
   type VistaHistoria,
   type EventoVista,
@@ -135,6 +139,30 @@ export class TransporteHistoria implements Transporte {
   /** El rival que se está enfrentando (el de la campaña, o el jefe secreto). */
   private rivalEnCurso(): RivalHistoria {
     return this.secretoActivo ? REY_VERDADERO : rivalActual(this.h);
+  }
+
+  /** El encargo del capítulo, si fue ACEPTADO y corre en este barrio. */
+  private encargoActivo(): { meta: Encargo; est: EstadoEncargo } | null {
+    if (this.secretoActivo) return null;
+    const meta = encargoDe(escenarioActual(this.h));
+    const est = this.h.encargo;
+    if (!meta || !est || est.capitulo !== this.h.escenarioIdx || !est.aceptado) return null;
+    return { meta, est };
+  }
+
+  /** La OFERTA del encargo: sólo en la puerta del barrio y sin decidir aún. */
+  private encargoOfrecido(): Encargo | null {
+    if (this.secretoActivo || this.h.rivalIdx !== 0) return null;
+    const meta = encargoDe(escenarioActual(this.h));
+    if (!meta) return null;
+    const est = this.h.encargo;
+    if (est && est.capitulo === this.h.escenarioIdx) return null; // ya decidido
+    return meta;
+  }
+
+  /** Los contadores de la corrida (siempre presentes tras normalizar). */
+  private cuentas() {
+    return (this.h.cuentas ??= cuentasEnCero());
   }
 
   /** El pasaje del epílogo que toca mostrar (fase "final"). */
@@ -292,9 +320,36 @@ export class TransporteHistoria implements Transporte {
         // El botín: premio base + la apuesta doblada + el bono del desafío.
         const rival = this.rivalEnCurso();
         const bono = desafioCumplido ? bonoDesafio(rival, this.h.oficio) : 0;
-        const total = rival.plata + this.apuestaMonto + bono;
-        this.botin = { premioBase: rival.plata, apuestaExtra: this.apuestaMonto, bono, desafioCumplido, total };
+        let total = rival.plata + this.apuestaMonto + bono;
+        // El encargo del barrio: la cosecha suma botines; al caer el jefe con
+        // el contrato vivo (y la cosecha completa, si aplica), se paga.
+        const enc = this.encargoActivo();
+        let encargoPago = 0;
+        let encargoItem: string | null = null;
+        if (enc && !enc.est.roto && !enc.est.pagado) {
+          enc.est.progreso += total;
+          const cosechado = enc.meta.tipo !== "cosecha" || enc.est.progreso >= (enc.meta.meta ?? 0);
+          if (rival.esBoss && cosechado) {
+            enc.est.pagado = true;
+            encargoPago = enc.meta.plata;
+            if (enc.meta.item) {
+              const im = itemMeta(enc.meta.item);
+              this.h.inventario[enc.meta.item] = Math.min(im.max, this.h.inventario[enc.meta.item] + 1);
+              encargoItem = im.nombre;
+            }
+            total += encargoPago;
+            this.cuentas().encargos += 1;
+            this.otorgar("de-palabra");
+          } else if (rival.esBoss) {
+            enc.est.roto = true; // el jefe cayó y la cosecha no alcanzó: contrato vencido
+          }
+        }
+        this.botin = { premioBase: rival.plata, apuestaExtra: this.apuestaMonto, bono, desafioCumplido, encargoPago, encargoItem, total };
         this.h.plata += total;
+        // La corrida en números.
+        this.cuentas().ganadas += 1;
+        this.cuentas().plataJuntada += total;
+        if (desafioCumplido) this.cuentas().desafios += 1;
         this.guardar();
         // Hazañas de la mesa ganada (persisten en el palmarés).
         const yo = pub.jugadores.find((j) => j.id === HUMANO_ID);
@@ -311,10 +366,12 @@ export class TransporteHistoria implements Transporte {
         // Al perder, los items usados se recuperan (no se confirmó la baja)…
         // pero la apuesta se la queda la mesa. Perder ahora duele.
         this.apuestaPerdida = Math.min(this.apuestaMonto, this.h.plata);
-        if (this.apuestaPerdida > 0) {
-          this.h.plata -= this.apuestaPerdida;
-          this.guardar();
-        }
+        if (this.apuestaPerdida > 0) this.h.plata -= this.apuestaPerdida;
+        this.cuentas().caidas += 1;
+        // Una caída rompe el contrato "sin caer" del barrio.
+        const enc = this.encargoActivo();
+        if (enc && enc.meta.tipo === "sin-caer" && !enc.est.pagado) enc.est.roto = true;
+        this.guardar();
         this.fase = "derrota";
       }
     }
@@ -360,10 +417,23 @@ export class TransporteHistoria implements Transporte {
     this.emitir();
   }
 
+  /** Acepta o deja pasar el encargo del barrio (sólo en la puerta del capítulo). */
+  historiaEncargo(aceptar: boolean) {
+    if (this.fase !== "intro" || this.cinematicaVista() || !this.encargoOfrecido()) return;
+    this.h.encargo = { capitulo: this.h.escenarioIdx, aceptado: aceptar, roto: false, pagado: false, progreso: 0 };
+    this.guardar();
+    this.emitir();
+  }
+
   /** Empieza el encuentro: si hay un evento de calle pendiente, va primero. */
   historiaEmpezar() {
     if (this.fase !== "intro" || this.cinematicaVista()) return;
     this.h.prologoVisto = true;
+    // La oferta del encargo caduca al sentarse: lo que no se firmó, no corre.
+    if (this.encargoOfrecido()) {
+      this.h.encargo = { capitulo: this.h.escenarioIdx, aceptado: false, roto: false, pagado: false, progreso: 0 };
+      this.guardar();
+    }
     const ev = eventoActual(this.h);
     if (ev) {
       this.eventoEnCurso = ev;
@@ -553,6 +623,12 @@ export class TransporteHistoria implements Transporte {
     if (!usado) return;
     // Se "gasta" de forma transitoria; sólo se confirma al ganar (ver onInner).
     this.itemsGastados[meta.id] += 1;
+    // Sacar algo bajo la manga rompe el contrato "manos quietas" del barrio.
+    const enc = this.encargoActivo();
+    if (enc && enc.meta.tipo === "manos-quietas" && !enc.est.pagado && !enc.est.roto) {
+      enc.est.roto = true;
+      this.guardar();
+    }
     this.emitir();
   }
   historiaSuerte() {
@@ -716,6 +792,28 @@ export class TransporteHistoria implements Transporte {
               return { nombre: d.nombre, desc: d.desc, bono: bonoDesafio(rival, this.h.oficio) };
             })()
           : null,
+      encargo: (() => {
+        // El encargo del barrio: la oferta (en la puerta) o su estado en curso.
+        if (this.secretoActivo) return null;
+        const meta = encargoDe(esc);
+        if (!meta) return null;
+        const est = this.h.encargo;
+        const decidido = !!est && est.capitulo === this.h.escenarioIdx;
+        const datos = {
+          patron: meta.patron,
+          texto: meta.texto,
+          plata: meta.plata,
+          item: meta.item ? itemMeta(meta.item).nombre : null,
+          meta: meta.tipo === "cosecha" ? meta.meta ?? 0 : null,
+          progreso: decidido ? est!.progreso : 0,
+        };
+        if (!decidido) {
+          return this.fase === "intro" && this.encargoOfrecido() ? { ...datos, estado: "ofrecido" as const } : null;
+        }
+        if (!est!.aceptado) return null; // lo dejaste pasar: no se habla más
+        return { ...datos, estado: est!.pagado ? ("pagado" as const) : est!.roto ? ("roto" as const) : ("encurso" as const) };
+      })(),
+      cuentas: { ...cuentasEnCero(), ...(this.h.cuentas ?? {}) },
       botin: this.fase === "victoria" ? this.botin : null,
       apuestaPerdida: this.fase === "derrota" ? this.apuestaPerdida : 0,
       acertijoDisponible:
