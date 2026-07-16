@@ -1098,6 +1098,186 @@ function Escenas({ escena }: { escena: string }) {
         </g>
       );
 
+    // El pasillo sin número: angosto, larguísimo, una puerta al fondo.
+    case "pasillo-sin-numero":
+      return (
+        <g>
+          <rect x="0" y="0" width="320" height="140" fill="#050408" />
+          {/* fuga del pasillo hacia la puerta del fondo */}
+          <path d="M0 0 L140 34 L140 106 L0 140 Z" fill="#0a0810" />
+          <path d="M320 0 L180 34 L180 106 L320 140 Z" fill="#0a0810" />
+          <path d="M0 0 L320 0 L180 34 L140 34 Z" fill="#070609" />
+          <path d="M0 140 L320 140 L180 106 L140 106 Z" fill="#0c0a12" />
+          {/* líneas de fuga apenas doradas */}
+          <g stroke={ORO} strokeOpacity="0.14" strokeWidth="1">
+            <path d="M0 18 L146 40" />
+            <path d="M320 18 L174 40" />
+            <path d="M0 122 L146 100" />
+            <path d="M320 122 L174 100" />
+          </g>
+          {/* la puerta sin número, con un hilo de luz abajo */}
+          <rect x="146" y="42" width="28" height="58" fill="#0d0a08" stroke="#241a12" strokeWidth="1.4" />
+          <rect className="esc-brilla" x="146" y="97" width="28" height="3" fill={ORO} opacity="0.55" />
+          <circle cx="168" cy="72" r="1.4" fill={ORO} opacity="0.5" />
+          {/* las dos siluetas que avanzan, de espaldas */}
+          <g fill={NEGRO} opacity="0.92">
+            <circle cx="118" cy="70" r="7" />
+            <path d="M109 78 q9 -5 18 0 l3 34 q-12 4 -24 0 z" />
+            <circle cx="94" cy="74" r="6" />
+            <path d="M86 81 q8 -4 16 0 l3 29 q-11 4 -22 0 z" />
+          </g>
+        </g>
+      );
+
+    // La leyenda del Patrón: la libreta de nombres tachados y el cacho de marfil.
+    case "patron-leyenda":
+      return (
+        <g>
+          <rect x="0" y="0" width="320" height="140" fill="#070609" />
+          <Suelo />
+          {/* cono de luz sobre la mesa */}
+          <g className="esc-flicker">
+            <circle cx="160" cy="10" r="4" fill={ORO} opacity="0.85" />
+            <path d="M160 14 L100 108 L220 108 Z" fill={ORO} opacity="0.07" />
+          </g>
+          {/* la mesa y el paño gastado */}
+          <rect x="84" y="92" width="152" height="12" rx="3" fill="#241a12" />
+          <rect x="92" y="86" width="136" height="8" rx="2" fill="#1a2a1e" />
+          {/* la libreta abierta, con los nombres tachados */}
+          <g transform="rotate(-3 150 78)">
+            <rect x="118" y="66" width="64" height="24" rx="2" fill="#d9d5c9" opacity="0.85" />
+            <line x1="150" y1="66" x2="150" y2="90" stroke="#8a8477" strokeWidth="1" />
+            <g stroke="#3a3630" strokeWidth="1">
+              <line x1="124" y1="72" x2="144" y2="72" />
+              <line x1="124" y1="77" x2="142" y2="77" />
+              <line x1="124" y1="82" x2="145" y2="82" />
+              <line x1="156" y1="72" x2="176" y2="72" />
+              <line x1="156" y1="77" x2="174" y2="77" />
+            </g>
+            {/* los tachados, en sangre vieja */}
+            <g stroke={SANGRE} strokeWidth="1.3" opacity="0.8">
+              <line x1="123" y1="71.5" x2="145" y2="72.5" />
+              <line x1="123" y1="76.5" x2="143" y2="77.5" />
+              <line x1="123" y1="81.5" x2="146" y2="82.5" />
+              <line x1="155" y1="71.5" x2="177" y2="72.5" />
+            </g>
+          </g>
+          {/* el cacho de marfil y sus dados viejos */}
+          <path d="M204 74 l12 -5 10 5 -3 14 -9 3 -9 -4 z" fill="#e9e3d2" opacity="0.75" stroke="#8a8477" strokeWidth="0.8" />
+          <rect x="196" y="84" width="7" height="7" rx="1.6" fill="#e9e3d2" opacity="0.7" />
+          <circle cx="199.5" cy="87.5" r="1" fill="#3a3630" />
+        </g>
+      );
+
+    // ---- Los cierres nuevos de los finales ----
+
+    // Final estándar, cierre: el sobre negro de LA BANCA bajo la puerta.
+    case "fin-trono-carta":
+      return (
+        <g>
+          <Suelo />
+          {/* la puerta del penthouse, apenas iluminada */}
+          <rect x="120" y="12" width="80" height="110" fill="#100d16" stroke="#241a12" strokeWidth="2" />
+          <circle cx="188" cy="70" r="2" fill={ORO} opacity="0.6" />
+          {/* el hilo de luz de abajo */}
+          <rect x="120" y="118" width="80" height="4" fill={ORO} opacity="0.18" />
+          {/* el sobre negro, medio adentro, con el as dorado */}
+          <g transform="rotate(-8 160 116)">
+            <rect x="138" y="108" width="44" height="26" rx="2" fill="#0a0810" stroke={ORO} strokeOpacity="0.55" strokeWidth="1" />
+            <path d="M138 108 L160 122 L182 108" fill="none" stroke={ORO} strokeOpacity="0.4" strokeWidth="1" />
+            <rect className="esc-brilla" x="152" y="114" width="16" height="14" rx="1.5" fill="#0d0a08" stroke={ORO} strokeWidth="0.8" />
+            <text x="160" y="125" textAnchor="middle" fontSize="10" fill={ORO} opacity="0.9" fontStyle="italic">A</text>
+          </g>
+        </g>
+      );
+
+    // Final malo, cierre: la pieza sin ventanas tacha tu nombre y apaga la luz.
+    case "fin-traicion-banca":
+      return (
+        <g>
+          <rect x="0" y="0" width="320" height="140" fill="#050408" />
+          {/* el Mapocho abajo, llevándose el saco */}
+          <path d="M0 124 q 60 -8 120 0 t 200 0 L320 140 L0 140 Z" fill="#0b1018" />
+          <path d="M228 122 q10 -6 20 0 q-2 6 -10 6 q-8 0 -10 -6 z" fill={NEGRO} />
+          <g stroke="#20303e" strokeWidth="1.2" fill="none" opacity="0.8">
+            <path d="M20 128 q 8 -4 16 0 t 16 0" />
+            <path d="M120 132 q 8 -4 16 0 t 16 0" />
+          </g>
+          {/* arriba, la pieza sin ventanas con la ampolleta a punto de apagarse */}
+          <rect x="96" y="12" width="128" height="84" fill="#0a0810" stroke="#000000" strokeWidth="6" />
+          <g className="esc-flicker">
+            <circle cx="160" cy="26" r="3" fill={ORO} opacity="0.5" />
+            <path d="M160 29 L138 74 L182 74 Z" fill={ORO} opacity="0.05" />
+          </g>
+          {/* la mano y la libreta: tu nombre, tachado */}
+          <rect x="136" y="58" width="48" height="18" rx="2" fill="#d9d5c9" opacity="0.7" transform="rotate(-2 160 67)" />
+          <g stroke="#3a3630" strokeWidth="1">
+            <line x1="142" y1="64" x2="170" y2="64" />
+            <line x1="142" y1="69" x2="166" y2="69" />
+          </g>
+          <line x1="140" y1="63" x2="172" y2="65" stroke={SANGRE} strokeWidth="1.6" />
+          <path d="M176 70 q6 2 8 8 l-6 2 q-4 -4 -2 -10 z" fill={NEGRO} />
+        </g>
+      );
+
+    // Final verdadero: la confesión del Patrón, de tahúr a tahúr.
+    case "fin-amanecer-confesion":
+      return (
+        <g>
+          <rect x="0" y="0" width="320" height="140" fill="#070609" />
+          <Suelo />
+          <g className="esc-flicker">
+            <circle cx="160" cy="10" r="4" fill={ORO} opacity="0.8" />
+            <path d="M160 14 L96 112 L224 112 Z" fill={ORO} opacity="0.06" />
+          </g>
+          {/* la mesa entre los dos */}
+          <rect x="120" y="92" width="80" height="10" rx="3" fill="#241a12" />
+          <path d="M150 84 l8 -3 7 3 -2 8 -6 2 -6 -3 z" fill="#e9e3d2" opacity="0.6" />
+          {/* el Patrón, vencido, con las manos a la vista */}
+          <g fill={NEGRO} opacity="0.94">
+            <circle cx="216" cy="62" r="9" />
+            <path d="M204 72 q12 -6 24 0 l4 30 q-16 5 -32 0 z" />
+          </g>
+          <path d="M206 92 q4 3 8 1 M226 92 q-4 3 -8 1" stroke={PIEL} strokeWidth="2" opacity="0.4" fill="none" />
+          {/* tú, de pie, escuchando */}
+          <g fill={NEGRO} opacity="0.92">
+            <circle cx="104" cy="52" r="8" />
+            <path d="M94 61 q10 -5 20 0 l4 42 q-14 5 -28 0 z" />
+          </g>
+        </g>
+      );
+
+    // Final verdadero: la libreta abierta en la primera página, y el "no".
+    case "fin-amanecer-libreta":
+      return (
+        <g>
+          <rect x="0" y="0" width="320" height="140" fill="#070609" />
+          <g className="esc-flicker">
+            <circle cx="160" cy="10" r="4" fill={ORO} opacity="0.8" />
+            <path d="M160 14 L110 96 L210 96 Z" fill={ORO} opacity="0.07" />
+          </g>
+          {/* la libreta, enorme en primer plano */}
+          <g transform="rotate(-2 160 92)">
+            <rect x="96" y="64" width="128" height="56" rx="3" fill="#d9d5c9" opacity="0.88" />
+            <line x1="160" y1="64" x2="160" y2="120" stroke="#8a8477" strokeWidth="1.4" />
+            {/* la primera página: UN solo nombre, tachado con rabia */}
+            <line x1="112" y1="86" x2="148" y2="86" stroke="#3a3630" strokeWidth="1.4" />
+            <g stroke={SANGRE} strokeWidth="2" opacity="0.85">
+              <line x1="108" y1="83" x2="152" y2="89" />
+              <line x1="108" y1="90" x2="152" y2="84" />
+            </g>
+            {/* la última página, en blanco: nadie más */}
+            <g stroke="#b9b4a6" strokeWidth="1" opacity="0.6">
+              <line x1="172" y1="78" x2="212" y2="78" />
+              <line x1="172" y1="88" x2="212" y2="88" />
+              <line x1="172" y1="98" x2="212" y2="98" />
+            </g>
+          </g>
+          {/* la mano que la cierra, desde el borde */}
+          <path d="M60 140 q10 -26 34 -22 l6 10 q-16 4 -22 16 z" fill={NEGRO} />
+        </g>
+      );
+
     // El Fiador: el prestamista de la tienda. Lentes chicos, chaleco y pluma.
     case "retrato-fiador":
       return (

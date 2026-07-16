@@ -189,16 +189,19 @@ describe("campaña", () => {
     expect(new Set(huellas).size).toBe(bosses.length);
   });
 
-  it("todos los jefes (y el Patrón) traen una cinemática de 3 pasajes que cierra en primer plano", () => {
+  it("todos los jefes traen cinemática que cierra en primer plano (el Patrón, la más larga)", () => {
     const bosses = [...CAMPANA.map((e) => e.rivales[e.rivales.length - 1]!), REY_VERDADERO];
     for (const b of bosses) {
       expect(b.cinematica, `${b.id} cinemática`).toBeTruthy();
-      expect(b.cinematica!.length).toBe(3); // plano general -> plano medio -> primer plano
+      // Los jefes de barrio: plano general -> plano medio -> primer plano.
+      // El jefe SECRETO carga además su leyenda: 5 pasajes.
+      expect(b.cinematica!.length).toBe(b.id === "b-patron" ? 5 : 3);
       for (const beat of b.cinematica!) {
         expect(beat.escena, `${b.id} escena`).toBeTruthy();
         expect(beat.texto, `${b.id} texto`).toBeTruthy();
       }
-      expect(b.cinematica![2]!.escena.startsWith("retrato-"), `${b.id} cierra en retrato`).toBe(true);
+      const cierre = b.cinematica![b.cinematica!.length - 1]!;
+      expect(cierre.escena.startsWith("retrato-"), `${b.id} cierra en retrato`).toBe(true);
     }
   });
 
@@ -718,11 +721,16 @@ describe("acertijos (candados de cifra)", () => {
     expect(new Set([escenaFinal("estandar"), escenaFinal("malo"), escenaFinal("verdadero")]).size).toBe(3);
   });
 
-  it("cada final trae un epílogo de 3 pasajes, cada uno con su propia estampa", () => {
+  it("cada final trae un epílogo de varios pasajes, cada uno con su propia estampa", () => {
     const todasLasEscenas = new Set<string>();
+    let totalBeats = 0;
+    // El verdadero es el final más largo: es el que carga el lore del Patrón.
+    expect(FINALES.verdadero.beats.length).toBeGreaterThan(FINALES.estandar.beats.length);
+    expect(FINALES.verdadero.beats.length).toBeGreaterThan(FINALES.malo.beats.length);
     for (const tf of ["estandar", "malo", "verdadero"] as TipoFinal[]) {
       const beats = FINALES[tf].beats;
-      expect(beats.length).toBe(3);
+      expect(beats.length).toBeGreaterThanOrEqual(4);
+      totalBeats += beats.length;
       for (const b of beats) {
         expect(b.texto, `${tf} texto`).toBeTruthy();
         expect(b.escena, `${tf} escena`).toBeTruthy();
@@ -731,7 +739,33 @@ describe("acertijos (candados de cifra)", () => {
       // el pasaje de cierre coincide con escenaFinal (la estampa del Cuaderno).
       expect(beats[beats.length - 1]!.escena).toBe(escenaFinal(tf));
     }
-    expect(todasLasEscenas.size).toBe(9); // ninguna estampa se repite entre pasajes
+    expect(todasLasEscenas.size).toBe(totalBeats); // ninguna estampa se repite entre pasajes
+  });
+
+  it("los finales incompletos avisan que la Banca sigue invicta; el verdadero cuenta la historia del Patrón", () => {
+    // El estándar y el malo cierran nombrando a la Banca sin dueño nuevo.
+    for (const tf of ["estandar", "malo"] as TipoFinal[]) {
+      const cierre = FINALES[tf].beats[FINALES[tf].beats.length - 1]!.texto.toLowerCase();
+      expect(cierre, `${tf} nombra a la banca`).toContain("banca");
+      expect(cierre, `${tf} deja claro el invicto`).toContain("invicta");
+    }
+    // …y sueltan la pista del camino: llegar limpio, y con un amigo.
+    const cartaEstandar = FINALES.estandar.beats[FINALES.estandar.beats.length - 1]!.texto.toLowerCase();
+    expect(cartaEstandar).toContain("limpias");
+    expect(cartaEstandar).toContain("amigo");
+    // El verdadero revela el ciclo: la confesión del Patrón y su nombre en la libreta.
+    const textoVerdadero = FINALES.verdadero.beats.map((b) => b.texto).join(" ");
+    expect(textoVerdadero).toContain("Yo también subí desde un muelle");
+    expect(textoVerdadero.toLowerCase()).toContain("libreta");
+  });
+
+  it("la cinemática del jefe secreto cuenta su leyenda (5 pasajes, estampas propias)", () => {
+    const beats = REY_VERDADERO.cinematica!;
+    expect(beats.length).toBe(5);
+    expect(new Set(beats.map((b) => b.escena)).size).toBe(beats.length);
+    const relato = beats.map((b) => b.texto).join(" ");
+    expect(relato).toContain("treinta años"); // el mito del ciclo
+    expect(relato.toLowerCase()).toContain("libreta"); // los que llegaron antes
   });
 
   it("abrir el candado: fallar no castiga, acertar premia una sola vez y el secreto se cierra", () => {

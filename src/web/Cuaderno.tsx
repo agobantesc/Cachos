@@ -131,12 +131,21 @@ export function Cuaderno({ volver }: { volver: () => void }) {
         </h3>
         {tiposFinal.map((tf) => {
           const visto = palmares.finales.includes(tf);
+          // El rumor de la Banca: si ya viste algún final pero no el verdadero,
+          // el cuaderno apunta el camino (limpio, y con un amigo de verdad).
+          const rumor = tf === "verdadero" && !visto && finalesVistos > 0;
           return (
             <div key={tf} className={"cua-item" + (visto ? "" : " cua-item--incognita")}>
-              <span className="cua-glifo" aria-hidden="true">{visto ? "★" : "·"}</span>
+              <span className="cua-glifo" aria-hidden="true">{visto ? "★" : rumor ? "?" : "·"}</span>
               <span className="cua-cuerpo">
                 <b>{visto ? FINALES[tf].titulo : "???"}</b>
-                {!visto && <i>Un destino que aún no escribes.</i>}
+                {!visto && (
+                  <i>
+                    {rumor
+                      ? "En el hampa se murmura que la vitrina no era el trono: la Banca sigue invicta. Dicen que a esa puerta se llega con las manos limpias de punta a punta… y de la mano de un amigo que te deba la vida."
+                      : "Un destino que aún no escribes."}
+                  </i>
+                )}
               </span>
             </div>
           );

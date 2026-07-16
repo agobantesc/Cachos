@@ -767,9 +767,11 @@ export const REY_VERDADERO: RivalHistoria = {
   habilidad: LA_BANCA,
   plata: 5000,
   cinematica: [
-    { escena: "cap-cumbre", texto: "El giro todavía te zumba en los oídos: el Rey de la vitrina era una fachada. Sigues a tu aliado por un pasillo que el penthouse escondía, hasta una puerta sin número, al fondo de todo." },
-    { escena: "jefe-patron", texto: "La puerta se abre a una pieza sin ventanas. No hay aplausos esperándote esta vez, ni ventanal con la ciudad. Sólo una ampolleta, un hombre sin edad, y treinta años de silencio esperando a que alguien cruzara ese umbral." },
-          { escena: "retrato-patron", texto: "De cerca… no hay 'de cerca'. La ampolleta le queda encima y aun así la cara del Patrón sigue en sombra, como si la luz le tuviera miedo. Sólo se le ven los dientes cuando dice: 'Treinta años. Juguemos.'" },
+    { escena: "cap-cumbre", texto: "El giro todavía te zumba en los oídos: el Rey de la vitrina era una fachada. Sigues a tu aliado por un pasillo que el penthouse escondía, hacia una puerta sin número, al fondo de todo." },
+    { escena: "pasillo-sin-numero", texto: "El pasillo es largo, angosto, sin un solo adorno: aquí no llega nadie por accidente. Tu aliado habla bajito, como en un velorio. 'Hace treinta años hubo otro cabro del barro que subió igual que tú, mesa a mesa, hasta el trono. La noche que ganó, desapareció. Nadie lo vio nunca más… pero desde esa noche, todos los Reyes de la vitrina le pagan tributo a esta pieza.'" },
+    { escena: "patron-leyenda", texto: "'No juega por plata', sigue tu aliado, con la mano ya en la manilla. 'En esa mesa se reparte otra baraja: deudas, favores, barrios enteros. Los jueces que viste, los comisarios, los senadores… todos deben algo acá adentro. Y a los que llegaron a esta puerta antes que tú, los anotó en una libreta. Ninguno salió a contarlo.' Recién ahí entiendes contra qué vas a jugar: no contra un hombre. Contra la casa entera." },
+    { escena: "jefe-patron", texto: "La puerta se abre a una pieza sin ventanas. No hay aplausos esperándote esta vez, ni ventanal con la ciudad. Sólo una ampolleta, una mesa de paño gastado por treinta años de un solo jugador, y un hombre sin edad que baraja un cacho de marfil amarillento: el de su primera partida, la que nadie recuerda… salvo él." },
+    { escena: "retrato-patron", texto: "De cerca… no hay 'de cerca'. La ampolleta le queda encima y aun así la cara del Patrón sigue en sombra, como si la luz le tuviera miedo. 'Sé quién eres. Sé desde qué muelle vienes, y sé qué dejaste y qué no dejaste en el camino. Por eso encontraste la puerta.' Sólo se le ven los dientes cuando remata: 'Treinta años. Juguemos.'" },
   ],
   frases: { caza: "La banca cobra.", cae: "…anota eso, porque nadie lo va a creer.", siciliana: "Siciliana. La banca aplaude a los osados… y después los entierra.", alFilo: "Un dado. La casa espera." },
   presentacion:
@@ -817,7 +819,12 @@ export const FINALES: Record<TipoFinal, { titulo: string; beats: FinalBeat[] }> 
       {
         escena: "fin-trono",
         texto:
-          "Partiste en una pocilga del puerto, oliendo a pescado y a fracaso; hoy nadie te reconocería en esa mesa pegajosa de vino. Desde lo más alto de Santiago, no queda un nombre por encima del tuyo. El cacho, por fin, tiene dueño. Y sin embargo, unas noches después, contando tu plata frente al mismo ventanal, una duda no te deja dormir: el Rey cayó demasiado fácil para treinta años de leyenda. Como si alguien, más arriba todavía, te hubiera dejado ganar. Pero estás cansado, y los reyes cansados no hacen preguntas. Te quedas con el trono… y con la incógnita.",
+          "Partiste en una pocilga del puerto, oliendo a pescado y a fracaso; hoy nadie te reconocería en esa mesa pegajosa de vino. Desde lo más alto de Santiago, no queda un nombre por encima del tuyo. El cacho, por fin, tiene dueño. Y sin embargo, unas noches después, contando tu plata frente al mismo ventanal, una duda no te deja dormir: el Rey cayó demasiado fácil para treinta años de leyenda. Como si alguien, más arriba todavía, te hubiera dejado ganar. Pero estás cansado, y los reyes cansados no hacen preguntas.",
+      },
+      {
+        escena: "fin-trono-carta",
+        texto:
+          "Una semana después, entre la correspondencia del penthouse, aparece un sobre negro sin remitente. Adentro, una sola carta: un as dibujado a mano con tinta dorada y una línea con letra de escribano: 'Bonita vitrina. Atentamente, LA BANCA.' Preguntas en todo Santiago quién la mandó; hasta los pesados se encogen de hombros. Sólo un viejo crupier, ya retirado, se atreve a decírtelo al oído: 'El trono que ganaste tiene dueño de mentira, muchacho. El que reparte de verdad nunca se sienta donde lo vean… y a su puerta no se llega solo: se llega de la mano de un amigo que te deba la vida, con las manos limpias de principio a fin.' Te quedas con el trono. La incógnita, ahora, tiene nombre: la Banca sigue invicta.",
       },
     ],
   },
@@ -837,7 +844,12 @@ export const FINALES: Record<TipoFinal, { titulo: string; beats: FinalBeat[] }> 
       {
         escena: "fin-traicion",
         texto:
-          "Levantaste tu imperio sobre cadáveres: el muerto de los cajones, el viejo del puente, el hermano que te buscó la cara. Subiste pisando a todos y arriba, donde ya no queda nadie a quien traicionar, te traicionan a ti. La copa de la victoria te sabe rara un segundo antes de que las piernas te fallen. Caes frente al ventanal con todo Chile encendido a tus pies, y lo último que oyes es una voz que no reconoces: 'La banca siempre cobra, cabro.' Otro saco de género rumbo al Mapocho. El cacho, esta noche, sigue sin dueño.",
+          "Levantaste tu imperio sobre cadáveres: el muerto de los cajones, el viejo del puente, el hermano que te buscó la cara. Subiste pisando a todos y arriba, donde ya no queda nadie a quien traicionar, te traicionan a ti. La copa de la victoria te sabe rara un segundo antes de que las piernas te fallen. Caes frente al ventanal con todo Chile encendido a tus pies, y lo último que oyes es una voz que no reconoces: 'La banca siempre cobra, cabro.' Otro saco de género rumbo al Mapocho.",
+      },
+      {
+        escena: "fin-traicion-banca",
+        texto:
+          "El río hace el resto, como lo lleva haciendo treinta años. Esa misma noche, en una pieza sin ventanas en lo más alto de Santiago, un hombre sin edad abre una libreta gastada y tacha tu nombre de una lista donde el suyo no aparece. Al margen anota, con letra pareja, lo mismo que anotó tantas veces: 'No llegó.' Después apaga la ampolleta. El verdadero Rey del Cacho ni siquiera alcanzó a conocer tu cara: a su puerta no se llega pisando gente — los muertos que dejaste atrás son, justamente, los que la esconden. La vitrina queda vacía. La Banca, invicta. Y el cacho, esta noche, sigue sin dueño.",
       },
     ],
   },
@@ -847,7 +859,17 @@ export const FINALES: Record<TipoFinal, { titulo: string; beats: FinalBeat[] }> 
       {
         escena: "fin-amanecer-puerta",
         texto:
-          "El Patrón queda tendido sobre su propio cacho, en silencio, en una pieza que nunca tuvo testigos hasta esta noche. No hay aplausos ni copas: solo el zumbido de la ampolleta y tu respiración, todavía agitada. Tu aliado entra despacio, como quien no cree lo que está viendo, y te mira largo antes de hablar. 'Treinta años', dice al fin, 'y nadie había cruzado esa puerta dos veces.' Tú tampoco lo puedes creer del todo. Recién ahí entiendes que ganaste algo que no tiene precio en plata.",
+          "El Patrón no cae: se queda muy quieto, mirando su cacho de marfil como si le hubiera mentido un amigo de toda la vida. No hay aplausos ni copas: sólo el zumbido de la ampolleta y tu respiración, todavía agitada. Tu aliado entra despacio, como quien no cree lo que está viendo. 'Treinta años', dice al fin, 'y nadie había salido de esta pieza por su propio pie.' Recién ahí entiendes que ganaste algo que no tiene precio en plata.",
+      },
+      {
+        escena: "fin-amanecer-confesion",
+        texto:
+          "Entonces el Patrón habla, y por primera vez la voz le sale con acento de puerto. 'Yo también subí desde un muelle, cabro. Hace treinta años. También hubo una puerta sin número, y un viejo sin nombre esperándome detrás. Le gané… y en vez de volver al sol, me quedé con la pieza.' Se mira las manos, viejas de repente. 'Ese es el secreto que nadie te cuenta: la banca no se hereda ni se roba. La banca se acepta. El viejo de entonces salió por esa puerta y no lo vieron más. Yo llevo treinta años sin ver el río.' Levanta la vista, y en la sombra le brillan los ojos: 'La pieza es tuya, si la quieres. Alguien tiene que repartir.'",
+      },
+      {
+        escena: "fin-amanecer-libreta",
+        texto:
+          "Sobre la mesa queda la libreta, abierta. La hojeas: treinta años de nombres tachados, uno por página — tahúres que llegaron hasta la puerta y no salieron a contarlo. En la primera página, con una tinta más vieja que todas, hay un nombre tachado distinto, con rabia: el del propio Patrón, escrito por la mano del viejo que lo esperó a él. Entiendes el ciclo completo: cada rey enterrando al anterior, cada ganador convertido en carcelero de sí mismo. Cierras la libreta y la dejas donde estaba. 'No', le dices, ya desde la puerta. 'Yo vine por el juego, no por la jaula.' Y por primera vez en treinta años, alguien le dice que no a la Banca.",
       },
       {
         escena: "fin-amanecer-penthouse",
@@ -857,7 +879,7 @@ export const FINALES: Record<TipoFinal, { titulo: string; beats: FinalBeat[] }> 
       {
         escena: "fin-amanecer",
         texto:
-          "Sales del edificio cuando el cielo recién empieza a cambiar de color. Empezaste en el barro, sin nombre, convencido de que el trono de arriba era lo único que importaba; pero lo que en verdad ganaste pasó lejos de las luces, en una pieza sin ventanas que nadie más va a conocer. El sol asoma sobre el río y, por primera vez, el Mapocho no se lleva a nadie. Hoy ERES el cacho —el de verdad, el que nadie va a destronar con trucos—. Te lo ganaste limpio, y acompañado. Esa, y no el trono, es la parte que cuenta.",
+          "Sales del edificio cuando el cielo recién empieza a cambiar de color, y detrás de ti baja también el Patrón — parpadeando como un recién nacido, viendo el río por primera vez en treinta años. No se despiden: los tahúres de verdad no se despiden. Empezaste en el barro convencido de que el trono era lo único que importaba; pero lo que en verdad ganaste pasó lejos de las luces: rompiste un ciclo que llevaba treinta años tragándose a los mejores. Arriba, la pieza sin ventanas quedó vacía, con una libreta que ya nadie va a escribir. El sol asoma sobre el Mapocho y, por primera vez, el río no se lleva a nadie. Hoy ERES el cacho — el de verdad, el que dijo que no. Te lo ganaste limpio, y acompañado. Esa, y no el trono, es la parte que cuenta.",
       },
     ],
   },
