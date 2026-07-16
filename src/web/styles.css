@@ -172,7 +172,7 @@ input:focus { border-color: var(--oro); box-shadow: 0 0 0 2px rgba(200, 162, 74,
   /* El paño: un fieltro verde botella que respira detrás de la zona de juego,
      con una lámpara cenital cayendo desde arriba. */
   background:
-    radial-gradient(90% 46% at 50% 26%, rgba(34, 61, 42, 0.5), rgba(24, 44, 30, 0.28) 60%, transparent 78%),
+    radial-gradient(90% 46% at 50% 26%, var(--pano-lampara, rgba(34, 61, 42, 0.5)), var(--pano-fondo, rgba(24, 44, 30, 0.28)) 60%, transparent 78%),
     radial-gradient(60% 30% at 50% 12%, rgba(230, 200, 120, 0.07), transparent 70%);
 }
 .mesa-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; }
@@ -841,7 +841,7 @@ button { touch-action: manipulation; }
 /* Tu mano sobre paño: el fieltro de la mesa de cacho, sutil bajo los dados. */
 .mi-mano {
   background:
-    radial-gradient(120% 130% at 50% 0%, rgba(38, 66, 46, 0.34), transparent 72%),
+    radial-gradient(120% 130% at 50% 0%, var(--pano-mano, rgba(38, 66, 46, 0.34)), transparent 72%),
     repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.012) 0 2px, transparent 2px 5px),
     linear-gradient(180deg, var(--humo-2), var(--humo));
 }
@@ -1363,3 +1363,107 @@ button { touch-action: manipulation; }
 @media (prefers-reduced-motion: reduce) {
   .mh-halo { animation: none; }
 }
+
+/* ============================================================
+   NIVEL PRODUCTO II: juice de la mesa, Mesa del Día y el Ropero.
+   ============================================================ */
+
+/* El GOLPE: la pantalla se sacude cuando pierdes un dado (más si es siciliana). */
+@keyframes mesa-golpe {
+  0%, 100% { transform: none; }
+  15% { transform: translate(-5px, 2px); }
+  30% { transform: translate(4px, -2px); }
+  45% { transform: translate(-3px, 1px); }
+  60% { transform: translate(2px, -1px); }
+  75% { transform: translate(-1px, 0); }
+}
+.mesa--golpe { animation: mesa-golpe 0.45s ease-out; }
+.mesa--golpe-fuerte { animation: mesa-golpe 0.65s ease-out; animation-iteration-count: 2; }
+
+/* CHISPAS de oro: lluvia breve para los momentos dulces (ganar, calzo exacto). */
+.chispas { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 5; }
+.chispas i {
+  position: absolute; bottom: 38%; width: 6px; height: 6px;
+  background: linear-gradient(180deg, var(--oro-claro), var(--oro));
+  border-radius: 1px; opacity: 0;
+  animation: chispa-vuela 1.15s cubic-bezier(0.2, 0.7, 0.4, 1) forwards;
+}
+.chispas i:nth-child(3n) { width: 4px; height: 4px; border-radius: 50%; }
+.chispas i:nth-child(4n) { background: #f1e6d0; }
+@keyframes chispa-vuela {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.6); }
+  12% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--chispa-x, 0px), -46vh) rotate(300deg) scale(1); }
+}
+.mesa.fin { position: relative; }
+.revelacion-caja { position: relative; overflow: hidden; }
+
+/* CINE: barras de letterbox en cinemáticas, caídas de jefe y finales. */
+.cine { position: relative; }
+.cine::before, .cine::after {
+  content: ""; position: fixed; left: 0; right: 0; height: 26px; z-index: 4;
+  background: #000; pointer-events: none;
+  animation: cine-entra 0.6s ease-out both;
+}
+.cine::before { top: 0; transform-origin: top; }
+.cine::after { bottom: 0; transform-origin: bottom; }
+@keyframes cine-entra {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mesa--golpe, .mesa--golpe-fuerte, .cine::before, .cine::after { animation: none; }
+  .chispas { display: none; }
+}
+
+/* La Mesa del Día: tarjeta del menú, reglas del día, reloj y ranking. */
+.diaria-emblema { color: #9db8d6; }
+.dia-regla { max-width: 380px; width: 100%; }
+.dia-capo { border-color: rgba(178, 58, 46, 0.55); background: rgba(143, 45, 36, 0.12); }
+.dia-capo .dc-tit { color: #e8a99a; }
+.reloj-dia {
+  position: fixed; top: 8px; left: 50%; transform: translateX(-50%); z-index: 30;
+  font-family: var(--display); font-size: 15px; letter-spacing: 1.5px; color: var(--oro-claro);
+  background: rgba(10, 8, 16, 0.82); border: 1px solid rgba(200, 162, 74, 0.45);
+  border-radius: 999px; padding: 3px 14px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+.rk-fila {
+  display: flex; align-items: center; gap: 10px; text-align: left;
+  padding: 3px 0; font-size: 13.5px;
+}
+.rk-puesto {
+  flex: none; width: 24px; height: 24px; display: grid; place-items: center;
+  border-radius: 50%; font-family: var(--display); font-size: 12px; color: var(--tenue);
+  background: var(--humo); border: 1px solid var(--linea);
+}
+.rk-puesto--podio { color: #15110a; background: linear-gradient(180deg, var(--oro-claro), var(--oro)); border-color: var(--oro); }
+.rk-nombre { color: var(--texto); }
+.rk-tiempo { margin-left: auto; font-family: var(--display); color: var(--tenue); letter-spacing: 1px; }
+.rk-fila--yo .rk-nombre, .rk-fila--yo .rk-tiempo { color: var(--oro-claro); font-weight: 700; }
+.rk-fila--yo { background: rgba(200, 162, 74, 0.07); border-radius: 8px; padding: 3px 6px; margin: 0 -6px; }
+
+/* EL ROPERO: la colección de cosméticos y secretos. */
+.ropero { gap: 10px; padding-bottom: 40px; }
+.rp-item { display: flex; align-items: center; gap: 11px; text-align: left; }
+.rp-item--cerrado { opacity: 0.55; }
+.rp-vista {
+  flex: none; width: 66px; min-height: 44px; display: grid; place-items: center;
+  background: rgba(0, 0, 0, 0.25); border: 1px solid var(--linea); border-radius: 10px; padding: 4px;
+}
+.rp-vista--secreta { border-style: dashed; }
+.rp-secreto { font-family: var(--display); font-size: 22px; color: var(--tenue); }
+.rp-pano { display: block; width: 52px; height: 34px; border-radius: 7px; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.45); }
+.rp-dados { display: flex; gap: 4px; }
+.rp-cap { font-size: 18px; color: var(--oro); }
+.rp-cuerpo { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+.rp-cuerpo b { font-family: var(--display); font-size: 14.5px; color: var(--hueso); letter-spacing: 0.3px; }
+.rp-cuerpo i { font-size: 12px; color: var(--tenue); font-style: italic; line-height: 1.4; }
+.rp-como { opacity: 0.75; }
+.rp-btn { flex: none; padding: 7px 14px; font-size: 12.5px; }
+.rp-uso {
+  flex: none; font-size: 10.5px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+  color: #15110a; background: linear-gradient(180deg, var(--oro-claro), var(--oro));
+  border-radius: 999px; padding: 4px 10px;
+}
+.rp-uso--activa { background: rgba(200, 162, 74, 0.15); color: var(--oro-claro); border: 1px solid rgba(200, 162, 74, 0.45); }

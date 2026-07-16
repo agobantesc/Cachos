@@ -9,7 +9,28 @@ import { FRASES } from "./frases";
 import { CONSEJOS, consejoPendiente, marcarConsejo, type ConsejoId } from "./consejos";
 import { Sonidos, Ambiente, sonidoActivado, alternarSonido, vibrar } from "./sonido";
 import { registrarPartida } from "./palmares";
+import { revisarDesbloqueos } from "./cosmeticos";
 import type { Instantanea, Transporte } from "./transporte";
+
+/** CHISPAS de oro: una lluvia breve de partículas para los momentos dulces
+ *  (ganar la mesa, un calzo exacto). Puro CSS; respeta reduced-motion. */
+function Chispas({ n = 16 }: { n?: number }) {
+  if (prefiereQuieto()) return null;
+  return (
+    <div className="chispas" aria-hidden="true">
+      {Array.from({ length: n }).map((_, i) => (
+        <i
+          key={i}
+          style={{
+            left: `${6 + ((i * 89) % 88)}%`,
+            animationDelay: `${(i % 8) * 90}ms`,
+            ["--chispa-x" as string]: `${(((i * 37) % 60) - 30)}px`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
 
 /** true si el usuario pidió menos movimiento (se salta la agitada de dados). */
 function prefiereQuieto(): boolean {
@@ -87,7 +108,11 @@ export function Mesa({
   };
 
   // Sonido por evento: dados al empezar ronda; ganar/perder en la resolución.
+  // Y el GOLPE: la pantalla se sacude cuando el que pierde el dado eres tú
+  // (más fuerte si cayó la siciliana).
   const finRegistrado = useRef(false);
+  const [golpe, setGolpe] = useState<"" | " mesa--golpe" | " mesa--golpe-fuerte">("");
+  const [botinRopero, setBotinRopero] = useState<string[]>([]);
   useEffect(() => {
     if (p.fase === "EN_RONDA") {
       finRegistrado.current = false; // mesa en curso (Mesa no se re-monta entre partidas)
@@ -96,6 +121,11 @@ export function Mesa({
       if (p.ultimaResolucion.perdedorId === snap.miId) {
         Sonidos.perder();
         vibrar(70);
+        if (!prefiereQuieto()) {
+          setGolpe(p.ultimaResolucion.siciliana ? " mesa--golpe-fuerte" : " mesa--golpe");
+          const timer = setTimeout(() => setGolpe(""), 650);
+          return () => clearTimeout(timer);
+        }
       } else {
         Sonidos.ganar();
       }
@@ -111,6 +141,8 @@ export function Mesa({
       if (!finRegistrado.current && (snap.esSolo || !snap.esLocal)) {
         finRegistrado.current = true;
         registrarPartida(gane);
+        // …y lo que esa mesa haya destrabado, cae al Ropero (con aviso).
+        setBotinRopero(revisarDesbloqueos().map((c) => c.nombre));
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -226,10 +258,16 @@ export function Mesa({
 
     return (
       <div className="mesa fin">
+        {gane && <Chispas n={20} />}
         <div className="fin-sello">
           <span className="fin-kicker">La Asociación de Cachos</span>
           <h1 className="fin-titulo">{gane ? "Ganaste la mesa" : `Ganó ${nombre(p.ganadorId)}`}</h1>
         </div>
+        {botinRopero.length > 0 && (
+          <div className="logro-toast" role="status">
+            Cayó al Ropero · <b>{botinRopero.join(" · ")}</b>
+          </div>
+        )}
         <ol className="resultados">
           {ranking.map((j) => {
             const puesto = puestoDe(j.id);
@@ -278,7 +316,7 @@ export function Mesa({
   }
 
   return (
-    <div className={"mesa" + (miTurno ? " mesa--mi-turno" : "")}>
+    <div className={"mesa" + (miTurno ? " mesa--mi-turno" : "") + golpe}>
       {snap.historia && snap.historia.faseHistoria === "mesa" && (
         <div className="historia-hud">
           <span className="hh-rival">
@@ -558,6 +596,7 @@ function Revelacion({
   return (
     <div className="revelacion">
       <div className={"revelacion-caja" + (res.siciliana ? " sacudida" : "")}>
+        {res.tipo === "CALZO" && res.perdedorId === null && <Chispas n={12} />}
         <h2>{esPaso ? "Paso dudado" : "Revelación"}</h2>
         {!esPaso && (
           <div

@@ -1,6 +1,51 @@
 import { memo } from "react";
 import type { Pinta } from "../engine";
 
+// --- Pieles de dados (cosméticos del Ropero) --------------------------------
+// Cada piel define los colores del dado normal y del as. La piel activa es un
+// global de módulo (como la cara del jugador en Avatar): se fija al arrancar
+// y al equipar en el Ropero — nunca a mitad de una mesa.
+export interface PielDado {
+  fondo: string;
+  canto: string;
+  borde: string;
+  punto: string;
+  brillo: number;
+  as: { fondo: string; canto: string; borde: string; punto: string };
+}
+
+const PIELES: Record<string, PielDado> = {
+  "dados-clasicos": {
+    fondo: "#ece6d5", canto: "#b8b099", borde: "rgba(60, 50, 30, 0.35)", punto: "#221c12", brillo: 0.3,
+    as: { fondo: "#fbf3d6", canto: "#c9b06a", borde: "#c8a24a", punto: "#b23a2e" },
+  },
+  "dados-obsidiana": {
+    fondo: "#23242c", canto: "#0d0e12", borde: "rgba(200, 162, 74, 0.55)", punto: "#e6c878", brillo: 0.12,
+    as: { fondo: "#2c2416", canto: "#171208", borde: "#c8a24a", punto: "#e6c878" },
+  },
+  "dados-sangre": {
+    fondo: "#8f2d24", canto: "#5c1d17", borde: "rgba(20, 8, 6, 0.5)", punto: "#f1e6d0", brillo: 0.18,
+    as: { fondo: "#a83326", canto: "#6e211a", borde: "#e6c878", punto: "#e6c878" },
+  },
+  "dados-oro": {
+    fondo: "#e6c878", canto: "#a87f2e", borde: "rgba(90, 62, 14, 0.55)", punto: "#241a08", brillo: 0.42,
+    as: { fondo: "#f2daa0", canto: "#b8903c", borde: "#8f2d24", punto: "#8f2d24" },
+  },
+  "dados-dia": {
+    fondo: "#1d2740", canto: "#101627", borde: "rgba(160, 180, 210, 0.45)", punto: "#cdd8ea", brillo: 0.15,
+    as: { fondo: "#243252", canto: "#141d33", borde: "#e6c878", punto: "#e6c878" },
+  },
+  "dados-marfil": {
+    fondo: "#efe3c0", canto: "#c2ac7c", borde: "#a08c5a", punto: "#4a3a22", brillo: 0.25,
+    as: { fondo: "#f6ecc9", canto: "#cbb076", borde: "#8f2d24", punto: "#8f2d24" },
+  },
+};
+
+let _piel: PielDado = PIELES["dados-clasicos"]!;
+export function fijarPielDados(id: string): void {
+  _piel = PIELES[id] ?? PIELES["dados-clasicos"]!;
+}
+
 // Posición (en un viewBox 0..100) de cada punto posible en la grilla 3x3.
 const POS: ReadonlyArray<readonly [number, number]> = [
   [27, 27], [50, 27], [73, 27],
@@ -25,12 +70,13 @@ const PIPS: Record<Pinta, number[]> = {
  * El volumen se simula con capas: canto inferior más oscuro, cara de marfil,
  * lámina de brillo arriba y pips "grabados" (borde de luz abajo a la derecha).
  */
-export const Dado = memo(function Dado({ cara, tam = 44 }: { cara: Pinta; tam?: number }) {
+export const Dado = memo(function Dado({ cara, tam = 44, pielId }: { cara: Pinta; tam?: number; pielId?: string }) {
+  const piel = pielId ? PIELES[pielId] ?? _piel : _piel;
   const esAs = cara === 1;
-  const fondo = esAs ? "#fbf3d6" : "#ece6d5";
-  const canto = esAs ? "#c9b06a" : "#b8b099";
-  const borde = esAs ? "#c8a24a" : "rgba(60, 50, 30, 0.35)";
-  const punto = esAs ? "#b23a2e" : "#221c12";
+  const fondo = esAs ? piel.as.fondo : piel.fondo;
+  const canto = esAs ? piel.as.canto : piel.canto;
+  const borde = esAs ? piel.as.borde : piel.borde;
+  const punto = esAs ? piel.as.punto : piel.punto;
   return (
     <svg
       className="dado"
@@ -45,7 +91,7 @@ export const Dado = memo(function Dado({ cara, tam = 44 }: { cara: Pinta; tam?: 
       {/* cara */}
       <rect x="4" y="3" width="92" height="90" rx="19" fill={fondo} stroke={borde} strokeWidth={esAs ? 3 : 2} />
       {/* lámina de brillo superior */}
-      <rect x="10" y="8" width="80" height="24" rx="12" fill="#ffffff" opacity="0.3" />
+      <rect x="10" y="8" width="80" height="24" rx="12" fill="#ffffff" opacity={piel.brillo} />
       {/* sombra interior del borde inferior de la cara */}
       <rect x="10" y="74" width="80" height="13" rx="7" fill="#000000" opacity="0.05" />
       {PIPS[cara].map((i) => (

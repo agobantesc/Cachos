@@ -299,7 +299,7 @@ export function PantallaHistoria({
     if (t.cinematica) {
       const c = t.cinematica;
       return (
-        <div className="pantalla historia-pantalla" style={estiloCapitulo(t.escenario.idx)}>
+        <div className="pantalla historia-pantalla cine" style={estiloCapitulo(t.escenario.idx)}>
           <span className="hist-kicker">
             {t.escenario.lugar} · Cap. {t.escenario.idx + 1}/{t.escenario.total}
           </span>
@@ -407,7 +407,7 @@ export function PantallaHistoria({
     if (t.epilogoBeat) {
       const b = t.epilogoBeat;
       return (
-        <div className="pantalla historia-pantalla hist-boss-caido" style={estiloCapitulo(t.escenario.idx)}>
+        <div className="pantalla historia-pantalla hist-boss-caido cine" style={estiloCapitulo(t.escenario.idx)}>
           <span className="hist-kicker">{t.escenario.nombre}</span>
           <h1 className="hist-titulo hist-gano">Cayó el jefe</h1>
           <div className="beat" key={b.idx}>
@@ -697,7 +697,7 @@ export function PantallaHistoria({
     transporte.historiaContinuar?.();
   };
   return (
-    <div className={"pantalla historia-pantalla hist-final" + (esMalo ? " hist-final-malo" : "")} style={estiloCapitulo(t.escenario.idx)}>
+    <div className={"pantalla historia-pantalla hist-final cine" + (esMalo ? " hist-final-malo" : "")} style={estiloCapitulo(t.escenario.idx)}>
       {logroAviso && <div className="logro-toast" role="status">Logro desbloqueado · <b>{logroAviso}</b></div>}
       <span className="hist-kicker">{esMalo ? "Penthouse, lo más alto de Santiago" : t.escenario.lugar}</span>
       <h1 className={"hist-titulo " + (esMalo ? "hist-perdio" : "hist-gano")}>{fin.titulo}</h1>

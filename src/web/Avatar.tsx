@@ -94,6 +94,19 @@ export function caraAleatoria(): Cara {
 // Registro del rostro elegido por el jugador humano: cuando se pide el avatar de
 // "humano" se usa este, así la cara personalizada aparece en toda la app sin
 // tener que pasarla por cada lugar.
+// El MARCO del jugador (cosmético del Ropero): un aro extra alrededor de SU
+// avatar. Global de módulo, como la cara; se fija al arrancar y al equipar.
+let _marcoJugador: string | null = null;
+export function fijarMarcoJugador(id: string | null): void {
+  _marcoJugador = id;
+}
+const MARCOS: Record<string, { color: string; doble: boolean }> = {
+  "marco-bronce": { color: "#b0793e", doble: false },
+  "marco-oro": { color: "#e6c878", doble: false },
+  "marco-hampa": { color: "#b23a2e", doble: false },
+  "marco-leyenda": { color: "#c8a24a", doble: true },
+};
+
 let _caraJugador: Cara | null = null;
 export function fijarCaraJugador(c: Cara | null): void {
   _caraJugador = c;
@@ -188,6 +201,7 @@ export const Avatar = memo(function Avatar({
   tam = 40,
   anillo = false,
   cara,
+  marco,
   animo = null,
 }: {
   id: string;
@@ -196,6 +210,8 @@ export const Avatar = memo(function Avatar({
   anillo?: boolean;
   /** Cara explícita (para el editor); si no, se deriva del id/nombre. */
   cara?: Cara;
+  /** Marco explícito (para la vista previa del Ropero); si no, el equipado. */
+  marco?: string;
   /** Reacción pasajera: sonríe (ganó) o hace mueca (perdió). Pisa boca y cejas. */
   animo?: "feliz" | "molesto" | null;
 }) {
@@ -221,6 +237,17 @@ export const Avatar = memo(function Avatar({
       <ellipse cx="32" cy="22" rx="30" ry="20" fill="#ffffff" opacity="0.06" />
       <ellipse cx="32" cy="50" rx="30" ry="22" fill={sombra} opacity="0.18" />
       <circle cx="32" cy="32" r="31" fill="none" stroke={anillo ? ORO : "rgba(200,162,74,0.32)"} strokeWidth={anillo ? 2.6 : 1.2} />
+      {/* Marco cosmético del jugador (sólo en SU avatar). */}
+      {(() => {
+        const m = marco ? MARCOS[marco] : id === "humano" && _marcoJugador ? MARCOS[_marcoJugador] : null;
+        if (!m) return null;
+        return (
+          <g fill="none">
+            <circle cx="32" cy="32" r="30" stroke={m.color} strokeWidth="2.6" opacity="0.95" />
+            {m.doble && <circle cx="32" cy="32" r="26.5" stroke={m.color} strokeWidth="1.2" opacity="0.7" />}
+          </g>
+        );
+      })()}
 
       {/* hombros / cuello */}
       <path d="M13 64 q2 -14 19 -14 q17 0 19 14 z" fill="#14121a" />

@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { leerPalmares } from "./palmares";
 import { Mesa } from "./Mesa";
 import { PantallaHistoria } from "./PantallaHistoria";
 import { Cuaderno } from "./Cuaderno";
 import { MapaHampa } from "./Mapa";
+import { Ropero } from "./Ropero";
+import { aplicarEquipado, tieneCosmetico, revisarDesbloqueos } from "./cosmeticos";
+import { mesaDelDia, rankingDelDia, diariaDeHoy, formatoTiempo, claveHoy, TransporteDiario } from "./diaria";
 import { CampoJugador } from "./Personaje";
 import { Emblema, IconoCalavera, IconoWhatsApp, IconoDado, IconoPersonas } from "./Iconos";
 import { Avatar, fijarCaraJugador, CARA_DEFECTO } from "./Avatar";
@@ -21,21 +24,24 @@ import type { Nivel } from "./bots";
 // Carga el rostro guardado del jugador (o la cara estándar limpia) para que
 // aparezca en toda la app.
 fijarCaraJugador(leerPrefs().cara ?? CARA_DEFECTO);
+// …y viste lo equipado del Ropero (paño, dados, marco) desde el arranque.
+aplicarEquipado();
 
-// "brutal" no se ofrece acá: es un escalón reservado a jefes puntuales del
-// modo historia (ver bots.ts), no una dificultad para jugar solo.
-type NivelSolo = Exclude<Nivel, "brutal">;
-const ETIQUETA_NIVEL: Record<NivelSolo, string> = {
+// "brutal" parte bloqueado: es el escalón de los jefes del modo historia. Se
+// abre en Jugar solo con la capacidad "Sin piedad" del Ropero (coronar la campaña).
+const ETIQUETA_NIVEL: Record<Nivel, string> = {
   facil: "Fácil",
   medio: "Medio",
   avanzado: "Avanzado",
   experto: "Experto",
+  brutal: "Sin piedad",
 };
-const DESC_NIVEL: Record<NivelSolo, string> = {
+const DESC_NIVEL: Record<Nivel, string> = {
   facil: "Juega a cartas vistas: arriesga de más y se deja cazar.",
   medio: "Fundamentos sólidos. Lee las señales de la mesa y apuesta honesto.",
   avanzado: "Calcula fino y empieza a engañar: farolea y disimula su mano.",
   experto: "Lee el historial y tus manías. Oculta su estrategia y castiga tus faroles.",
+  brutal: "La banca completa: lee tus faroles como los jefes del bajo mundo. Sin anestesia.",
 };
 
 export function App() {
@@ -79,6 +85,9 @@ function Juego({ transporte, salir }: { transporte: Transporte; salir: () => voi
         <div className="banner-reconexion" role="status">
           Reconectando con el servidor…
         </div>
+      )}
+      {transporte instanceof TransporteDiario && snap.publico && snap.publico.fase !== "FIN_JUEGO" && (
+        <RelojDia transporte={transporte} />
       )}
       {contenido}
     </>
@@ -174,15 +183,21 @@ function Inicio({ onListo }: { onListo: (t: Transporte) => void }) {
   // Si llegan por un enlace de invitación (?sala=CODIGO) entran directo a la
   // mesa en línea con la contraseña ya puesta.
   const [salaURL] = useState(() => salaDesdeURL());
-  const [vista, setVista] = useState<"home" | "solo" | "historia" | "online" | "reglas">(
+  const [vista, setVista] = useState<"home" | "solo" | "historia" | "online" | "reglas" | "diaria" | "ropero">(
     salaURL ? "online" : "home",
   );
+  // Lo que ya te ganaste cae al ropero apenas pisas el salón.
+  useEffect(() => {
+    revisarDesbloqueos();
+  }, []);
 
   if (vista === "solo") return <ConfigSolo onListo={onListo} volver={() => setVista("home")} />;
   if (vista === "historia") return <ConfigHistoria onListo={onListo} volver={() => setVista("home")} />;
   if (vista === "online")
     return <ConfigOnline onListo={onListo} volver={() => setVista("home")} codigoInicial={salaURL ?? ""} />;
   if (vista === "reglas") return <Reglas volver={() => setVista("home")} />;
+  if (vista === "diaria") return <ConfigDiaria onListo={onListo} volver={() => setVista("home")} />;
+  if (vista === "ropero") return <Ropero volver={() => setVista("home")} />;
 
   return (
     <div className="pantalla home">
@@ -238,10 +253,25 @@ function Inicio({ onListo }: { onListo: (t: Transporte) => void }) {
           </span>
           <span className="tc-flecha" aria-hidden="true">›</span>
         </button>
+
+        <button className="modo-card diaria-card" onClick={() => setVista("diaria")} aria-label="La Mesa del Día">
+          <span className="tc-emblema diaria-emblema" aria-hidden="true">
+            <IconoDado tam={26} />
+          </span>
+          <span className="tc-texto">
+            <span className="tc-kicker">Desafío diario · contra el reloj</span>
+            <span className="tc-titulo">La Mesa del Día</span>
+            <span className="tc-sub">La misma mesa brava para todos. El más rápido manda.</span>
+          </span>
+          <span className="tc-flecha" aria-hidden="true">›</span>
+        </button>
       </div>
 
       <Palmares />
 
+      <button className="btn-link" onClick={() => setVista("ropero")}>
+        El Ropero del Tahúr
+      </button>
       <button className="btn-link" onClick={() => setVista("reglas")}>
         Reglas de la Asociación
       </button>
@@ -273,13 +303,16 @@ function Palmares() {
   );
 }
 
-const NOMBRES_BOT = ["El Tuerto", "La Sombra", "Doña Suerte", "El Croata", "Patas Negras"];
+const NOMBRES_BOT = ["El Tuerto", "La Sombra", "Doña Suerte", "El Croata", "Patas Negras", "El Chacal"];
 
 function ConfigSolo({ onListo, volver }: { onListo: (t: Transporte) => void; volver: () => void }) {
   const prefs = leerPrefs();
+  // Capacidades del Ropero: "Sin piedad" abre brutal; "Mesa llena", el 6º rival.
+  const conBrutal = tieneCosmetico("cap-sin-piedad");
+  const maxRivales = tieneCosmetico("cap-mesa-llena") ? NOMBRES_BOT.length : NOMBRES_BOT.length - 1;
   const [nombre, setNombre] = useState(prefs.nombre ?? "Miembro");
-  const [rivales, setRivales] = useState(prefs.rivales ?? 3);
-  const [nivel, setNivel] = useState<NivelSolo>(prefs.nivel && prefs.nivel !== "brutal" ? prefs.nivel : "medio");
+  const [rivales, setRivales] = useState(Math.min(prefs.rivales ?? 3, maxRivales));
+  const [nivel, setNivel] = useState<Nivel>(prefs.nivel && (prefs.nivel !== "brutal" || conBrutal) ? prefs.nivel : "medio");
 
   const empezar = () => {
     desbloquearAudio(); // habilita el audio dentro del gesto del usuario
@@ -300,16 +333,18 @@ function ConfigSolo({ onListo, volver }: { onListo: (t: Transporte) => void; vol
       <div className="stepper">
         <button onClick={() => setRivales((r) => Math.max(1, r - 1))} aria-label="menos">−</button>
         <span className="cantidad">{rivales}</span>
-        <button onClick={() => setRivales((r) => Math.min(NOMBRES_BOT.length, r + 1))} aria-label="más">+</button>
+        <button onClick={() => setRivales((r) => Math.min(maxRivales, r + 1))} aria-label="más">+</button>
       </div>
 
       <div className="campo-label">Dificultad</div>
       <div className="segmento">
-        {(Object.keys(ETIQUETA_NIVEL) as NivelSolo[]).map((n) => (
-          <button key={n} className={"seg-btn" + (nivel === n ? " sel" : "")} onClick={() => setNivel(n)}>
-            {ETIQUETA_NIVEL[n]}
-          </button>
-        ))}
+        {(Object.keys(ETIQUETA_NIVEL) as Nivel[])
+          .filter((n) => n !== "brutal" || conBrutal)
+          .map((n) => (
+            <button key={n} className={"seg-btn" + (nivel === n ? " sel" : "")} onClick={() => setNivel(n)}>
+              {ETIQUETA_NIVEL[n]}
+            </button>
+          ))}
       </div>
       <p className="ayuda nivel-desc">{DESC_NIVEL[nivel]}</p>
 
@@ -398,6 +433,92 @@ function ConfigHistoria({ onListo, volver }: { onListo: (t: Transporte) => void;
       <button className="btn-link" onClick={() => setCuaderno(true)}>
         Cuaderno del Tahúr
       </button>
+    </div>
+  );
+}
+
+/** LA MESA DEL DÍA: la misma mesa brava para todos; manda el cronómetro. */
+function ConfigDiaria({ onListo, volver }: { onListo: (t: Transporte) => void; volver: () => void }) {
+  const [nombre, setNombre] = useState(leerPrefs().nombre ?? "Miembro");
+  const clave = claveHoy();
+  const cfg = useMemo(() => mesaDelDia(clave), [clave]);
+  const mio = diariaDeHoy(clave);
+  const ranking = rankingDelDia(clave);
+  const capo = cfg.rivales[0]!;
+
+  const empezar = () => {
+    desbloquearAudio();
+    guardarPrefs({ nombre: nombre.trim() || "Miembro" });
+    onListo(new TransporteDiario(nombre.trim() || "Miembro", cfg));
+  };
+
+  return (
+    <div className="pantalla config diaria">
+      <Cabecera titulo="La Mesa del Día" volver={volver} />
+      <p className="ayuda">
+        La mesa del <b>{clave.slice(8)}/{clave.slice(5, 7)}</b>: la misma para todos los socios, brava de verdad.
+        Gana… y que sea rápido: el ranking del día lo manda el <b>cronómetro</b>.
+      </p>
+      <CampoJugador nombre={nombre} setNombre={setNombre} />
+
+      <div className="campo-label">Las reglas de hoy</div>
+      {cfg.modificadores.map((m) => (
+        <div key={m.clave} className="desafio-chip dia-regla">
+          <span className="dc-tit">Regla de la casa · {m.nombre}</span>
+          {m.desc}
+        </div>
+      ))}
+      <div className="desafio-chip dia-regla dia-capo">
+        <span className="dc-tit">El capo de hoy · {capo.nombre}</span>
+        Juega sin piedad y con los dados comprados. Lo acompañan {cfg.rivales[1]!.nombre} y {cfg.rivales[2]!.nombre}.
+      </div>
+
+      {mio.mejorMs !== null ? (
+        <div className="hist-continuar">
+          Tu mejor tiempo de hoy: <b>{formatoTiempo(mio.mejorMs)}</b> · {mio.intentos} intento{mio.intentos === 1 ? "" : "s"}
+        </div>
+      ) : (
+        mio.intentos > 0 && (
+          <div className="hist-continuar">
+            {mio.intentos} intento{mio.intentos === 1 ? "" : "s"} hoy, sin victoria todavía. La mesa espera.
+          </div>
+        )
+      )}
+
+      <button className="btn btn--apostar grande" onClick={empezar}>
+        {mio.mejorMs !== null ? "Mejorar tu tiempo" : "Sentarse a la mesa del día"}
+      </button>
+
+      <section className="cua-seccion" aria-label="Ranking del día">
+        <h3 className="cua-titulo">
+          El ranking de hoy <span className="cua-cuenta">{clave}</span>
+        </h3>
+        {ranking.map((p, i) => (
+          <div key={p.nombre + i} className={"rk-fila" + (p.esJugador ? " rk-fila--yo" : "")}>
+            <span className={"rk-puesto" + (i < 3 ? " rk-puesto--podio" : "")}>{i + 1}</span>
+            <span className="rk-nombre">{p.nombre}</span>
+            <span className="rk-tiempo">{formatoTiempo(p.ms)}</span>
+          </div>
+        ))}
+        {mio.mejorMs === null && (
+          <p className="cua-vacio">Todavía no apareces en la pizarra. Gana la mesa y tu tiempo queda escrito.</p>
+        )}
+      </section>
+    </div>
+  );
+}
+
+/** El cronómetro de la Mesa del Día, discreto en una esquina de la mesa. */
+function RelojDia({ transporte }: { transporte: TransporteDiario }) {
+  const [, tic] = useState(0);
+  useEffect(() => {
+    const iv = setInterval(() => tic((n) => n + 1), 1000);
+    return () => clearInterval(iv);
+  }, []);
+  const t0 = transporte.t0;
+  return (
+    <div className="reloj-dia" aria-label="Cronómetro del día">
+      {t0 === null ? "0:00" : formatoTiempo(Date.now() - t0)}
     </div>
   );
 }
