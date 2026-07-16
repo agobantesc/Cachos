@@ -108,10 +108,7 @@ export function Mesa({
   };
 
   // Sonido por evento: dados al empezar ronda; ganar/perder en la resolución.
-  // Y el GOLPE: la pantalla se sacude cuando el que pierde el dado eres tú
-  // (más fuerte si cayó la siciliana).
   const finRegistrado = useRef(false);
-  const [golpe, setGolpe] = useState<"" | " mesa--golpe" | " mesa--golpe-fuerte">("");
   const [botinRopero, setBotinRopero] = useState<string[]>([]);
   useEffect(() => {
     if (p.fase === "EN_RONDA") {
@@ -121,11 +118,6 @@ export function Mesa({
       if (p.ultimaResolucion.perdedorId === snap.miId) {
         Sonidos.perder();
         vibrar(70);
-        if (!prefiereQuieto()) {
-          setGolpe(p.ultimaResolucion.siciliana ? " mesa--golpe-fuerte" : " mesa--golpe");
-          const timer = setTimeout(() => setGolpe(""), 650);
-          return () => clearTimeout(timer);
-        }
       } else {
         Sonidos.ganar();
       }
@@ -316,7 +308,7 @@ export function Mesa({
   }
 
   return (
-    <div className={"mesa" + (miTurno ? " mesa--mi-turno" : "") + golpe}>
+    <div className={"mesa" + (miTurno ? " mesa--mi-turno" : "")}>
       {snap.historia && snap.historia.faseHistoria === "mesa" && (
         <div className="historia-hud">
           <span className="hh-rival">
@@ -593,9 +585,13 @@ function Revelacion({
   const humanoFuera = snap.esSolo && (publico.jugadores.find((j) => j.id === snap.miId)?.eliminado ?? false);
   const iniciar = (sentido: Sentido) => transporte.siguienteRonda(sentido);
 
+  // El GOLPE: la caja se sacude cuando el dado perdido es tuyo. La siciliana
+  // conserva su sacudida más larga y dramática. (Se anima la CAJA y no un
+  // ancestro: animar con transform a un padre descolocaría este overlay fijo.)
+  const perdiYo = res.perdedorId === snap.miId;
   return (
     <div className="revelacion">
-      <div className={"revelacion-caja" + (res.siciliana ? " sacudida" : "")}>
+      <div className={"revelacion-caja" + (res.siciliana ? " sacudida" : perdiYo ? " caja--golpe" : "")}>
         {res.tipo === "CALZO" && res.perdedorId === null && <Chispas n={12} />}
         <h2>{esPaso ? "Paso dudado" : "Revelación"}</h2>
         {!esPaso && (
