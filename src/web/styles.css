@@ -1461,3 +1461,16 @@ button { touch-action: manipulation; }
   border-radius: 999px; padding: 4px 10px;
 }
 .rp-uso--activa { background: rgba(200, 162, 74, 0.15); color: var(--oro-claro); border: 1px solid rgba(200, 162, 74, 0.45); }
+
+/* El presagio del Mapocho: con el alma cargada, el río se anuncia en la puerta. */
+.presagio {
+  max-width: 26em; margin: 2px 0; padding: 11px 14px; text-align: left;
+  font-style: italic; font-size: 13.5px; line-height: 1.55; color: #d8b8ae;
+  background: linear-gradient(180deg, rgba(20, 30, 40, 0.55), rgba(10, 8, 16, 0.7));
+  border: 1px solid rgba(58, 90, 110, 0.5); border-left: 3px solid var(--sangre-viva);
+  border-radius: 0 12px 12px 0;
+}
+.presagio-tit {
+  display: block; font-style: normal; font-size: 10px; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--sangre-viva); margin-bottom: 3px;
+}

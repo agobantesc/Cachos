@@ -344,6 +344,16 @@ export const CAMPANA: Escenario[] = [
           { etiqueta: "Mándalo por el dato", item: "soplon", resultado: "El cabro desaparece y vuelve con un soplón viejo que te susurra al oído cómo leer la mesa. 'Cuídese del que pierde y sonríe, tío.' Guárdate ese dato: vale más que la plata." },
         ],
       } },
+      { antesDe: 2, evento: {
+        tipo: "dilema",
+        clave: "pocilga-velorio",
+        titulo: "El velorio del muelle",
+        texto: "En la trastienda de la pocilga velan al Chinchorro: un tahúr viejo que el río devolvió esta mañana, con los bolsillos dados vuelta y las manos vacías. Sobre los párpados le pusieron dos monedas, como se ha hecho siempre, para que pague el peaje del otro lado. La viuda recibe los pésames junto al cajón. Nadie de la mesa se ha parado a saludar.",
+        opciones: [
+          { etiqueta: "Deja tu apuesta en el cajón", plata: -20, marca: "deudo", resultado: "Te acercas, dejas unos billetes junto a las velas y le sostienes la mirada a la viuda un segundo más de lo obligado. 'Usted no lo conocía', dice ella. 'No', respondes, 'pero jugaba a lo mismo.' En la pocilga entera se corre la voz: el forastero paga sus respetos. Eso, aquí abajo, vale más que ganar." },
+          { etiqueta: "Róbale las monedas al muerto", plata: 45, marca: "profanador", resultado: "Esperas a que la viuda salga a llorar al muelle y le quitas al Chinchorro las monedas de los ojos, y de paso lo poco que el velorio juntó en el cajón. Nadie te ve. Eso crees. Los muertos, dicen en el puerto, cruzan igual sin pagar… pero anotan la deuda a nombre de otro." },
+        ],
+      } },
     ],
     rivales: [
       { id: "r-pulga", nombre: "El Pulguita", nivel: "facil", mesa: 4, esBoss: false, plata: 20,
@@ -626,6 +636,16 @@ export const CAMPANA: Escenario[] = [
           { etiqueta: "Acepta el dato", item: "soplon", marca: "aliado", resultado: "Te susurra cómo respiran los de la mesa de abajo. 'El Carnicero ve todo. Y ahora, un poco, ve por ti.' Tienes un aliado donde nadie hace amigos." },
         ],
       } },
+      { antesDe: 3, requiere: "sangre-fria", evento: {
+        tipo: "dilema",
+        clave: "club-aparecido",
+        titulo: "El aparecido de los fierros",
+        texto: "Un hombre con la cara quemada por chispas de soldadura te corta el paso en la boca del Subterráneo: te vino siguiendo desde San Diego. Lo reconoces: era de la Maestranza. 'Yo cargué el bulto esa noche, compadre. El del Fundidor. Sé lo que le susurraste, y sé lo que pasó después.' No pide plata todavía; sólo te muestra que sabe. Los que saben, cobran para siempre.",
+        opciones: [
+          { etiqueta: "Cómprale el olvido", plata: -100, resultado: "Le llenas la mano de billetes y él se los guarda sin contarlos. 'Por ahora', dice. Sabes cómo funcionan estas deudas: el fierro se oxida, pero la memoria del que carga bultos, jamás. Al menos esta noche, la trastienda te deja jugar en paz." },
+          { etiqueta: "Que el Mapocho lo calle", efecto: "sin_suerte", marca: "asesino", resultado: "Le dices que te espere en el callejón, que ahí arreglan. El callejón da al río. Vuelves solo, con las manos frías y un zumbido en los oídos que no se va con nada. En la mesa, esa noche, los dados te pesan como piedras: entras sin Suerte, y con un ahogado más a la cuenta." },
+        ],
+      } },
       { antesDe: 2, evento: {
         tipo: "lectura",
         clave: "club-tarot",
@@ -714,6 +734,16 @@ export const CAMPANA: Escenario[] = [
           { etiqueta: "Mándalo abajo, a salvo", plata: -100, resultado: "Le metes un fajo en el bolsillo del delantal y le ordenas esperarte abajo: 'Esto lo termino solo.' Protesta, pero obedece. Si esta noche sale mal, al menos él no la va a ver. Subes más liviano y más solo que nunca." },
         ],
       } },
+      { antesDe: 1, requiere: "deudo", evento: {
+        tipo: "dilema",
+        clave: "cumbre-reliquia",
+        titulo: "La reliquia del Chinchorro",
+        texto: "Entre los mozos del penthouse hay una cara que no calza con el lugar: la viuda del muelle, de delantal prestado, que subió medio Santiago para encontrarte. 'Usted fue el único que se paró frente al cajón sin conocerlo.' Abre la mano: un dado viejo, gastado por cuarenta años de puerto. 'Era su cábala. Él hubiera querido que siguiera jugando… y allá abajo ya no juega nadie que valga la pena.'",
+        opciones: [
+          { etiqueta: "Recibe el dado", item: "cargado", resultado: "Tomas el dado del Chinchorro como se toma una medalla ajena: con las dos manos. 'Va a subir conmigo hasta la última mesa', le prometes. La viuda asiente y se va sin mirar atrás. Los muertos del puerto, cuando se les paga el respeto, devuelven la apuesta con intereses." },
+          { etiqueta: "Que lo guarde ella", atributo: "suerte", resultado: "Le cierras los dedos sobre el dado. 'La cábala de él es suya, señora. A mí me basta con que haya subido a decírmelo.' Ella te toca la mejilla como a un hijo y baja las escaleras. Esa noche duermes como hace meses no dormías, y algo del Chinchorro —quién sabe qué— se te queda pegado en la mano de tirar." },
+        ],
+      } },
       { antesDe: 2, requiere: "aliado", evento: {
         tipo: "dilema",
         clave: "cumbre-aliado",
@@ -784,7 +814,7 @@ export const REY_VERDADERO: RivalHistoria = {
 };
 
 /** Marcas "oscuras": acciones turbias que empujan al final malo. */
-const MARCAS_OSCURAS = ["delator", "saqueador", "sangre-fria", "asesino", "sin-alma"];
+export const MARCAS_OSCURAS = ["delator", "saqueador", "sangre-fria", "asesino", "sin-alma", "profanador"];
 
 export type TipoFinal = "estandar" | "malo" | "verdadero";
 
@@ -1235,6 +1265,9 @@ const ESCENA_EVENTO: Record<string, string> = {
   "club-tarot": "lectura",
   "cumbre-oferta": "oferta",
   "cumbre-huerfano": "huerfano",
+  "pocilga-velorio": "velorio",
+  "club-aparecido": "cobrador",
+  "cumbre-reliquia": "manoamiga",
   "cumbre-aliado": "manoamiga",
 };
 /** Estampa de ambiente de cada capítulo (por índice). Ver Escena.tsx. */
@@ -1259,6 +1292,8 @@ export const MARCAS_INFO: Record<string, { nombre: string; desc: string }> = {
   asesino: { nombre: "Asesino", desc: "Al hermano del finado lo callaste para siempre." },
   "sin-alma": { nombre: "Sin alma", desc: "Le sostuviste la mirada al huérfano sin pestañear." },
   aliado: { nombre: "Aliado del Carnicero", desc: "Hay una mano dura de tu lado en el bajo mundo." },
+  deudo: { nombre: "Deudo del puerto", desc: "Pagaste el respeto en el velorio del Chinchorro. Las viudas no olvidan." },
+  profanador: { nombre: "Profanador", desc: "Le robaste las monedas de los ojos a un muerto. Ni ellos están a salvo de ti." },
   verdad: { nombre: "La Verdad", desc: "Sabes que el Rey de la vitrina no es el que reparte." },
   cabro: { nombre: "El cabro del puerto", desc: "Le diste pega al niño de la pocilga. Te eligió, aunque no lo sepas." },
   padrino: { nombre: "Padrino", desc: "Tu campana ve todo y nadie lo ve a él. Alguien te cuida las espaldas." },
@@ -1338,9 +1373,25 @@ const ECOS: Record<string, string> = {
   asesino: "Dos hermanos duermen bajo el río. Tú sabes por qué.",
   "sin-alma": "Hay un mozo en la cumbre que jamás va a olvidar tu mirada.",
   verdad: "Supiste mirar detrás de la vitrina, donde nadie mira.",
+  deudo: "En un velorio del puerto, tu apuesta ardió junto a las velas. La viuda del Chinchorro reza por ti.",
+  profanador: "Hay un ahogado en el puerto que cruzó sin pagar el peaje. La deuda quedó a tu nombre.",
 };
 export function ecosDelCamino(marcas: string[]): string[] {
   return marcas.map((m) => ECOS[m]).filter((x): x is string => Boolean(x));
+}
+
+/** El PRESAGIO del Mapocho: la historia es oscura y uno de los finales MATA.
+ *  Cuando el alma se carga (2+ marcas oscuras), el río empieza a anunciarse
+ *  en la puerta de cada mesa: el jugador siente venir la cuenta mucho antes
+ *  de que se cobre. */
+export function presagio(h: EstadoHistoria): string | null {
+  const marcas = h.marcas ?? [];
+  const oscuras = MARCAS_OSCURAS.filter((m) => marcas.includes(m)).length;
+  if (oscuras >= 3)
+    return "Ya ni cuentas lo que llevas encima. En las mesas te hacen espacio demasiado rápido, como a los apestados… o a los muertos que aún caminan. Anoche soñaste con el Mapocho, y en el sueño el río sabía tu nombre y tenía tu voz. Arriba te van a dejar llegar, sí. Los ríos siempre dejan que la corriente traiga sola lo suyo.";
+  if (oscuras === 2)
+    return "Últimamente duermes mal. Dicen en el puerto que el Mapocho llama bajito a los que le deben, mucho antes de cobrarles. Dos veces has elegido el camino del cuchillo; el agua, de noche, ya te suena distinta.";
+  return null;
 }
 
 export function escenaDe(clave: string): string {
@@ -1615,6 +1666,8 @@ export interface VistaHistoria {
   acertijo: { titulo: string; texto: string; desenlace: string | null; fallo: string | null } | null;
   /** Marcas de tu pasado (lo que tus decisiones dejaron escrito). */
   marcas: string[];
+  /** El presagio del Mapocho (intro): con el alma cargada, el río se anuncia. */
+  presagio: string | null;
   /** Qué final se está mostrando (fase "final"). */
   finalTipo: TipoFinal | null;
   /** Pasaje actual del epílogo del final (fase "final"): se recorre con historiaContinuar. */

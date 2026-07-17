@@ -19,6 +19,8 @@ import {
   escenaCapitulo,
   escenaFinal,
   ecosDelCamino,
+  presagio,
+  MARCAS_OSCURAS,
   OFICIOS,
   costoMejora,
   costoItem,
@@ -938,5 +940,52 @@ describe("la corrida en números (cuentas)", () => {
     const th = new TransporteHistoria(historiaNueva("Vista"));
     expect(th.instantanea().historia!.cuentas.ganadas).toBe(0);
     th.detener();
+  });
+});
+
+describe("la historia oscura: presagios y el peso de las marcas", () => {
+  it("con el alma limpia el río calla; con 2+ marcas oscuras, se anuncia", () => {
+    const h = historiaNueva("Limpio");
+    expect(presagio(h)).toBeNull();
+    h.marcas = ["honrado", "aliado"]; // claras: no cuentan
+    expect(presagio(h)).toBeNull();
+    h.marcas = ["saqueador"];
+    expect(presagio(h)).toBeNull(); // una sola todavía no
+    h.marcas = ["saqueador", "profanador"];
+    expect(presagio(h)).toContain("Mapocho");
+    h.marcas = ["saqueador", "profanador", "asesino"];
+    expect(presagio(h)!.length).toBeGreaterThan(presagio({ ...h, marcas: ["saqueador", "profanador"] })!.length);
+  });
+
+  it("profanar al muerto del velorio cuenta para el final malo (el jugador muere)", () => {
+    expect(MARCAS_OSCURAS).toContain("profanador");
+    const h = { ...historiaNueva("Oscuro"), marcas: ["profanador", "delator"] };
+    expect(tipoFinal(h)).toBe("malo");
+    // …y el deudo, en cambio, no ensucia el camino al final verdadero.
+    const limpio = { ...historiaNueva("Deudo"), marcas: ["deudo", "verdad"] };
+    expect(tipoFinal(limpio)).toBe("verdadero");
+  });
+
+  it("toda marca nueva tiene su ficha en el Cuaderno y su eco en el final", () => {
+    for (const m of ["deudo", "profanador"]) {
+      expect(MARCAS_INFO[m], m).toBeTruthy();
+      expect(ecosDelCamino([m]).length, m).toBe(1);
+    }
+  });
+
+  it("la reliquia del Chinchorro sólo llega si pagaste el respeto (deudo)", () => {
+    const h = historiaNueva("Viudo");
+    h.escenarioIdx = 5;
+    h.rivalIdx = 1;
+    h.marcas = ["deudo"];
+    expect(eventoActual(h)?.clave).toBe("cumbre-reliquia");
+    h.marcas = [];
+    expect(eventoActual(h)?.clave).not.toBe("cumbre-reliquia");
+    // …y el aparecido de los fierros te sigue hasta el Subterráneo.
+    const h2 = historiaNueva("Perseguido");
+    h2.escenarioIdx = 4;
+    h2.rivalIdx = 3;
+    h2.marcas = ["sangre-fria"];
+    expect(eventoActual(h2)?.clave).toBe("club-aparecido");
   });
 });

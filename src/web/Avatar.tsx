@@ -100,10 +100,15 @@ let _marcoJugador: string | null = null;
 export function fijarMarcoJugador(id: string | null): void {
   _marcoJugador = id;
 }
-const MARCOS: Record<string, { color: string; doble: boolean }> = {
-  "marco-bronce": { color: "#b0793e", doble: false },
-  "marco-oro": { color: "#e6c878", doble: false },
-  "marco-hampa": { color: "#b23a2e", doble: false },
+const MARCOS: Record<string, { color: string; doble?: boolean; dash?: string; adorno?: "pips" | "calavera" | "reloj" }> = {
+  "marco-bronce": { color: "#b0793e" },
+  "marco-plata": { color: "#c9cdd6" },
+  "marco-oro": { color: "#e6c878" },
+  "marco-humo": { color: "#8a8494", dash: "5 4" },
+  "marco-dia": { color: "#9db8d6", adorno: "reloj" },
+  "marco-hampa": { color: "#b23a2e" },
+  "marco-calavera": { color: "#d9d5c9", adorno: "calavera" },
+  "marco-tahur": { color: "#e6c878", adorno: "pips" },
   "marco-leyenda": { color: "#c8a24a", doble: true },
 };
 
@@ -243,8 +248,33 @@ export const Avatar = memo(function Avatar({
         if (!m) return null;
         return (
           <g fill="none">
-            <circle cx="32" cy="32" r="30" stroke={m.color} strokeWidth="2.6" opacity="0.95" />
+            <circle cx="32" cy="32" r="30" stroke={m.color} strokeWidth="2.6" opacity="0.95" {...(m.dash ? { strokeDasharray: m.dash } : {})} />
             {m.doble && <circle cx="32" cy="32" r="26.5" stroke={m.color} strokeWidth="1.2" opacity="0.7" />}
+            {m.adorno === "pips" && (
+              <g fill={m.color} stroke="none">
+                <circle cx="32" cy="2.5" r="2.6" />
+                <circle cx="32" cy="61.5" r="2.6" />
+                <circle cx="2.5" cy="32" r="2.6" />
+                <circle cx="61.5" cy="32" r="2.6" />
+              </g>
+            )}
+            {m.adorno === "reloj" && (
+              <g stroke={m.color} strokeWidth="2">
+                <line x1="32" y1="0.5" x2="32" y2="5.5" />
+                <line x1="32" y1="58.5" x2="32" y2="63.5" />
+                <line x1="0.5" y1="32" x2="5.5" y2="32" />
+                <line x1="58.5" y1="32" x2="63.5" y2="32" />
+              </g>
+            )}
+            {m.adorno === "calavera" && (
+              <g stroke="none">
+                <circle cx="32" cy="59" r="5.5" fill="#0a0810" stroke={m.color} strokeWidth="1.2" />
+                <circle cx="32" cy="58" r="3.6" fill={m.color} />
+                <circle cx="30.6" cy="57.5" r="0.9" fill="#0a0810" />
+                <circle cx="33.4" cy="57.5" r="0.9" fill="#0a0810" />
+                <rect x="30.5" y="60" width="3" height="1.6" rx="0.5" fill={m.color} />
+              </g>
+            )}
           </g>
         );
       })()}

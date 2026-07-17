@@ -360,6 +360,12 @@ export function PantallaHistoria({
         )}
         <EncargoChip t={t} transporte={transporte} />
         <p className="hist-dialogo">“{r.dialogo}”</p>
+        {t.presagio && (
+          <p className="presagio" role="note">
+            <span className="presagio-tit">El presagio del Mapocho</span>
+            {t.presagio}
+          </p>
+        )}
         <BarraStats t={t} />
         <Bolsa t={t} />
         {t.acertijoDisponible && (

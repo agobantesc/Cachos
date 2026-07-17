@@ -4,6 +4,7 @@
 // con su condición a la vista; otros son SECRETOS: ni el nombre se muestra
 // hasta ganarlos. Todo persiste en su propia clave de localStorage.
 import { leerPalmares, type Palmares } from "./palmares";
+import { LOGROS } from "./historia";
 import { leerPrefs } from "./prefs";
 import { leerDiaria } from "./diaria";
 import { fijarPielDados } from "./Dado";
@@ -46,6 +47,7 @@ export const COSMETICOS: Cosmetico[] = [
   { id: "pano-casa", tipo: "pano", nombre: "Paño de la casa", desc: "El fieltro verde botella de toda la vida.", condicion: "De serie.", deSerie: true, listo: () => true },
   { id: "pano-burdeos", tipo: "pano", nombre: "Paño burdeos", desc: "Fieltro color vino, como las mesas bravas del sur.", condicion: "Gana 10 mesas (donde sea).", listo: (d) => d.palmares.ganadas >= 10 },
   { id: "pano-puerto", tipo: "pano", nombre: "Paño del puerto", desc: "Azul profundo, con olor a sal y a primera victoria.", condicion: "Sal de La Pocilga: completa el primer capítulo.", listo: (d) => capitulo(d, 1) },
+  { id: "pano-fierro", tipo: "pano", nombre: "Paño de la Maestranza", desc: "Fieltro oxidado, con olor a soldadura y a deudas viejas.", condicion: "Llega a los galpones de la Maestranza.", listo: (d) => capitulo(d, 2) },
   { id: "pano-subterraneo", tipo: "pano", nombre: "Paño del Subterráneo", desc: "Terciopelo púrpura del club bajo el río.", condicion: "Abre los tres candados del bajo mundo.", listo: (d) => logro(d, "tres-llaves") },
   { id: "pano-banca", tipo: "pano", nombre: "Paño de la Banca", desc: "Negro absoluto con hilo de oro. En este fieltro nadie ve venir nada.", condicion: "La Banca te veló: conoce el final donde ella cobra.", oculto: true, listo: (d) => d.palmares.finales.includes("malo") },
 
@@ -60,8 +62,13 @@ export const COSMETICOS: Cosmetico[] = [
   // --- Marcos de avatar ------------------------------------------------------
   { id: "marco-ninguno", tipo: "marco", nombre: "Sin marco", desc: "Cara lavada, como llegaste al puerto.", condicion: "De serie.", deSerie: true, listo: () => true },
   { id: "marco-bronce", tipo: "marco", nombre: "Marco de bronce", desc: "Un aro de bronce pulido: respeto de barrio.", condicion: "Gana 25 mesas (donde sea).", listo: (d) => d.palmares.ganadas >= 25 },
+  { id: "marco-plata", tipo: "marco", nombre: "Marco de plata", desc: "Plata curtida de mil noches: el aro de los que calientan la silla.", condicion: "Juega 40 mesas (ganes o pierdas).", listo: (d) => d.palmares.jugadas >= 40 },
   { id: "marco-oro", tipo: "marco", nombre: "Marco de oro", desc: "Oro de verdad. Que sepan quién manda en la mesa.", condicion: "Encadena una racha de 5 mesas ganadas.", listo: (d) => d.palmares.mejorRacha >= 5 },
+  { id: "marco-humo", tipo: "marco", nombre: "Marco de humo", desc: "Un aro que se deshace, como el humo de la trastienda.", condicion: "Baja hasta la trastienda de San Diego (capítulo 4).", listo: (d) => capitulo(d, 3) },
+  { id: "marco-dia", tipo: "marco", nombre: "Marco del cronómetro", desc: "Azul de medianoche con las cuatro horas marcadas: el aro de los que corren contra el reloj.", condicion: "Gana tres Mesas del Día.", listo: (d) => d.diariasGanadas >= 3 },
   { id: "marco-hampa", tipo: "marco", nombre: "Sello del hampa", desc: "Un aro rojo sangre: el bajo mundo reconoce a los suyos.", condicion: "Cumple un encargo del barrio, de punta a punta.", oculto: true, listo: (d) => logro(d, "de-palabra") },
+  { id: "marco-calavera", tipo: "marco", nombre: "Marco de la calavera", desc: "Hueso viejo con una calavera al pie: el río devuelve a los porfiados.", condicion: "Sobrevive a 25 palizas y sigue sentándote a la mesa.", oculto: true, listo: (d) => d.palmares.jugadas - d.palmares.ganadas >= 25 },
+  { id: "marco-tahur", tipo: "marco", nombre: "Marco del Tahúr", desc: "Oro con los cuatro pips cardinales: el aro de los completistas.", condicion: "Junta los doce logros de la campaña.", oculto: true, listo: (d) => LOGROS.every((l) => d.palmares.logros.includes(l.id)) },
   { id: "marco-leyenda", tipo: "marco", nombre: "Marco de la Leyenda", desc: "Doble aro de oro viejo: sólo para los que volvieron a empezar y coronaron igual.", condicion: "Corona una vuelta de Leyenda.", oculto: true, listo: (d) => logro(d, "leyenda-viva") },
 
   // --- Capacidades -----------------------------------------------------------
@@ -148,6 +155,7 @@ const PANOS: Record<string, [string, string, string]> = {
   "pano-casa": ["rgba(34, 61, 42, 0.5)", "rgba(24, 44, 30, 0.28)", "rgba(38, 66, 46, 0.34)"],
   "pano-burdeos": ["rgba(84, 30, 34, 0.5)", "rgba(56, 20, 24, 0.3)", "rgba(92, 34, 38, 0.34)"],
   "pano-puerto": ["rgba(30, 52, 74, 0.52)", "rgba(20, 36, 54, 0.3)", "rgba(34, 58, 82, 0.34)"],
+  "pano-fierro": ["rgba(88, 52, 30, 0.5)", "rgba(58, 34, 20, 0.3)", "rgba(96, 58, 34, 0.34)"],
   "pano-subterraneo": ["rgba(62, 34, 78, 0.5)", "rgba(42, 22, 54, 0.3)", "rgba(70, 40, 88, 0.34)"],
   "pano-banca": ["rgba(28, 26, 20, 0.62)", "rgba(14, 13, 10, 0.4)", "rgba(38, 34, 24, 0.4)"],
 };

@@ -1098,6 +1098,41 @@ function Escenas({ escena }: { escena: string }) {
         </g>
       );
 
+    // El velorio del muelle: el cajón, las velas y la viuda de espaldas.
+    case "velorio":
+      return (
+        <g>
+          <rect x="0" y="0" width="320" height="140" fill="#0b0910" />
+          <Suelo />
+          {/* las velas: tres llamas que tiemblan sobre el cajón */}
+          <g className="esc-flicker">
+            {[118, 160, 202].map((x) => (
+              <g key={x}>
+                <rect x={x - 2} y={58} width="4" height="14" fill="#d9d5c9" opacity="0.8" />
+                <ellipse cx={x} cy={54} rx="2.4" ry="4.4" fill={ORO} opacity="0.9" />
+                <ellipse cx={x} cy={52} rx="5" ry="8" fill={ORO} opacity="0.14" />
+              </g>
+            ))}
+          </g>
+          {/* el cajón sobre dos caballetes */}
+          <g fill="#241a12">
+            <path d="M96 76 L224 76 L214 100 L106 100 Z" />
+            <rect x="112" y="100" width="8" height="18" />
+            <rect x="200" y="100" width="8" height="18" />
+          </g>
+          <path d="M96 76 L224 76 L214 100 L106 100 Z" fill="none" stroke={ORO} strokeOpacity="0.25" strokeWidth="1" />
+          {/* las dos monedas, brillando apenas donde van los ojos */}
+          <circle className="esc-brilla" cx="150" cy="72" r="2.2" fill={ORO} opacity="0.75" />
+          <circle className="esc-brilla" cx="162" cy="72" r="2.2" fill={ORO} opacity="0.75" />
+          {/* la viuda, de espaldas, con velo */}
+          <g fill={NEGRO} opacity="0.94">
+            <circle cx="62" cy="66" r="8" />
+            <path d="M52 72 q10 -4 20 0 l5 48 q-15 5 -30 0 z" />
+            <path d="M54 60 q8 -8 16 0 l2 12 q-10 4 -20 0 z" opacity="0.8" />
+          </g>
+        </g>
+      );
+
     // El pasillo sin número: angosto, larguísimo, una puerta al fondo.
     case "pasillo-sin-numero":
       return (
