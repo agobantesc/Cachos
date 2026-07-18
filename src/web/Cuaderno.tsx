@@ -32,7 +32,8 @@ export function Cuaderno({ volver }: { volver: () => void }) {
         <h2>Cuaderno del Tahúr</h2>
       </header>
       <p className="ayuda">
-        Todo lo que viviste en el bajo mundo, anotado con letra chueca.
+        <i className="glosa">Tahúr: el que vive de los dados y los naipes. O sea, tú.</i>
+        {" "}Todo lo que viviste en el bajo mundo, anotado con letra chueca.
         {h?.oficio && <span className="leyenda-badge"> {OFICIOS.find((o) => o.id === h.oficio)?.nombre ?? ""}</span>}
         {(h?.leyenda ?? 0) > 0 && <span className="leyenda-badge"> Leyenda {"I".repeat(Math.min(h!.leyenda ?? 0, 3))}</span>}
       </p>

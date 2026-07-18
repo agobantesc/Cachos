@@ -1478,3 +1478,17 @@ button { touch-action: manipulation; }
   display: block; font-style: normal; font-size: 10px; letter-spacing: 2px;
   text-transform: uppercase; color: var(--sangre-viva); margin-bottom: 3px;
 }
+
+/* El presagio del camino limpio: el hampa también habla de los que respetan. */
+.presagio--limpio {
+  color: #cfd9c8; border-color: rgba(200, 162, 74, 0.4); border-left-color: var(--oro);
+  background: linear-gradient(180deg, rgba(200, 162, 74, 0.08), rgba(10, 8, 16, 0.7));
+}
+.presagio--limpio .presagio-tit { color: var(--oro); }
+
+/* El rumor del barrio: una voz baja en la puerta de cada mesa. */
+.rumor { max-width: 25em; margin: 0; font-size: 12.5px; font-style: italic; color: var(--tenue); line-height: 1.5; }
+.rumor-tit { display: block; font-style: normal; font-size: 9.5px; letter-spacing: 2px; text-transform: uppercase; color: rgba(200, 162, 74, 0.7); margin-bottom: 2px; }
+
+/* La glosa: la palabra del oficio, explicada al pasar (tahúr y compañía). */
+.glosa { display: block; font-size: 11.5px; color: var(--oro-claro); opacity: 0.8; margin-bottom: 3px; }

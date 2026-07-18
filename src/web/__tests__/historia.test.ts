@@ -20,6 +20,7 @@ import {
   escenaFinal,
   ecosDelCamino,
   presagio,
+  rumorDe,
   MARCAS_OSCURAS,
   OFICIOS,
   costoMejora,
@@ -947,14 +948,21 @@ describe("la historia oscura: presagios y el peso de las marcas", () => {
   it("con el alma limpia el río calla; con 2+ marcas oscuras, se anuncia", () => {
     const h = historiaNueva("Limpio");
     expect(presagio(h)).toBeNull();
-    h.marcas = ["honrado", "aliado"]; // claras: no cuentan
-    expect(presagio(h)).toBeNull();
     h.marcas = ["saqueador"];
     expect(presagio(h)).toBeNull(); // una sola todavía no
     h.marcas = ["saqueador", "profanador"];
-    expect(presagio(h)).toContain("Mapocho");
+    expect(presagio(h)!.tono).toBe("oscuro");
+    expect(presagio(h)!.texto).toContain("Mapocho");
     h.marcas = ["saqueador", "profanador", "asesino"];
-    expect(presagio(h)!.length).toBeGreaterThan(presagio({ ...h, marcas: ["saqueador", "profanador"] })!.length);
+    expect(presagio(h)!.texto.length).toBeGreaterThan(presagio({ ...h, marcas: ["saqueador", "profanador"] })!.texto.length);
+    // …y el camino limpio también habla: el hampa protege a los que respetan.
+    h.marcas = ["honrado", "deudo"];
+    expect(presagio(h)!.tono).toBe("limpio");
+    h.marcas = ["honrado", "deudo", "aliado"];
+    expect(presagio(h)!.texto).toContain("limpio");
+    // …pero una sola mancha oscura calla los elogios sin despertar al río.
+    h.marcas = ["honrado", "deudo", "aliado", "saqueador"];
+    expect(presagio(h)).toBeNull();
   });
 
   it("profanar al muerto del velorio cuenta para el final malo (el jugador muere)", () => {
@@ -964,6 +972,19 @@ describe("la historia oscura: presagios y el peso de las marcas", () => {
     // …y el deudo, en cambio, no ensucia el camino al final verdadero.
     const limpio = { ...historiaNueva("Deudo"), marcas: ["deudo", "verdad"] };
     expect(tipoFinal(limpio)).toBe("verdadero");
+  });
+
+  it("cada mesa tiene su rumor de barrio, y rota con el rival", () => {
+    const h = historiaNueva("Oidor");
+    const r0 = rumorDe(h);
+    h.rivalIdx = 1;
+    const r1 = rumorDe(h);
+    expect(r0).toBeTruthy();
+    expect(r1).toBeTruthy();
+    expect(r0).not.toBe(r1);
+    for (let esc = 0; esc < 6; esc++) {
+      expect(rumorDe({ ...historiaNueva("X"), escenarioIdx: esc })).toBeTruthy();
+    }
   });
 
   it("toda marca nueva tiene su ficha en el Cuaderno y su eco en el final", () => {

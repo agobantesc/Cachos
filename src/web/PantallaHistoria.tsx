@@ -360,10 +360,16 @@ export function PantallaHistoria({
         )}
         <EncargoChip t={t} transporte={transporte} />
         <p className="hist-dialogo">“{r.dialogo}”</p>
+        {t.rumor && (
+          <p className="rumor">
+            <span className="rumor-tit" aria-hidden="true">Se dice en el barrio</span>
+            {t.rumor}
+          </p>
+        )}
         {t.presagio && (
-          <p className="presagio" role="note">
-            <span className="presagio-tit">El presagio del Mapocho</span>
-            {t.presagio}
+          <p className={"presagio" + (t.presagio.tono === "limpio" ? " presagio--limpio" : "")} role="note">
+            <span className="presagio-tit">{t.presagio.tono === "limpio" ? "Lo que el hampa murmura" : "El presagio del Mapocho"}</span>
+            {t.presagio.texto}
           </p>
         )}
         <BarraStats t={t} />

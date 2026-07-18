@@ -54,7 +54,8 @@ export function Ropero({ volver }: { volver: () => void }) {
         <h2>El Ropero del Tahúr</h2>
       </header>
       <p className="ayuda">
-        Lo que el bajo mundo te ha visto ganar. <b>{ganados}</b> de {COSMETICOS.length} piezas.
+        <i className="glosa">Tahúr: jugador profesional del bajo mundo — el oficio que estás aprendiendo.</i>
+        {" "}Lo que el bajo mundo te ha visto ganar. <b>{ganados}</b> de {COSMETICOS.length} piezas.
         {" "}Las tapadas son secretos: se ganan sin saber cómo.
       </p>
       {nuevos.length > 0 && (

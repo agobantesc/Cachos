@@ -1376,6 +1376,49 @@ const ECOS: Record<string, string> = {
   deudo: "En un velorio del puerto, tu apuesta ardió junto a las velas. La viuda del Chinchorro reza por ti.",
   profanador: "Hay un ahogado en el puerto que cruzó sin pagar el peaje. La deuda quedó a tu nombre.",
 };
+/** RUMORES del barrio: lo que se murmura en la puerta de cada mesa. Tres por
+ *  capítulo, rotando según el rival — el mundo sigue vivo alrededor tuyo. */
+const RUMORES: Record<string, string[]> = {
+  pocilga: [
+    "Dicen que Doña Berta guarda bajo la caja el primer cacho que le ganó a un capitán de barco, y que nunca más perdió.",
+    "Un pescador jura que anoche el Mapocho arrastró un vaso de cuero lleno de dados. Nadie quiso recogerlo.",
+    "El Pulguita anda contando que a la pocilga llegó sangre nueva. Nadie le cree… todavía.",
+  ],
+  vega: [
+    "En La Vega dicen que El Carnicero afila el cuchillo sólo cuando está nervioso. Esta semana lo afiló tres veces.",
+    "La Pitona leyó las cartas tres noches seguidas y las tres salió La Torre. Cerró el puesto y no ha vuelto.",
+    "Corre el rumor de que el Charqui esconde un cofre que nadie ha sabido abrir. Al que pregunta, lo miran feo.",
+  ],
+  maestranza: [
+    "Los soldadores apuestan a escondidas cuántas mesas aguanta el forastero antes de conocer el saco de género.",
+    "Dicen que El Verdugo no habla porque hizo una promesa el día que perdió lo único que ha perdido.",
+    "En los galpones se oye un tren que no existe. Los viejos dicen que son los que perdieron con El Verdugo, volviendo.",
+  ],
+  trastienda: [
+    "El Notario levanta acta de todo. Dicen que su libreta tiene una página con tu nombre… a medio escribir.",
+    "La Viuda Alegre encargó flores esta semana. En San Diego eso significa que alguien va a perder algo grande.",
+    "Al Croata nadie lo ha visto parpadear. Un mozo jura que una vez lo vio, y que fue la noche que casi pierde.",
+  ],
+  club: [
+    "Madame Ruiz paga por saber quién sube. De ti ya preguntó dos veces, querido: eso acá abajo es un honor caro.",
+    "Dicen que bajo el terciopelo del Subterráneo hay una puerta que ni El Senador conoce. Y que alguien la usa.",
+    "El Comisario dejó su placa en casa esta noche. Los que saben, saben que eso es peor señal que traerla.",
+  ],
+  cumbre: [
+    "Los mozos del penthouse apuestan entre ellos. Ninguno ha apostado nunca contra el Rey. Esta noche, dos dudaron.",
+    "Desde el ventanal de la cumbre se ve todo Chile… menos una pieza. Pregunta por ella y verás cómo cambian de tema.",
+    "Dicen que el Rey duerme con el cacho bajo la almohada, y que hace treinta años que no sueña nada.",
+  ],
+};
+
+/** El rumor que toca antes de este encuentro (determinista por rival). */
+export function rumorDe(h: EstadoHistoria): string | null {
+  const esc = escenarioActual(h);
+  const pool = RUMORES[esc.clave];
+  if (!pool || pool.length === 0) return null;
+  return pool[h.rivalIdx % pool.length] ?? null;
+}
+
 export function ecosDelCamino(marcas: string[]): string[] {
   return marcas.map((m) => ECOS[m]).filter((x): x is string => Boolean(x));
 }
@@ -1384,13 +1427,22 @@ export function ecosDelCamino(marcas: string[]): string[] {
  *  Cuando el alma se carga (2+ marcas oscuras), el río empieza a anunciarse
  *  en la puerta de cada mesa: el jugador siente venir la cuenta mucho antes
  *  de que se cobre. */
-export function presagio(h: EstadoHistoria): string | null {
+/** Marcas "claras": el camino del respeto (el que abre la puerta sin número). */
+export const MARCAS_CLARAS = ["honrado", "deudo", "aliado", "cabro", "padrino", "verdad"];
+
+export function presagio(h: EstadoHistoria): { texto: string; tono: "oscuro" | "limpio" } | null {
   const marcas = h.marcas ?? [];
   const oscuras = MARCAS_OSCURAS.filter((m) => marcas.includes(m)).length;
   if (oscuras >= 3)
-    return "Ya ni cuentas lo que llevas encima. En las mesas te hacen espacio demasiado rápido, como a los apestados… o a los muertos que aún caminan. Anoche soñaste con el Mapocho, y en el sueño el río sabía tu nombre y tenía tu voz. Arriba te van a dejar llegar, sí. Los ríos siempre dejan que la corriente traiga sola lo suyo.";
+    return { tono: "oscuro", texto: "Ya ni cuentas lo que llevas encima. En las mesas te hacen espacio demasiado rápido, como a los apestados… o a los muertos que aún caminan. Anoche soñaste con el Mapocho, y en el sueño el río sabía tu nombre y tenía tu voz. Arriba te van a dejar llegar, sí. Los ríos siempre dejan que la corriente traiga sola lo suyo." };
   if (oscuras === 2)
-    return "Últimamente duermes mal. Dicen en el puerto que el Mapocho llama bajito a los que le deben, mucho antes de cobrarles. Dos veces has elegido el camino del cuchillo; el agua, de noche, ya te suena distinta.";
+    return { tono: "oscuro", texto: "Últimamente duermes mal. Dicen en el puerto que el Mapocho llama bajito a los que le deben, mucho antes de cobrarles. Dos veces has elegido el camino del cuchillo; el agua, de noche, ya te suena distinta." };
+  // El camino limpio también habla: el hampa protege a los que respetan.
+  const claras = MARCAS_CLARAS.filter((m) => marcas.includes(m)).length;
+  if (oscuras === 0 && claras >= 3)
+    return { tono: "limpio", texto: "Algo raro pasa contigo en el bajo mundo: las viudas te rezan, los cabros te siguen y las manos duras te cuidan la espalda sin que lo pidas. Los viejos dicen que así caminaban los que llegaron más arriba que el trono. Sigue limpio: hay puertas que sólo se abren para los que no deben nada." };
+  if (oscuras === 0 && claras === 2)
+    return { tono: "limpio", texto: "En las mesas se comenta bajito: el forastero paga sus respetos. En este oficio casi nadie lo hace, y el hampa tiene buena memoria para lo raro. Alguien, en alguna parte, ya te está guardando un favor." };
   return null;
 }
 
@@ -1666,8 +1718,10 @@ export interface VistaHistoria {
   acertijo: { titulo: string; texto: string; desenlace: string | null; fallo: string | null } | null;
   /** Marcas de tu pasado (lo que tus decisiones dejaron escrito). */
   marcas: string[];
-  /** El presagio del Mapocho (intro): con el alma cargada, el río se anuncia. */
-  presagio: string | null;
+  /** El presagio (intro): el río se anuncia a los oscuros; el hampa, a los limpios. */
+  presagio: { texto: string; tono: "oscuro" | "limpio" } | null;
+  /** Lo que se dice en el barrio antes de esta mesa (sabor, determinista). */
+  rumor: string | null;
   /** Qué final se está mostrando (fase "final"). */
   finalTipo: TipoFinal | null;
   /** Pasaje actual del epílogo del final (fase "final"): se recorre con historiaContinuar. */
