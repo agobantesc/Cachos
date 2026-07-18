@@ -1260,6 +1260,10 @@ button { touch-action: manipulation; }
 }
 .vd-bueno { background: rgba(46, 160, 86, 0.18); color: #7fdca4; border: 1px solid rgba(46, 160, 86, 0.5); }
 .vd-malo { background: rgba(178, 58, 46, 0.18); color: #f0a396; border: 1px solid rgba(178, 58, 46, 0.55); }
+/* Neutro: un rival calzó y se fortalece — ni festejo ni luto. */
+.vd-neutro { background: rgba(200, 162, 74, 0.12); color: var(--oro-claro); border: 1px solid rgba(200, 162, 74, 0.45); }
+/* El saldo personal bajo el hecho: quién pierde o recupera, sin ambigüedad. */
+.vd-saldo { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.4px; margin-top: 2px; opacity: 0.9; text-transform: none; }
 
 /* Aviso de versión nueva: banda fija arriba, con su botón. */
 .version-nueva {

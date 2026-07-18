@@ -115,9 +115,15 @@ export function Mesa({
       finRegistrado.current = false; // mesa en curso (Mesa no se re-monta entre partidas)
       Sonidos.dados();
     } else if (p.fase === "FIN_RONDA" && p.ultimaResolucion) {
-      if (p.ultimaResolucion.perdedorId === snap.miId) {
+      // El sonido cuenta TU resultado, no el hecho: fanfarria sólo si la ronda
+      // te favorece; golpe si el dado perdido es tuyo; y si un RIVAL calza
+      // exacto (se fortalece), nada de celebrar: un tic neutro.
+      const res = p.ultimaResolucion;
+      if (res.perdedorId === snap.miId) {
         Sonidos.perder();
         vibrar(70);
+      } else if (res.tipo === "CALZO" && res.perdedorId === null && res.calzadorId !== snap.miId) {
+        Sonidos.tic();
       } else {
         Sonidos.ganar();
       }
@@ -592,30 +598,46 @@ function Revelacion({
   return (
     <div className="revelacion">
       <div className={"revelacion-caja" + (res.siciliana ? " sacudida" : perdiYo ? " caja--golpe" : "")}>
-        {res.tipo === "CALZO" && res.perdedorId === null && <Chispas n={12} />}
+        {res.tipo === "CALZO" && res.perdedorId === null && res.calzadorId === snap.miId && <Chispas n={12} />}
         <h2>{esPaso ? "Paso dudado" : "Revelación"}</h2>
-        {!esPaso && (
-          <div
-            className={
-              "veredicto " +
-              (res.tipo === "CALZO"
-                ? res.perdedorId === null
-                  ? "vd-bueno"
-                  : "vd-malo"
-                : res.cantidadReal >= res.cantidadDeclarada
-                  ? "vd-bueno"
-                  : "vd-malo")
-            }
-          >
-            {res.tipo === "CALZO"
-              ? res.perdedorId === null
-                ? "CALZO EXACTO"
-                : "CALZO FALLIDO"
-              : res.cantidadReal >= res.cantidadDeclarada
-                ? "LA APUESTA SE CUMPLÍA"
-                : "NO SE CUMPLÍA"}
-          </div>
-        )}
+        {!esPaso &&
+          (() => {
+            // El COLOR cuenta cómo te fue A TI (no el hecho): verde si la ronda
+            // te favorece, rojo si el golpe es tuyo, neutro si un rival calza y
+            // se fortalece. El hecho queda en el texto; abajo, el saldo claro.
+            const calzoExacto = res.tipo === "CALZO" && res.perdedorId === null;
+            const tono = calzoExacto
+              ? res.calzadorId === snap.miId
+                ? "vd-bueno"
+                : "vd-neutro"
+              : res.perdedorId === snap.miId
+                ? "vd-malo"
+                : "vd-bueno";
+            const dados = res.dadosPerdidos > 1 ? `${res.dadosPerdidos} dados` : "un dado";
+            const saldo = calzoExacto
+              ? res.calzadorId === snap.miId
+                ? res.ganadorDadoId
+                  ? "Recuperas un dado"
+                  : "Calzaste exacto (ya estabas al tope)"
+                : res.ganadorDadoId
+                  ? `${nombre(res.calzadorId ?? null)} recupera un dado`
+                  : `${nombre(res.calzadorId ?? null)} calzó exacto`
+              : res.perdedorId === snap.miId
+                ? `Pierdes ${dados}`
+                : `${nombre(res.perdedorId)} pierde ${dados}`;
+            return (
+              <div className={"veredicto " + tono}>
+                {res.tipo === "CALZO"
+                  ? res.perdedorId === null
+                    ? "CALZO EXACTO"
+                    : "CALZO FALLIDO"
+                  : res.cantidadReal >= res.cantidadDeclarada
+                    ? "LA APUESTA SE CUMPLÍA"
+                    : "NO SE CUMPLÍA"}
+                <span className="vd-saldo">{saldo}</span>
+              </div>
+            );
+          })()}
         <p className="resultado">{texto}</p>
         {res.siciliana && (
           <p className="siciliana">
