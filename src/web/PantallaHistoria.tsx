@@ -341,45 +341,62 @@ export function PantallaHistoria({
         {r.id !== "b-patron" && <CaminoBarrio t={t} />}
         {t.narrativa.intro && <Escena escena={escenaCapitulo(t.escenario.idx)} />}
         {t.narrativa.intro && <p className="hist-ambiente">{t.narrativa.intro}</p>}
-        <FichaRival t={t} />
-        <MesaInfo t={t} />
-        {t.narrativa.presentacion && <p className="hist-relato">{t.narrativa.presentacion}</p>}
-        {r.habilidad && (
-          <div className={"boss-habilidad" + (r.esBoss ? "" : " mesa-regla")}>
-            <span className="bh-tit">
-              {r.esBoss ? "Habilidad" : "Reglas de la mesa"} · {r.habilidad.nombre}
-            </span>
-            {r.habilidad.desc}
-          </div>
-        )}
-        {r.esBoss && r.fases === 2 && (
-          <div className="duelo-epico" role="note">
-            <span className="de-tit">Duelo épico · dos fases</span>
-            Este jefe no cae como los demás: hiérelo (déjalo en 2 cachos) y verás su verdadera cara.
-          </div>
-        )}
-        {t.desafio && (
-          <div className="desafio-chip">
-            <span className="dc-tit">Desafío de la casa · {t.desafio.nombre}</span>
-            {t.desafio.desc} <b className="dc-bono">Paga +${t.desafio.bono.toLocaleString("es-CL")}</b>
-          </div>
-        )}
-        <EncargoChip t={t} transporte={transporte} />
-        <p className="hist-dialogo">“{r.dialogo}”</p>
         {t.rumor && (
           <p className="rumor">
             <span className="rumor-tit" aria-hidden="true">Se dice en el barrio</span>
             {t.rumor}
           </p>
         )}
-        {t.presagio && (
-          <p className={"presagio" + (t.presagio.tono === "limpio" ? " presagio--limpio" : "")} role="note">
-            <span className="presagio-tit">{t.presagio.tono === "limpio" ? "Lo que el hampa murmura" : "El presagio del Mapocho"}</span>
-            {t.presagio.texto}
-          </p>
-        )}
-        <BarraStats t={t} />
-        <Bolsa t={t} />
+
+        <section className="tarjeta" aria-label="El rival">
+          <span className="tarjeta-tit">El rival</span>
+          <FichaRival t={t} />
+          <MesaInfo t={t} />
+          {t.narrativa.presentacion && <p className="hist-relato">{t.narrativa.presentacion}</p>}
+          <p className="hist-dialogo">“{r.dialogo}”</p>
+          {r.habilidad && (
+            <div className={"boss-habilidad" + (r.esBoss ? "" : " mesa-regla")}>
+              <span className="bh-tit">
+                {r.esBoss ? "Habilidad" : "Reglas de la mesa"} · {r.habilidad.nombre}
+              </span>
+              {r.habilidad.desc}
+            </div>
+          )}
+          {r.esBoss && r.fases === 2 && (
+            <div className="duelo-epico" role="note">
+              <span className="de-tit">Duelo épico · dos fases</span>
+              Este jefe no cae como los demás: hiérelo (déjalo en 2 cachos) y verás su verdadera cara.
+            </div>
+          )}
+        </section>
+
+        <section className="tarjeta" aria-label="Los términos de la mesa">
+          <span className="tarjeta-tit">Los términos de la mesa</span>
+          {t.desafio && (
+            <div className="desafio-chip">
+              <span className="dc-tit">Desafío de la casa · {t.desafio.nombre}</span>
+              {t.desafio.desc} <b className="dc-bono">Paga +${t.desafio.bono.toLocaleString("es-CL")}</b>
+            </div>
+          )}
+          <EncargoChip t={t} transporte={transporte} />
+        </section>
+
+        <section className="tarjeta" aria-label="Tu juego">
+          <span className="tarjeta-tit">Tu juego</span>
+          <BarraStats t={t} />
+          {t.skill && (
+            <p className="tarjeta-skill" title={t.skill.desc}>
+              ✦ <b>{t.skill.nombre} {"I".repeat(t.skill.nivel)}</b> · {t.skill.desc}
+            </p>
+          )}
+          <Bolsa t={t} />
+          {t.presagio && (
+            <p className={"presagio" + (t.presagio.tono === "limpio" ? " presagio--limpio" : "")} role="note">
+              <span className="presagio-tit">{t.presagio.tono === "limpio" ? "Lo que el hampa murmura" : "El presagio del Mapocho"}</span>
+              {t.presagio.texto}
+            </p>
+          )}
+        </section>
         {t.acertijoDisponible && (
           <button className="secreto-pill" onClick={() => transporte.historiaAbrirAcertijo?.()}>
             <span className="sp-glifo" aria-hidden="true">?</span>

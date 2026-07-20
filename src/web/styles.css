@@ -1516,3 +1516,42 @@ button { touch-action: manipulation; }
   border-radius: 0 12px 12px 0; background: linear-gradient(180deg, rgba(143, 45, 36, 0.16), transparent);
 }
 .de-tit { display: block; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--sangre-viva); margin-bottom: 2px; }
+
+/* ============================================================
+   ORDEN PROFESIONAL: tarjetas del modo historia y pie del salón.
+   ============================================================ */
+
+/* La TARJETA: el contenedor común que ordena la intro del modo historia.
+   Todo al mismo ancho, mismo ritmo, con su título discreto arriba. */
+.tarjeta {
+  display: flex; flex-direction: column; align-items: center; gap: 9px;
+  width: 100%; max-width: 400px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 40%), var(--humo);
+  border: 1px solid var(--linea); border-radius: 14px; padding: 12px 14px 14px;
+}
+.tarjeta-tit {
+  align-self: stretch; text-align: left;
+  font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--oro);
+  border-bottom: 1px solid var(--linea); padding-bottom: 6px;
+}
+/* Dentro de la tarjeta, los bloques ocupan el ancho completo y se alinean. */
+.tarjeta .desafio-chip, .tarjeta .encargo, .tarjeta .boss-habilidad, .tarjeta .duelo-epico,
+.tarjeta .presagio, .tarjeta .hist-relato, .tarjeta .hist-dialogo, .tarjeta .hist-bolsa {
+  width: 100%; max-width: none;
+}
+.tarjeta .hist-relato, .tarjeta .hist-dialogo { text-align: left; margin: 0; }
+.tarjeta-skill {
+  width: 100%; margin: 0; text-align: left; font-size: 12.5px; color: var(--tenue); line-height: 1.45;
+}
+.tarjeta-skill b { color: var(--oro-claro); }
+
+/* El pie del salón: los accesos secundarios, en fila y con peso propio. */
+.menu-pie { display: flex; gap: 9px; width: 100%; max-width: 420px; margin-top: 2px; }
+.pie-btn {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 11px 10px; border-radius: 12px; font-size: 13px; font-weight: 700;
+  background: linear-gradient(180deg, #1e2027, #15161b); color: var(--oro-claro);
+  border: 1px solid var(--linea);
+}
+.pie-btn span { color: var(--oro); font-size: 12px; }
+.pie-btn:active { transform: translateY(1px); }

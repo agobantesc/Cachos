@@ -275,12 +275,14 @@ function Inicio({ onListo }: { onListo: (t: Transporte) => void }) {
 
       <Palmares />
 
-      <button className="btn-link" onClick={() => setVista("ropero")}>
-        El Ropero del Tahúr
-      </button>
-      <button className="btn-link" onClick={() => setVista("reglas")}>
-        Reglas de la Asociación
-      </button>
+      <div className="menu-pie" role="group" aria-label="Más de la Asociación">
+        <button className="pie-btn" onClick={() => setVista("ropero")}>
+          <span aria-hidden="true">◆</span> El Ropero
+        </button>
+        <button className="pie-btn" onClick={() => setVista("reglas")}>
+          <span aria-hidden="true">§</span> Las Reglas
+        </button>
+      </div>
     </div>
   );
 }

@@ -14,7 +14,7 @@ describe("App (inicio)", () => {
     expect(html).toContain("Cachos");
     expect(html).toContain("Jugar solo");
     expect(html).toContain("Mesa en línea");
-    expect(html).toContain("Reglas de la Asociación");
+    expect(html).toContain("Las Reglas");
   });
 });
 
