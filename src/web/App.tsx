@@ -13,7 +13,7 @@ import { Avatar, fijarCaraJugador, CARA_DEFECTO } from "./Avatar";
 import { invitarWhatsApp, copiarInvitacion, salaDesdeURL, limpiarURLSala } from "./invitacion";
 import { TransporteLocal, type Transporte } from "./transporte";
 import { TransporteHistoria } from "./transporteHistoria";
-import { historiaNueva, escenarioActual, normalizar, OFICIOS, type OficioId } from "./historia";
+import { historiaNueva, escenarioActual, normalizar, OFICIOS, SKILLS, type OficioId } from "./historia";
 import { onlineConfigurado, crearTransporteOnline } from "./online";
 import { useInstantanea } from "./util";
 import { leerPrefs, guardarPrefs } from "./prefs";
@@ -363,7 +363,12 @@ function ConfigHistoria({ onListo, volver }: { onListo: (t: Transporte) => void;
   const leyendaSiguiente = (coronada?.leyenda ?? 0) + 1;
   const [nombre, setNombre] = useState(prefs.nombre ?? guardada?.nombre ?? "Forastero");
   const [oficio, setOficio] = useState<OficioId>("relojero");
+  // El OFICIO ES UN PACTO: con una historia en curso no se elige nada — sólo
+  // aparece el selector al empezar una historia NUEVA ("Empezar de cero").
+  const [eligiendo, setEligiendo] = useState(!guardada);
   const [cuaderno, setCuaderno] = useState(false);
+  const oficioSellado = guardada?.oficio ? OFICIOS.find((o) => o.id === guardada.oficio) : null;
+  const skillElegida = SKILLS[oficio];
 
   if (cuaderno) return <Cuaderno volver={() => setCuaderno(false)} />;
 
@@ -425,7 +430,7 @@ function ConfigHistoria({ onListo, volver }: { onListo: (t: Transporte) => void;
             Ya coronaste el cacho{(coronada.leyenda ?? 0) > 0 ? ` (Leyenda ${"I".repeat(Math.min(coronada.leyenda ?? 0, 3))})` : ""}.
             La Leyenda endurece a TODOS los rivales un escalón.
           </div>
-          <button className="btn btn--apostar grande" onClick={() => comenzar(historiaNueva(nombre, leyendaSiguiente, oficio))}>
+          <button className="btn btn--apostar grande" onClick={() => comenzar(historiaNueva(nombre, leyendaSiguiente, coronada?.oficio ?? oficio))}>
             Nueva Partida+ · Leyenda {"I".repeat(Math.min(leyendaSiguiente, 3))}
           </button>
         </>

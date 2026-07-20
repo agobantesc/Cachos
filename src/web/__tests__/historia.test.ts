@@ -28,6 +28,8 @@ import {
   bonoDesafio,
   umbralMaraton,
   ENCARGOS,
+  SKILLS,
+  nivelSkill,
   type EstadoHistoria,
   type TipoFinal,
 } from "../historia";
@@ -1008,5 +1010,63 @@ describe("la historia oscura: presagios y el peso de las marcas", () => {
     h2.rivalIdx = 3;
     h2.marcas = ["sangre-fria"];
     expect(eventoActual(h2)?.clave).toBe("club-aparecido");
+  });
+});
+
+describe("las skills del oficio (únicas, y suben con la historia)", () => {
+  it("cada oficio tiene su skill con tres niveles descritos", () => {
+    for (const o of OFICIOS) {
+      const sk = SKILLS[o.id];
+      expect(sk, o.id).toBeTruthy();
+      expect(sk.nombre, o.id).toBeTruthy();
+      expect(sk.niveles.length, o.id).toBe(3);
+    }
+    // Hay activas (botón en la mesa) y pasivas (trabajan solas).
+    const activas = OFICIOS.filter((o) => SKILLS[o.id].activa).length;
+    expect(activas).toBeGreaterThanOrEqual(2);
+    expect(activas).toBeLessThan(OFICIOS.length);
+  });
+
+  it("la skill sube de nivel con los barrios: I (1–2), II (3–4), III (5–6)", () => {
+    expect(nivelSkill({ escenarioIdx: 0 })).toBe(1);
+    expect(nivelSkill({ escenarioIdx: 1 })).toBe(1);
+    expect(nivelSkill({ escenarioIdx: 2 })).toBe(2);
+    expect(nivelSkill({ escenarioIdx: 3 })).toBe(2);
+    expect(nivelSkill({ escenarioIdx: 4 })).toBe(3);
+    expect(nivelSkill({ escenarioIdx: 5 })).toBe(3);
+  });
+
+  it("el Cabalista juega con re-tiradas extra; la vista expone la skill y sus usos", () => {
+    const th = new TransporteHistoria(historiaNueva("Cábala", 0, "cabalista"));
+    th.historiaEncargo!(false);
+    th.historiaEmpezar();
+    th.historiaElegir!(0);
+    th.historiaContinuar!();
+    const v = th.instantanea().historia!;
+    expect(v.faseHistoria).toBe("mesa");
+    expect(v.suerteDisponible).toBe(2); // Suerte 1 (dote) + 1 (Cábala vieja nivel I)
+    expect(v.skill).toEqual({ nombre: "Cábala vieja", desc: SKILLS.cabalista.niveles[0], nivel: 1, activa: false, usosRestantes: 0 });
+    th.detener();
+  });
+
+  it("El Relojero carga su skill activa (un uso por mesa) y la gasta al usarla", () => {
+    const th = new TransporteHistoria(historiaNueva("Pulso", 0, "relojero"));
+    th.historiaEncargo!(false);
+    th.historiaEmpezar();
+    th.historiaElegir!(0);
+    th.historiaContinuar!();
+    let v = th.instantanea().historia!;
+    expect(v.skill?.activa).toBe(true);
+    expect(v.skill?.usosRestantes).toBe(1);
+    th.historiaSkill!();
+    v = th.instantanea().historia!;
+    expect(v.skill?.usosRestantes).toBe(0);
+    th.detener();
+  });
+
+  it("costoItem del Contrabandista mejora con la skill al máximo", () => {
+    expect(costoItem("marcado")).toBe(150);
+    expect(costoItem("marcado", "contrabandista", 1)).toBe(120); // 20%
+    expect(costoItem("marcado", "contrabandista", 3)).toBe(105); // 30% (Doble fondo III)
   });
 });

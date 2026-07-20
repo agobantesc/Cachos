@@ -1492,3 +1492,19 @@ button { touch-action: manipulation; }
 
 /* La glosa: la palabra del oficio, explicada al pasar (tahúr y compañía). */
 .glosa { display: block; font-size: 11.5px; color: var(--oro-claro); opacity: 0.8; margin-bottom: 3px; }
+
+/* El pacto del oficio: stats y skill explicados antes de sellar. */
+.pacto {
+  display: flex; flex-direction: column; gap: 5px; width: 100%; max-width: 400px;
+  text-align: left; padding: 12px 14px; border-radius: 13px;
+  background: var(--humo); border: 1px solid rgba(200, 162, 74, 0.35);
+}
+.pacto-tit { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--oro); border-bottom: 1px solid var(--linea); padding-bottom: 6px; }
+.pacto-sub { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--oro-claro); margin-top: 6px; }
+.pacto-linea { margin: 0; font-size: 12.5px; color: var(--texto); line-height: 1.5; }
+.pacto-linea b { color: var(--oro-claro); }
+.pacto-nivel { padding-left: 10px; color: var(--tenue); }
+.oficio-sellado { max-width: 380px; font-style: italic; }
+
+/* La skill activa en la mesa: el botón del oficio. */
+.hh-skill { border-color: rgba(200, 162, 74, 0.6); color: var(--oro-claro); }

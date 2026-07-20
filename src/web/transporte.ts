@@ -101,6 +101,8 @@ export interface Transporte {
   historiaSacarCarta?(cartaIdx: number): void;
   /** Usa el poder "Suerte": re-tira tu mano. */
   historiaSuerte?(): void;
+  /** Dispara la SKILL activa del oficio (una vez por encuentro). */
+  historiaSkill?(): void;
   // --- Mesa en línea (opcionales: la UI los muestra sólo si existen) ---
   /** Anfitrión: agrega un bot de la casa a la sala (sólo en el lobby). */
   agregarBot?(): void;

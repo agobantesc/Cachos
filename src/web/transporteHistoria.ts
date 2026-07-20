@@ -32,6 +32,8 @@ import {
   umbralRelampago,
   umbralMaraton,
   costoItem,
+  SKILLS,
+  nivelSkill,
   encargoDe,
   cuentasEnCero,
   OFICIOS,
@@ -108,6 +110,10 @@ export class TransporteHistoria implements Transporte {
   /** La apuesta de la mesa en curso (doblar o nada) y el botín de la victoria. */
   private apuestaMonto = 0;
   private suerteUsadaEnMesa = false;
+  /** Usos de la SKILL activa del oficio en el encuentro en curso. */
+  private skillUsos = 0;
+  /** "Doble fondo": el primer item de la mesa ya salió gratis. */
+  private dobleFondoUsado = false;
   private botin: VistaHistoria["botin"] = null;
   private apuestaPerdida = 0;
 
@@ -204,6 +210,11 @@ export class TransporteHistoria implements Transporte {
     this.suerteUsos = this.h.atributos.suerte;
     this.soplonActivo = false;
     this.suerteUsadaEnMesa = false;
+    // La SKILL del oficio: las activas cargan su uso; la cábala suma re-tiradas.
+    const skill = this.h.oficio ? SKILLS[this.h.oficio] : null;
+    this.skillUsos = skill?.activa ? 1 : 0;
+    this.dobleFondoUsado = false;
+    if (this.h.oficio === "cabalista") this.suerteUsos += nivelSkill(this.h);
     this.itemsGastados = { cargado: 0, marcado: 0, soplon: 0 };
     this.eventoEnCurso = null;
     this.botin = null;
@@ -346,6 +357,8 @@ export class TransporteHistoria implements Transporte {
             enc.est.roto = true; // el jefe cayó y la cosecha no alcanzó: contrato vencido
           }
         }
+        // "El apellido pesa": De Buena Cuna cobra un extra sobre TODO el botín.
+        if (this.h.oficio === "buenacuna") total = Math.round(total * (1 + 0.05 * nivelSkill(this.h)));
         this.botin = { premioBase: rival.plata, apuestaExtra: this.apuestaMonto, bono, desafioCumplido, encargoPago, encargoItem, total };
         this.h.plata += total;
         // La corrida en números.
@@ -599,9 +612,10 @@ export class TransporteHistoria implements Transporte {
     if (this.fase !== "tienda") return;
     const meta = ITEMS.find((x) => x.id === id);
     if (!meta) return;
-    const costo = costoItem(meta.id, this.h.oficio);
+    const costo = costoItem(meta.id, this.h.oficio, nivelSkill(this.h));
     const cantidad = this.h.inventario[meta.id];
-    if (cantidad >= meta.max || this.h.plata < costo) return;
+    const tope = meta.max + (this.h.oficio === "contrabandista" && nivelSkill(this.h) >= 2 ? 1 : 0);
+    if (cantidad >= tope || this.h.plata < costo) return;
     this.h.plata -= costo;
     this.h.inventario[meta.id] = cantidad + 1;
     this.guardar();
@@ -623,8 +637,13 @@ export class TransporteHistoria implements Transporte {
       usado = true;
     }
     if (!usado) return;
-    // Se "gasta" de forma transitoria; sólo se confirma al ganar (ver onInner).
-    this.itemsGastados[meta.id] += 1;
+    // "Doble fondo": al Contrabandista, el primer item de la mesa no se le gasta.
+    if (this.h.oficio === "contrabandista" && !this.dobleFondoUsado) {
+      this.dobleFondoUsado = true;
+    } else {
+      // Se "gasta" de forma transitoria; sólo se confirma al ganar (ver onInner).
+      this.itemsGastados[meta.id] += 1;
+    }
     // Sacar algo bajo la manga rompe el contrato "manos quietas" del barrio.
     const enc = this.encargoActivo();
     if (enc && enc.meta.tipo === "manos-quietas" && !enc.est.pagado && !enc.est.roto) {
@@ -633,6 +652,28 @@ export class TransporteHistoria implements Transporte {
     }
     this.emitir();
   }
+  /** Dispara la SKILL activa del oficio (una vez por encuentro, en la mesa). */
+  historiaSkill() {
+    if (this.fase !== "mesa" || this.skillUsos <= 0 || !this.inner || !this.h.oficio) return;
+    const skill = SKILLS[this.h.oficio];
+    if (!skill.activa) return;
+    const nivel = nivelSkill(this.h);
+    let usado = false;
+    if (this.h.oficio === "relojero") {
+      // El pulso: tu mano se concentra (más fino con cada nivel).
+      usado = !!this.inner.cargarMano(HUMANO_ID, [4, 6, 8][nivel - 1]);
+    } else if (this.h.oficio === "charlatan") {
+      // El bla-bla: el capo se dispersa; con nivel, suelta información y hasta
+      // te da tiempo de ordenar tu propia mano.
+      usado = !!this.inner.descargarMano(this.rivalEnCurso().id);
+      if (usado && nivel >= 2) this.soplonActivo = true;
+      if (usado && nivel >= 3) this.inner.cargarMano(HUMANO_ID, 4);
+    }
+    if (!usado) return;
+    this.skillUsos -= 1;
+    this.emitir();
+  }
+
   historiaSuerte() {
     if (this.fase !== "mesa" || this.suerteUsos <= 0 || !this.inner) return;
     if (this.inner.rerollarMano(HUMANO_ID)) {
@@ -707,8 +748,9 @@ export class TransporteHistoria implements Transporte {
       this.fase === "tienda"
         ? ITEMS.map((it) => {
             const cantidad = this.h.inventario[it.id];
-            const costo = costoItem(it.id, this.h.oficio);
-            return { id: it.id, nombre: it.nombre, desc: it.desc, costo, cantidad, max: it.max, alcanzable: cantidad < it.max && this.h.plata >= costo };
+            const costo = costoItem(it.id, this.h.oficio, nivelSkill(this.h));
+            const tope = it.max + (this.h.oficio === "contrabandista" && nivelSkill(this.h) >= 2 ? 1 : 0);
+            return { id: it.id, nombre: it.nombre, desc: it.desc, costo, cantidad, max: tope, alcanzable: cantidad < tope && this.h.plata >= costo };
           })
         : [];
 
@@ -774,6 +816,13 @@ export class TransporteHistoria implements Transporte {
       itemsEnMano,
       evento,
       marcas: [...this.h.marcas],
+      skill: this.h.oficio
+        ? (() => {
+            const sk = SKILLS[this.h.oficio!];
+            const nivel = nivelSkill(this.h);
+            return { nombre: sk.nombre, desc: sk.niveles[nivel - 1]!, nivel, activa: sk.activa, usosRestantes: this.skillUsos };
+          })()
+        : null,
       presagio: this.fase === "intro" && !this.secretoActivo ? presagio(this.h) : null,
       rumor: this.fase === "intro" && !this.secretoActivo ? rumorDe(this.h) : null,
       finalTipo: this.fase === "final" ? this.finalTipo : null,

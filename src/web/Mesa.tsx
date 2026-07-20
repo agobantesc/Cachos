@@ -333,6 +333,15 @@ export function Mesa({
                   <IconoDado /> Suerte ({snap.historia.suerteDisponible})
                 </button>
               )}
+              {snap.historia.skill?.activa && snap.historia.skill.usosRestantes > 0 && (
+                <button
+                  className="hh-chip hh-skill"
+                  onClick={() => transporte.historiaSkill?.()}
+                  title={snap.historia.skill.desc}
+                >
+                  ✦ {snap.historia.skill.nombre} {"I".repeat(snap.historia.skill.nivel)}
+                </button>
+              )}
               {snap.historia.itemsEnMano.map((it) => (
                 <button
                   key={it.id}

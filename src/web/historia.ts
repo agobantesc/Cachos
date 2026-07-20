@@ -1002,10 +1002,79 @@ const OFICIO_ATRIBUTO: Partial<Record<OficioId, ClaveAtributo>> = {
   cabalista: "suerte",
 };
 
-/** Costo de un item en la tienda, con el descuento del oficio si aplica. */
-export function costoItem(id: ItemId, oficio?: OficioId): number {
+/** Costo de un item en la tienda, con el descuento del oficio si aplica.
+ *  El Contrabandista con la skill al máximo (III) compra aún más barato. */
+export function costoItem(id: ItemId, oficio?: OficioId, nivelSkillActual = 1): number {
   const base = ITEMS.find((x) => x.id === id)!.costo;
-  return oficio === "contrabandista" ? Math.round(base * 0.8) : base;
+  if (oficio !== "contrabandista") return base;
+  return Math.round(base * (nivelSkillActual >= 3 ? 0.7 : 0.8));
+}
+
+// ---------------------------------------------------------------------------
+// La SKILL del oficio: una habilidad ÚNICA por pasado, que SUBE de nivel
+// (I → III) a medida que avanzas de barrio. Las activas se disparan desde la
+// mesa (una vez por encuentro); las pasivas trabajan solas.
+// ---------------------------------------------------------------------------
+
+export interface SkillOficio {
+  nombre: string;
+  /** Qué hace en cada nivel (I, II, III). */
+  niveles: [string, string, string];
+  /** ACTIVA: aparece como botón en la mesa (1 uso por encuentro). */
+  activa: boolean;
+}
+
+export const SKILLS: Record<OficioId, SkillOficio> = {
+  relojero: {
+    nombre: "Pulso de relojero",
+    activa: true,
+    niveles: [
+      "Una vez por mesa: respiras hondo y tu mano se CONCENTRA al rearmarse.",
+      "El pulso se afina: la concentración sale más pareja.",
+      "Manos de cirujano: te quedas con la mejor de ocho tiradas.",
+    ],
+  },
+  charlatan: {
+    nombre: "Puro bla-bla",
+    activa: true,
+    niveles: [
+      "Una vez por mesa: mareas al capo con el verso y su mano se DISPERSA.",
+      "Mientras habla, suelta información: se encienden tus pistas por esta mesa.",
+      "Verso completo: además, tú ordenas tu mano con calma mientras él se marea.",
+    ],
+  },
+  cabalista: {
+    nombre: "Cábala vieja",
+    activa: false,
+    niveles: [
+      "Un uso EXTRA de Suerte en cada mesa.",
+      "La cábala crece: dos usos extra por mesa.",
+      "El destino te obedece: tres usos extra por mesa.",
+    ],
+  },
+  contrabandista: {
+    nombre: "Doble fondo",
+    activa: false,
+    niveles: [
+      "El primer item que uses en cada mesa no se gasta.",
+      "Además te cabe un item MÁS de cada tipo en el bolsillo.",
+      "Y el fiador te deja todo un 30% más barato.",
+    ],
+  },
+  buenacuna: {
+    nombre: "El apellido pesa",
+    activa: false,
+    niveles: [
+      "Todo botín de mesa paga un 5% extra.",
+      "El apellido crece: 10% extra en cada botín.",
+      "Nadie cobra como tu familia: 15% extra.",
+    ],
+  },
+};
+
+/** El nivel de la skill crece con la historia: barrios 1–2 → I, 3–4 → II, 5–6 → III. */
+export function nivelSkill(h: Pick<EstadoHistoria, "escenarioIdx">): number {
+  return h.escenarioIdx <= 1 ? 1 : h.escenarioIdx <= 3 ? 2 : 3;
 }
 
 // ---------------------------------------------------------------------------
@@ -1718,6 +1787,8 @@ export interface VistaHistoria {
   acertijo: { titulo: string; texto: string; desenlace: string | null; fallo: string | null } | null;
   /** Marcas de tu pasado (lo que tus decisiones dejaron escrito). */
   marcas: string[];
+  /** La SKILL del oficio, como la ve la UI (null sin oficio). */
+  skill: { nombre: string; desc: string; nivel: number; activa: boolean; usosRestantes: number } | null;
   /** El presagio (intro): el río se anuncia a los oscuros; el hampa, a los limpios. */
   presagio: { texto: string; tono: "oscuro" | "limpio" } | null;
   /** Lo que se dice en el barrio antes de esta mesa (sabor, determinista). */
