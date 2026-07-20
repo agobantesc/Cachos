@@ -57,6 +57,8 @@ export interface Instantanea {
   conexion?: "ok" | "reconectando";
   /** Estado del modo historia, si se juega la campaña; null/undefined si no. */
   historia?: VistaHistoria | null;
+  /** El TORNEO en curso (Jugar solo · modo torneo), si aplica. */
+  torneo?: { ronda: number; total: number; nombre: string; vivo: boolean; coronado: boolean } | null;
   /** Última frase rápida recibida en la mesa en línea (índice en FRASES). */
   frase?: { deId: string; nombre: string; idx: number; n: number } | null;
 }
@@ -103,6 +105,8 @@ export interface Transporte {
   historiaSuerte?(): void;
   /** Dispara la SKILL activa del oficio (una vez por encuentro). */
   historiaSkill?(): void;
+  /** Torneo: tras ganar un duelo, avanza al siguiente rival del cuadro. */
+  torneoSiguiente?(): void;
   // --- Mesa en línea (opcionales: la UI los muestra sólo si existen) ---
   /** Anfitrión: agrega un bot de la casa a la sala (sólo en el lobby). */
   agregarBot?(): void;

@@ -1508,3 +1508,11 @@ button { touch-action: manipulation; }
 
 /* La skill activa en la mesa: el botón del oficio. */
 .hh-skill { border-color: rgba(200, 162, 74, 0.6); color: var(--oro-claro); }
+
+/* El duelo épico: aviso de jefe en dos fases, con sangre en el borde. */
+.duelo-epico {
+  max-width: 26em; padding: 9px 13px; text-align: left; font-size: 13px; line-height: 1.45;
+  color: #e8c8bc; border: 1px solid rgba(178, 58, 46, 0.55); border-left: 3px solid var(--sangre-viva);
+  border-radius: 0 12px 12px 0; background: linear-gradient(180deg, rgba(143, 45, 36, 0.16), transparent);
+}
+.de-tit { display: block; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--sangre-viva); margin-bottom: 2px; }

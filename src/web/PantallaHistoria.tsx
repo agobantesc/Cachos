@@ -352,6 +352,12 @@ export function PantallaHistoria({
             {r.habilidad.desc}
           </div>
         )}
+        {r.esBoss && r.fases === 2 && (
+          <div className="duelo-epico" role="note">
+            <span className="de-tit">Duelo épico · dos fases</span>
+            Este jefe no cae como los demás: hiérelo (déjalo en 2 cachos) y verás su verdadera cara.
+          </div>
+        )}
         {t.desafio && (
           <div className="desafio-chip">
             <span className="dc-tit">Desafío de la casa · {t.desafio.nombre}</span>

@@ -10,7 +10,7 @@ export interface Palmares {
   /** Racha de mesas ganadas seguidas (actual y la mejor de la historia). */
   racha: number;
   mejorRacha: number;
-  /** Torneos coronados (histórico; el modo torneo ya no existe). */
+  /** Torneos coronados (Jugar solo · modo torneo). */
   copas: number;
   /** Finales de la campaña vistos ("estandar" | "malo" | "verdadero"). */
   finales: string[];
@@ -71,6 +71,13 @@ export function registrarLogro(id: string): boolean {
   p.logros.push(id);
   guardar(p);
   return true;
+}
+
+/** Registra una copa de torneo coronado (Jugar solo · modo torneo). */
+export function registrarCopa(): void {
+  const p = leerPalmares();
+  p.copas += 1;
+  guardar(p);
 }
 
 /** Registra un final de la campaña visto (una sola vez por tipo). */

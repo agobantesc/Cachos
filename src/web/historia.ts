@@ -165,6 +165,10 @@ export interface RivalHistoria {
   relato?: string;
   /** Cinemática de entrada (3 pasajes: plano general, medio y primer plano). Sólo bosses. */
   cinematica?: FinalBeat[];
+  /** DUELO ÉPICO: al quedar herido (2 cachos o menos) el jefe cambia de cara.
+   *  "trampa": su dado cargado se vuelve descarado (+4 tiradas).
+   *  "lectura": te lee entero — tu mano se DISPERSA en cada ronda. */
+  fase2?: { alerta: string; efecto: "trampa" | "lectura" };
   /** Frases del jefe DURANTE la mesa (bocadillos por gatillo). Sólo bosses. */
   frases?: FrasesMesa;
 }
@@ -583,6 +587,7 @@ export const CAMPANA: Escenario[] = [
         relato: "La Viuda te despide con un beso al aire. 'Otro luto para mi colección.' Tras el humo, El Croata apaga su cigarro: llegó tu turno con el hielo.",
         dialogos: d("Enterré a tres maridos jugando al cacho. Siéntate, lindo, hay sitio.", "Me dejas viuda otra vez… de mi invicto. Qué hombre.", "Otro luto más para mi colección, mijito.") },
       { id: "b-croata", nombre: "El Croata", nivel: "brutal", mesa: 2, esBoss: true, plata: 260, habilidad: TEMPANO,
+        fase2: { efecto: "lectura", alerta: "El Croata apaga el cigarro a medio fumar. 'Se acabó el calentamiento.' Sus ojos te desarman: desde ahora TE LEE, y tu mano llega dispersa a cada ronda." },
         cinematica: [
           { escena: "cap-trastienda", texto: "El Notario, Pituto, la Viuda Alegre: cada uno con su parte del rumor. Hay un hombre al fondo que no suda, no parpadea, no pierde. Bajo el foco amarillo, el paño verde te espera para la última mesa de la trastienda." },
           { escena: "jefe-croata", texto: "El Croata ya te lleva la cuenta antes de que te sientes: cuántas veces subiste de más, cuántas dudaste tarde. No fuma por vicio — fuma para tener las manos quietas. 'Siéntate', dice, sin levantar la vista. 'Veamos qué tan bien mientes.'" },
@@ -765,6 +770,7 @@ export const CAMPANA: Escenario[] = [
         relato: "La Jueza dicta su último veredicto de la noche: 'Culpable… de ser mejor que yo. Pasa.' Se hace un silencio. Tras la última puerta, treinta años de leyenda te esperan.",
         dialogos: d("He condenado a hombres por menos que tu ambición. A ver si me convences.", "Veredicto: culpable… de ser mejor que yo. Pasa.", "Sentencia firme: de vuelta al barro, sin apelación.") },
       { id: "b-rey", nombre: "El Rey del Cacho", nivel: "brutal", mesa: 2, esBoss: true, plata: 1500, habilidad: OJO_HALCON,
+        fase2: { efecto: "trampa", alerta: "El Rey deja de sonreír por primera vez en treinta años. 'Ahora en serio.' Chasquea los dedos: sus dados comprados dejan de disimular. La trampa se vuelve descarada." },
         cinematica: [
           { escena: "cap-cumbre", texto: "El Heredero, la Jueza: los últimos peldaños antes del trono. Cada mesa que ganaste en esta ciudad, cada capítulo, te trajo hasta este ventanal con todo Chile encendido a tus pies." },
           { escena: "jefe-rey", texto: "Treinta años sentado en el mismo sillón, contra el mismo ventanal, y ni una vez tuvo que levantarse. El Rey del Cacho no te mira con miedo ni con desprecio: te mira como quien ya ha visto morir a cien iguales a ti." },
@@ -796,6 +802,7 @@ export const REY_VERDADERO: RivalHistoria = {
   esBoss: true,
   habilidad: LA_BANCA,
   plata: 5000,
+  fase2: { efecto: "lectura", alerta: "El Patrón deja el cacho de marfil sobre la mesa y por primera vez te MIRA. La ampolleta parpadea. 'Nadie llegó tan lejos. Veamos cómo juegas sin secretos.' Te lee entero: tu mano se dispersa." },
   cinematica: [
     { escena: "cap-cumbre", texto: "El giro todavía te zumba en los oídos: el Rey de la vitrina era una fachada. Sigues a tu aliado por un pasillo que el penthouse escondía, hacia una puerta sin número, al fondo de todo." },
     { escena: "pasillo-sin-numero", texto: "El pasillo es largo, angosto, sin un solo adorno: aquí no llega nadie por accidente. Tu aliado habla bajito, como en un velorio. 'Hace treinta años hubo otro cabro del barro que subió igual que tú, mesa a mesa, hasta el trono. La noche que ganó, desapareció. Nadie lo vio nunca más… pero desde esa noche, todos los Reyes de la vitrina le pagan tributo a esta pieza.'" },
@@ -1761,6 +1768,8 @@ export interface VistaHistoria {
     nivel: Nivel;
     esBoss: boolean;
     habilidad: { nombre: string; desc: string } | null;
+    /** DUELO ÉPICO: 2 si el jefe cambia de cara al quedar herido. */
+    fases: number;
     /** Plata que entrega al ser derrotado (para el premio). */
     plata: number;
     dialogo: string;

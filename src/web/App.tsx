@@ -7,6 +7,7 @@ import { MapaHampa } from "./Mapa";
 import { Ropero } from "./Ropero";
 import { aplicarEquipado, tieneCosmetico, revisarDesbloqueos } from "./cosmeticos";
 import { mesaDelDia, rankingDelDia, diariaDeHoy, formatoTiempo, claveHoy, TransporteDiario } from "./diaria";
+import { TransporteTorneo } from "./torneo";
 import { CampoJugador } from "./Personaje";
 import { Emblema, IconoCalavera, IconoWhatsApp, IconoDado, IconoPersonas } from "./Iconos";
 import { Avatar, fijarCaraJugador, CARA_DEFECTO } from "./Avatar";
@@ -88,6 +89,11 @@ function Juego({ transporte, salir }: { transporte: Transporte; salir: () => voi
       )}
       {transporte instanceof TransporteDiario && snap.publico && snap.publico.fase !== "FIN_JUEGO" && (
         <RelojDia transporte={transporte} />
+      )}
+      {snap.torneo && snap.publico && snap.publico.fase !== "FIN_JUEGO" && (
+        <div className="reloj-dia" aria-label="Ronda del torneo">
+          Torneo · {snap.torneo.nombre}
+        </div>
       )}
       {contenido}
     </>
@@ -293,6 +299,11 @@ function Palmares() {
           racha <b>{p.mejorRacha}</b>
         </span>
       )}
+      {p.copas > 0 && (
+        <span className="pal-dato">
+          copas <b>{p.copas}</b>
+        </span>
+      )}
       {p.finales.length > 0 && (
         <span className="pal-dato">
           finales <b>{p.finales.length}</b>
@@ -311,6 +322,7 @@ function ConfigSolo({ onListo, volver }: { onListo: (t: Transporte) => void; vol
   const conBrutal = tieneCosmetico("cap-sin-piedad");
   const maxRivales = tieneCosmetico("cap-mesa-llena") ? NOMBRES_BOT.length : NOMBRES_BOT.length - 1;
   const [nombre, setNombre] = useState(prefs.nombre ?? "Miembro");
+  const [modo, setModo] = useState<"rapida" | "torneo">("rapida");
   const [rivales, setRivales] = useState(Math.min(prefs.rivales ?? 3, maxRivales));
   const [nivel, setNivel] = useState<Nivel>(prefs.nivel && (prefs.nivel !== "brutal" || conBrutal) ? prefs.nivel : "medio");
 
@@ -318,6 +330,10 @@ function ConfigSolo({ onListo, volver }: { onListo: (t: Transporte) => void; vol
     desbloquearAudio(); // habilita el audio dentro del gesto del usuario
     const limpio = nombre.trim() || "Miembro";
     guardarPrefs({ nombre: limpio, rivales, nivel });
+    if (modo === "torneo") {
+      onListo(new TransporteTorneo(limpio));
+      return;
+    }
     const yo = { id: "humano", nombre: limpio };
     const bots = NOMBRES_BOT.slice(0, rivales).map((n, i) => ({ id: `bot${i}`, nombre: n }));
     onListo(new TransporteLocal([yo, ...bots], { humanoId: yo.id, nivel }));
@@ -329,6 +345,18 @@ function ConfigSolo({ onListo, volver }: { onListo: (t: Transporte) => void; vol
       <p className="ayuda">Tú contra la banca. Elige rivales y dificultad.</p>
       <CampoJugador nombre={nombre} setNombre={setNombre} />
 
+      <div className="campo-label">Modo</div>
+      <div className="segmento">
+        <button className={"seg-btn" + (modo === "rapida" ? " sel" : "")} onClick={() => setModo("rapida")}>Partida rápida</button>
+        <button className={"seg-btn" + (modo === "torneo" ? " sel" : "")} onClick={() => setModo("torneo")}>Torneo</button>
+      </div>
+      {modo === "torneo" && (
+        <p className="ayuda nivel-desc">
+          Eliminatoria de duelos 1v1: Cuartos (medio) → Semifinal (avanzado) → La Final (experto).
+          Pierdes, afuera. Corona la final y la COPA queda en tu palmarés.
+        </p>
+      )}
+      {modo === "rapida" && <>
       <div className="campo-label">Rivales de la máquina</div>
       <div className="stepper">
         <button onClick={() => setRivales((r) => Math.max(1, r - 1))} aria-label="menos">−</button>
@@ -347,9 +375,10 @@ function ConfigSolo({ onListo, volver }: { onListo: (t: Transporte) => void; vol
           ))}
       </div>
       <p className="ayuda nivel-desc">{DESC_NIVEL[nivel]}</p>
+      </>}
 
       <button className="btn btn--apostar grande" onClick={empezar}>
-        Sentarse a la mesa
+        {modo === "torneo" ? "Entrar al torneo" : "Sentarse a la mesa"}
       </button>
     </div>
   );

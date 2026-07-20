@@ -48,3 +48,12 @@ describe("palmarés", () => {
     expect(registrarLogro("fantasma")).toBe(true); // sigue "nuevo": no hay dónde guardarlo
   });
 });
+
+describe("el torneo", () => {
+  it("cada corona suma una copa al palmarés", async () => {
+    const { registrarCopa } = await import("../palmares");
+    registrarCopa();
+    registrarCopa();
+    expect(leerPalmares().copas).toBe(2);
+  });
+});

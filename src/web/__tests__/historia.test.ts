@@ -1070,3 +1070,25 @@ describe("las skills del oficio (únicas, y suben con la historia)", () => {
     expect(costoItem("marcado", "contrabandista", 3)).toBe(105); // 30% (Doble fondo III)
   });
 });
+
+describe("duelos épicos (jefes en dos fases)", () => {
+  it("los tres jefes 'brutal' pelean en dos fases, con alerta y efecto propios", () => {
+    const croata = CAMPANA.flatMap((e) => e.rivales).find((r) => r.id === "b-croata")!;
+    const rey = CAMPANA.flatMap((e) => e.rivales).find((r) => r.id === "b-rey")!;
+    expect(croata.fase2?.efecto).toBe("lectura");
+    expect(rey.fase2?.efecto).toBe("trampa");
+    expect(REY_VERDADERO.fase2?.efecto).toBe("lectura");
+    for (const b of [croata, rey, REY_VERDADERO]) expect(b.fase2?.alerta.length ?? 0).toBeGreaterThan(40);
+    // Los jefes de barrio comunes no cambian de cara.
+    expect(CAMPANA[0]!.rivales.at(-1)!.fase2).toBeUndefined();
+  });
+
+  it("la vista anuncia el duelo épico (fases: 2)", () => {
+    const h = historiaNueva("Retador");
+    h.escenarioIdx = 3;
+    h.rivalIdx = 3; // El Croata
+    const th = new TransporteHistoria(h);
+    expect(th.instantanea().historia!.rival.fases).toBe(2);
+    th.detener();
+  });
+});

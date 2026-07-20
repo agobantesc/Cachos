@@ -114,6 +114,8 @@ export class TransporteHistoria implements Transporte {
   private skillUsos = 0;
   /** "Doble fondo": el primer item de la mesa ya salió gratis. */
   private dobleFondoUsado = false;
+  /** DUELO ÉPICO: el jefe herido ya cambió de cara (segunda fase). */
+  private fase2Activa = false;
   private botin: VistaHistoria["botin"] = null;
   private apuestaPerdida = 0;
 
@@ -214,6 +216,7 @@ export class TransporteHistoria implements Transporte {
     const skill = this.h.oficio ? SKILLS[this.h.oficio] : null;
     this.skillUsos = skill?.activa ? 1 : 0;
     this.dobleFondoUsado = false;
+    this.fase2Activa = false;
     if (this.h.oficio === "cabalista") this.suerteUsos += nivelSkill(this.h);
     this.itemsGastados = { cargado: 0, marcado: 0, soplon: 0 };
     this.eventoEnCurso = null;
@@ -248,9 +251,25 @@ export class TransporteHistoria implements Transporte {
     this.emitir();
   }
 
-  /** Boss "dado cargado": recarga su mano al inicio de cada ronda. */
+  /** Boss "dado cargado": recarga su mano al inicio de cada ronda. Y en la
+   *  SEGUNDA FASE de un duelo épico, el jefe que "te lee" dispersa tu mano. */
   private aplicarTrampa() {
     if (this.dadoCargadoId && this.inner) this.inner.cargarMano(this.dadoCargadoId, this.dadoCargadoIntentos);
+    const rival = this.rivalEnCurso();
+    if (this.fase2Activa && rival.fase2?.efecto === "lectura") this.inner?.descargarMano(HUMANO_ID);
+  }
+
+  /** ¿El jefe quedó herido? Enciende su segunda fase (una vez por mesa).
+   *  Devuelve true si RECIÉN se encendió (su alerta manda sobre el comentario). */
+  private revisarFase2(pub: NonNullable<Instantanea["publico"]>): boolean {
+    const rival = this.rivalEnCurso();
+    if (!rival.fase2 || this.fase2Activa) return false;
+    const jefe = pub.jugadores.find((j) => j.id === rival.id);
+    if (!jefe || jefe.eliminado || jefe.cantidadDados > 2) return false;
+    this.fase2Activa = true;
+    if (rival.fase2.efecto === "trampa") this.dadoCargadoIntentos += 4;
+    this.comentario = { texto: rival.fase2.alerta, n: ++this.comentarioN };
+    return true;
   }
 
   /** ¿Se cumplió el desafío de la casa? (se evalúa sobre la mesa ya ganada) */
@@ -320,7 +339,7 @@ export class TransporteHistoria implements Transporte {
     const pub = this.inner.instantanea().publico;
     if (this.fase === "mesa" && pub && pub.fase === "FIN_RONDA" && pub.ultimaResolucion && pub.numeroRonda !== this.rondaComentada) {
       this.rondaComentada = pub.numeroRonda;
-      this.comentarRonda(pub);
+      if (!this.revisarFase2(pub)) this.comentarRonda(pub);
     }
     if (this.fase === "mesa" && pub && pub.fase === "FIN_JUEGO") {
       if (pub.ganadorId === HUMANO_ID) {
@@ -802,6 +821,7 @@ export class TransporteHistoria implements Transporte {
         nivel: rival.nivel,
         esBoss: rival.esBoss,
         habilidad: rival.habilidad ? { nombre: rival.habilidad.nombre, desc: rival.habilidad.desc } : null,
+        fases: rival.fase2 ? 2 : 1,
         plata: rival.plata,
         dialogo,
       },

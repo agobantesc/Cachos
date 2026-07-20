@@ -254,13 +254,22 @@ export function Mesa({
     const ranking = [...p.jugadores].sort((a, b) => puestoDe(a.id) - puestoDe(b.id));
     const gane = p.ganadorId === snap.miId;
 
+    const torneo = snap.torneo;
     return (
       <div className="mesa fin">
         {gane && <Chispas n={20} />}
         <div className="fin-sello">
-          <span className="fin-kicker">La Asociación de Cachos</span>
-          <h1 className="fin-titulo">{gane ? "Ganaste la mesa" : `Ganó ${nombre(p.ganadorId)}`}</h1>
+          <span className="fin-kicker">{torneo ? `Torneo de la Asociación · ${torneo.nombre}` : "La Asociación de Cachos"}</span>
+          <h1 className="fin-titulo">
+            {torneo && torneo.coronado ? "¡CAMPEÓN DEL TORNEO!" : gane ? "Ganaste la mesa" : `Ganó ${nombre(p.ganadorId)}`}
+          </h1>
         </div>
+        {torneo && torneo.coronado && (
+          <div className="logro-toast" role="status">La copa es tuya · quedó grabada en tu palmarés</div>
+        )}
+        {torneo && !torneo.vivo && (
+          <p className="ayuda">El cuadro te dejó fuera en {torneo.nombre.toLowerCase()}. El torneo espera tu revancha.</p>
+        )}
         {botinRopero.length > 0 && (
           <div className="logro-toast" role="status">
             Cayó al Ropero · <b>{botinRopero.join(" · ")}</b>
