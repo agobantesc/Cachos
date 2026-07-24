@@ -11,7 +11,7 @@ const BUILD_TIME = new Date().toISOString().slice(0, 16).replace("T", " ") + " U
 // `base` se ajusta en el deploy de GitHub Pages (BASE_PATH=/Cachos/); en local es "/".
 export default defineConfig({
   base: process.env.BASE_PATH ?? "/",
-  define: { __BUILD_TIME__: JSON.stringify(BUILD_TIME) },
+  define: { __BUILD_TIME__: JSON.stringify(BUILD_TIME), __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? "1.0.0") },
   plugins: [
     react(),
     VitePWA({

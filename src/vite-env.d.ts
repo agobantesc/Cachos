@@ -13,3 +13,4 @@ interface ImportMeta {
 
 // Sello de versión inyectado por Vite (ver `define` en vite.config.ts).
 declare const __BUILD_TIME__: string;
+declare const __APP_VERSION__: string;

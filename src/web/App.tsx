@@ -63,7 +63,7 @@ export function App() {
         </div>
       )}
       {!transporte ? <Inicio onListo={setTransporte} /> : <Juego transporte={transporte} salir={salir} />}
-      <div className="build">v{__BUILD_TIME__}</div>
+      <div className="build">v{__APP_VERSION__} · {__BUILD_TIME__}</div>
     </>
   );
 }
@@ -189,9 +189,15 @@ function Inicio({ onListo }: { onListo: (t: Transporte) => void }) {
   // Si llegan por un enlace de invitación (?sala=CODIGO) entran directo a la
   // mesa en línea con la contraseña ya puesta.
   const [salaURL] = useState(() => salaDesdeURL());
-  const [vista, setVista] = useState<"home" | "solo" | "historia" | "online" | "reglas" | "diaria" | "ropero">(
+  const [vista, setVistaCruda] = useState<"home" | "solo" | "historia" | "online" | "reglas" | "diaria" | "ropero">(
     salaURL ? "online" : "home",
   );
+  // Cambio de pantalla con fundido nativo (View Transitions; cae con gracia).
+  const setVista: typeof setVistaCruda = (v) => {
+    const doc = document as Document & { startViewTransition?: (cb: () => void) => void };
+    if (doc.startViewTransition) doc.startViewTransition(() => setVistaCruda(v));
+    else setVistaCruda(v);
+  };
   // Lo que ya te ganaste cae al ropero apenas pisas el salón.
   useEffect(() => {
     revisarDesbloqueos();

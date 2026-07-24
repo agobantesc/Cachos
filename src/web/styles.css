@@ -1555,3 +1555,41 @@ button { touch-action: manipulation; }
 }
 .pie-btn span { color: var(--oro); font-size: 12px; }
 .pie-btn:active { transform: translateY(1px); }
+
+/* ============================================================
+   v1.0: pulido visual general — entradas, foco, tacto y detalle.
+   ============================================================ */
+
+/* Toda pantalla entra con un fundido corto y un respiro hacia arriba. */
+@keyframes pantalla-entra {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.pantalla { animation: pantalla-entra 0.22s ease-out; }
+
+/* Fundido nativo entre vistas (View Transitions), sobrio. */
+::view-transition-old(root) { animation-duration: 0.12s; }
+::view-transition-new(root) { animation-duration: 0.18s; }
+
+/* Accesibilidad con estilo: el foco de teclado se ve, y se ve bien. */
+:focus-visible { outline: 2px solid var(--oro); outline-offset: 2px; border-radius: 6px; }
+button:focus:not(:focus-visible) { outline: none; }
+
+/* Tacto: todo botón responde al dedo. */
+.modo-card:active, .oficio-card:active, .rp-btn:active, .seg-btn:active, .am-btn:active { transform: translateY(1px); }
+.modo-card { transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+.modo-card:hover { border-color: rgba(200, 162, 74, 0.5); box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35); }
+
+/* La selección de texto y la barra de scroll, en la paleta de la casa. */
+::selection { background: rgba(200, 162, 74, 0.35); color: var(--hueso); }
+* { scrollbar-width: thin; scrollbar-color: rgba(200, 162, 74, 0.35) transparent; }
+*::-webkit-scrollbar { width: 8px; }
+*::-webkit-scrollbar-thumb { background: rgba(200, 162, 74, 0.3); border-radius: 999px; }
+
+/* El sello de versión, más fino. */
+.build { letter-spacing: 0.5px; opacity: 0.55; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pantalla { animation: none; }
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+}
