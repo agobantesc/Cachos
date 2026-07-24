@@ -109,6 +109,9 @@ const MARCOS: Record<string, { color: string; doble?: boolean; dash?: string; ad
   "marco-hampa": { color: "#b23a2e" },
   "marco-calavera": { color: "#d9d5c9", adorno: "calavera" },
   "marco-tahur": { color: "#e6c878", adorno: "pips" },
+  "marco-copa": { color: "#b0793e", doble: true },
+  "marco-rio": { color: "#5a86a0", dash: "7 3" },
+  "marco-vicio": { color: "#8a8477", dash: "2 3" },
   "marco-leyenda": { color: "#c8a24a", doble: true },
 };
 

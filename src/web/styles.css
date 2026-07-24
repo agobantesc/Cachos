@@ -1593,3 +1593,9 @@ button:focus:not(:focus-visible) { outline: none; }
   .pantalla { animation: none; }
   ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
 }
+
+/* Mapa del Hampa v2: camino curvo con aro exterior en los nodos. */
+.mh-aro { stroke: rgba(217, 213, 201, 0.12); stroke-width: 1; }
+.mh-nodo--conquistado .mh-aro { stroke: rgba(200, 162, 74, 0.35); }
+.mh-nodo--actual .mh-aro { stroke: rgba(200, 162, 74, 0.55); stroke-dasharray: 3 3; }
+.mh-tramo--recorrido { stroke-width: 2; filter: drop-shadow(0 0 3px rgba(200, 162, 74, 0.35)); }

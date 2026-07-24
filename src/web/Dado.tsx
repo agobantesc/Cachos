@@ -35,6 +35,18 @@ const PIELES: Record<string, PielDado> = {
     fondo: "#1d2740", canto: "#101627", borde: "rgba(160, 180, 210, 0.45)", punto: "#cdd8ea", brillo: 0.15,
     as: { fondo: "#243252", canto: "#141d33", borde: "#e6c878", punto: "#e6c878" },
   },
+  "dados-esmeralda": {
+    fondo: "#1d4a34", canto: "#0f2e1f", borde: "rgba(200, 162, 74, 0.4)", punto: "#e9e3d2", brillo: 0.18,
+    as: { fondo: "#245c40", canto: "#143526", borde: "#e6c878", punto: "#e6c878" },
+  },
+  "dados-campeon": {
+    fondo: "#b0793e", canto: "#7a5228", borde: "rgba(40, 24, 10, 0.5)", punto: "#241408", brillo: 0.35,
+    as: { fondo: "#c48a4a", canto: "#8a5e2e", borde: "#e6c878", punto: "#8f2d24" },
+  },
+  "dados-humo": {
+    fondo: "#4a4a52", canto: "#2c2c33", borde: "rgba(200, 200, 210, 0.25)", punto: "#d9d5c9", brillo: 0.1,
+    as: { fondo: "#55555e", canto: "#33333b", borde: "#c8a24a", punto: "#e6c878" },
+  },
   "dados-marfil": {
     fondo: "#efe3c0", canto: "#c2ac7c", borde: "#a08c5a", punto: "#4a3a22", brillo: 0.25,
     as: { fondo: "#f6ecc9", canto: "#cbb076", borde: "#8f2d24", punto: "#8f2d24" },

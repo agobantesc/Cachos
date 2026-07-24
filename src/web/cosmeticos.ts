@@ -4,7 +4,7 @@
 // con su condición a la vista; otros son SECRETOS: ni el nombre se muestra
 // hasta ganarlos. Todo persiste en su propia clave de localStorage.
 import { leerPalmares, type Palmares } from "./palmares";
-import { LOGROS } from "./historia";
+import { LOGROS, MARCAS_OSCURAS } from "./historia";
 import { leerPrefs } from "./prefs";
 import { leerDiaria } from "./diaria";
 import { fijarPielDados } from "./Dado";
@@ -49,6 +49,8 @@ export const COSMETICOS: Cosmetico[] = [
   { id: "pano-puerto", tipo: "pano", nombre: "Paño del puerto", desc: "Azul profundo, con olor a sal y a primera victoria.", condicion: "Sal de La Pocilga: completa el primer capítulo.", listo: (d) => capitulo(d, 1) },
   { id: "pano-fierro", tipo: "pano", nombre: "Paño de la Maestranza", desc: "Fieltro oxidado, con olor a soldadura y a deudas viejas.", condicion: "Llega a los galpones de la Maestranza.", listo: (d) => capitulo(d, 2) },
   { id: "pano-subterraneo", tipo: "pano", nombre: "Paño del Subterráneo", desc: "Terciopelo púrpura del club bajo el río.", condicion: "Abre los tres candados del bajo mundo.", listo: (d) => logro(d, "tres-llaves") },
+  { id: "pano-cumbre", tipo: "pano", nombre: "Paño de la Cumbre", desc: "Fieltro dorado tenue, como el ventanal del penthouse al amanecer.", condicion: "Llega a La Cumbre (capítulo 6).", listo: (d) => capitulo(d, 5) },
+  { id: "pano-luto", tipo: "pano", nombre: "Paño de luto", desc: "Azul de velorio, con olor a cera y a respeto.", condicion: "Paga el respeto en el velorio del muelle.", oculto: true, listo: (d) => !!d.historia?.marcas?.includes("deudo") },
   { id: "pano-banca", tipo: "pano", nombre: "Paño de la Banca", desc: "Negro absoluto con hilo de oro. En este fieltro nadie ve venir nada.", condicion: "La Banca te veló: conoce el final donde ella cobra.", oculto: true, listo: (d) => d.palmares.finales.includes("malo") },
 
   // --- Pieles de dados -------------------------------------------------------
@@ -57,6 +59,9 @@ export const COSMETICOS: Cosmetico[] = [
   { id: "dados-sangre", tipo: "dados", nombre: "Dados de sangre", desc: "Rojo matadero. La Vega los reconocería.", condicion: "Encadena una racha de 3 mesas ganadas.", listo: (d) => d.palmares.mejorRacha >= 3 },
   { id: "dados-oro", tipo: "dados", nombre: "Dados de oro", desc: "Oro macizo de la Cumbre. Ostentosos hasta decir basta.", condicion: "Corona la campaña, con el final que sea.", listo: (d) => logro(d, "rey-caido") },
   { id: "dados-dia", tipo: "dados", nombre: "Dados del Día", desc: "Azul de medianoche con pips de plata: los de la mesa que cambia cada día.", condicion: "Gana una Mesa del Día.", oculto: true, listo: (d) => d.diariasGanadas >= 1 },
+  { id: "dados-esmeralda", tipo: "dados", nombre: "Dados esmeralda", desc: "Verde profundo de mesa fina: los de los que corren contra el reloj.", condicion: "Gana cinco Mesas del Día.", listo: (d) => d.diariasGanadas >= 5 },
+  { id: "dados-campeon", tipo: "dados", nombre: "Dados del campeón", desc: "Cobre pulido de trofeo: suenan a final ganada.", condicion: "Corona un torneo de la Asociación.", listo: (d) => d.palmares.copas >= 1 },
+  { id: "dados-humo", tipo: "dados", nombre: "Dados de humo", desc: "Gris ahumado, casi ilegibles: como tus intenciones en racha.", condicion: "Encadena una racha de 8 mesas ganadas.", oculto: true, listo: (d) => d.palmares.mejorRacha >= 8 },
   { id: "dados-marfil", tipo: "dados", nombre: "El marfil del Patrón", desc: "Marfil amarillento, más viejo que Santiago. Su primera partida vive aquí.", condicion: "Baja al verdadero Rey del Cacho.", oculto: true, listo: (d) => logro(d, "detras-vitrina") },
 
   // --- Marcos de avatar ------------------------------------------------------
@@ -69,6 +74,9 @@ export const COSMETICOS: Cosmetico[] = [
   { id: "marco-hampa", tipo: "marco", nombre: "Sello del hampa", desc: "Un aro rojo sangre: el bajo mundo reconoce a los suyos.", condicion: "Cumple un encargo del barrio, de punta a punta.", oculto: true, listo: (d) => logro(d, "de-palabra") },
   { id: "marco-calavera", tipo: "marco", nombre: "Marco de la calavera", desc: "Hueso viejo con una calavera al pie: el río devuelve a los porfiados.", condicion: "Sobrevive a 25 palizas y sigue sentándote a la mesa.", oculto: true, listo: (d) => d.palmares.jugadas - d.palmares.ganadas >= 25 },
   { id: "marco-tahur", tipo: "marco", nombre: "Marco del Tahúr", desc: "Oro con los cuatro pips cardinales: el aro de los completistas.", condicion: "Junta los doce logros de la campaña.", oculto: true, listo: (d) => LOGROS.every((l) => d.palmares.logros.includes(l.id)) },
+  { id: "marco-copa", tipo: "marco", nombre: "Marco de la copa", desc: "Cobre de trofeo, doble aro: tres finales coronadas.", condicion: "Corona tres torneos de la Asociación.", listo: (d) => d.palmares.copas >= 3 },
+  { id: "marco-rio", tipo: "marco", nombre: "Marco del río", desc: "Un aro de agua turbia que ondula: el Mapocho reconoce a los suyos.", condicion: "Carga dos marcas oscuras en una misma historia.", oculto: true, listo: (d) => (d.historia?.marcas ?? []).filter((m) => MARCAS_OSCURAS.includes(m)).length >= 2 },
+  { id: "marco-vicio", tipo: "marco", nombre: "Marco del vicio", desc: "Gastado, torcido y tuyo: cien noches de mesa no se fingen.", condicion: "Juega 100 mesas (donde sea).", oculto: true, listo: (d) => d.palmares.jugadas >= 100 },
   { id: "marco-leyenda", tipo: "marco", nombre: "Marco de la Leyenda", desc: "Doble aro de oro viejo: sólo para los que volvieron a empezar y coronaron igual.", condicion: "Corona una vuelta de Leyenda.", oculto: true, listo: (d) => logro(d, "leyenda-viva") },
 
   // --- Capacidades -----------------------------------------------------------
@@ -157,6 +165,8 @@ const PANOS: Record<string, [string, string, string]> = {
   "pano-puerto": ["rgba(30, 52, 74, 0.52)", "rgba(20, 36, 54, 0.3)", "rgba(34, 58, 82, 0.34)"],
   "pano-fierro": ["rgba(88, 52, 30, 0.5)", "rgba(58, 34, 20, 0.3)", "rgba(96, 58, 34, 0.34)"],
   "pano-subterraneo": ["rgba(62, 34, 78, 0.5)", "rgba(42, 22, 54, 0.3)", "rgba(70, 40, 88, 0.34)"],
+  "pano-cumbre": ["rgba(96, 78, 34, 0.5)", "rgba(64, 52, 22, 0.3)", "rgba(104, 86, 40, 0.34)"],
+  "pano-luto": ["rgba(30, 38, 58, 0.55)", "rgba(18, 24, 40, 0.35)", "rgba(34, 44, 66, 0.36)"],
   "pano-banca": ["rgba(28, 26, 20, 0.62)", "rgba(14, 13, 10, 0.4)", "rgba(38, 34, 24, 0.4)"],
 };
 
