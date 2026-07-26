@@ -15,6 +15,82 @@ const NODOS: { x: number; y: number }[] = [
   { x: 196, y: 38 }, // La Cumbre (penthouse, arriba)
 ];
 
+
+/** La viñeta de cada barrio: un mini-edificio de silueta, con sus luces. */
+function Edificio({ clave, encendido }: { clave: string; encendido: boolean }) {
+  const cuerpo = "#171a22";
+  const borde = "rgba(217, 213, 201, 0.22)";
+  const luz = encendido ? "rgba(230, 200, 120, 0.85)" : "rgba(120, 120, 130, 0.25)";
+  switch (clave) {
+    case "pocilga": // la caseta del muelle, con su bote
+      return (
+        <g>
+          <rect x="-13" y="-8" width="20" height="16" fill={cuerpo} stroke={borde} strokeWidth="0.8" />
+          <path d="M-15 -8 L-3 -16 L9 -8 Z" fill={cuerpo} stroke={borde} strokeWidth="0.8" />
+          <rect x="-8" y="-3" width="4" height="5" fill={luz} />
+          <line x1="-11" y1="8" x2="-11" y2="13" stroke={borde} strokeWidth="1.2" />
+          <line x1="3" y1="8" x2="3" y2="13" stroke={borde} strokeWidth="1.2" />
+          <path d="M9 6 q5 5 12 3 l-2 3 q-7 2 -11 -3 z" fill={cuerpo} stroke={borde} strokeWidth="0.7" />
+        </g>
+      );
+    case "vega": // el puesto del mercado, con toldo y cajones
+      return (
+        <g>
+          <rect x="-12" y="-4" width="24" height="12" fill={cuerpo} stroke={borde} strokeWidth="0.8" />
+          <path d="M-14 -4 L14 -4 L12 -10 L-12 -10 Z" fill={cuerpo} stroke={borde} strokeWidth="0.8" />
+          {[-11, -5, 1, 7].map((x) => (
+            <path key={x} d={`M${x} -4 q2 3 4 0`} fill="none" stroke={luz} strokeWidth="1" />
+          ))}
+          <rect x="-9" y="2" width="6" height="6" fill="none" stroke={borde} strokeWidth="0.8" />
+          <rect x="0" y="3" width="6" height="5" fill="none" stroke={borde} strokeWidth="0.8" />
+        </g>
+      );
+    case "maestranza": // el galpón dentado, con chimenea y engranaje
+      return (
+        <g>
+          <path d="M-14 8 L-14 -6 L-7 -12 L-7 -6 L0 -12 L0 -6 L7 -12 L7 8 Z" fill={cuerpo} stroke={borde} strokeWidth="0.8" />
+          <rect x="9" y="-14" width="4" height="22" fill={cuerpo} stroke={borde} strokeWidth="0.8" />
+          <circle cx="-3" cy="0" r="4.4" fill="none" stroke={luz} strokeWidth="1.2" />
+          <circle cx="-3" cy="0" r="1.4" fill={luz} />
+          <path className="esc-humo" d="M11 -15 q2 -4 0 -7" stroke="rgba(150,150,160,0.4)" strokeWidth="1.4" fill="none" />
+        </g>
+      );
+    case "trastienda": // la botillería angosta, con letrero de botella
+      return (
+        <g>
+          <rect x="-8" y="-14" width="16" height="22" fill={cuerpo} stroke={borde} strokeWidth="0.8" />
+          <rect x="-3" y="0" width="6" height="8" fill="none" stroke={borde} strokeWidth="0.8" />
+          <rect x="-5" y="-10" width="10" height="4" fill={luz} opacity="0.9" />
+          <path d="M11 -8 l0 3 M10 -5 q1 4 -1 6 q-2 1 -3 -1 q0 -3 2 -5 z" stroke={borde} strokeWidth="0.8" fill={cuerpo} />
+        </g>
+      );
+    case "club": // la boca del Subterráneo: arco y escalera que baja
+      return (
+        <g>
+          <path d="M-11 8 L-11 -6 Q0 -16 11 -6 L11 8 Z" fill={cuerpo} stroke={borde} strokeWidth="0.8" />
+          <path d="M-6 8 L-6 -4 Q0 -10 6 -4 L6 8 Z" fill="#0a0c12" />
+          <path d="M-4 8 h8 M-3 5 h6 M-2 2 h4" stroke={luz} strokeWidth="1" />
+        </g>
+      );
+    case "cumbre": // la torre del penthouse, con la última luz encendida
+      return (
+        <g>
+          <rect x="-7" y="-20" width="14" height="28" fill={cuerpo} stroke={borde} strokeWidth="0.8" />
+          <rect x="-4" y="-26" width="8" height="6" fill={cuerpo} stroke={borde} strokeWidth="0.8" />
+          <line x1="0" y1="-26" x2="0" y2="-31" stroke={borde} strokeWidth="1" />
+          <rect x="-2.4" y="-24" width="4.8" height="3" fill={luz} />
+          {[-14, -8, -2].map((y) => (
+            <g key={y} fill={encendido ? "rgba(230,200,120,0.4)" : "rgba(120,120,130,0.15)"}>
+              <rect x="-4.6" y={y} width="3" height="3.6" />
+              <rect x="1.6" y={y} width="3" height="3.6" />
+            </g>
+          ))}
+        </g>
+      );
+  }
+  return null;
+}
+
 export const MapaHampa = memo(function MapaHampa({
   escenarioIdx,
   completado,
@@ -108,22 +184,23 @@ export const MapaHampa = memo(function MapaHampa({
         );
       })}
 
-      {/* Los barrios. */}
+      {/* Los barrios: viñetas ilustradas, no círculos. */}
       {CAMPANA.map((esc, i) => {
         const { x, y } = NODOS[i]!;
         const st = estado(i);
         const conocido = st !== "incognita";
         return (
           <g key={esc.clave} className={"mh-nodo mh-nodo--" + st}>
-            {st === "actual" && <circle cx={x} cy={y} r="16" className="mh-halo" />}
-            <circle cx={x} cy={y + 1.6} r="10.5" fill="rgba(0,0,0,0.45)" />
-            <circle cx={x} cy={y} r="10.5" className="mh-ficha" />
-            <circle cx={x} cy={y} r="13" fill="none" className="mh-aro" />
-            <text x={x} y={y + 3.5} textAnchor="middle" className="mh-num">
-              {st === "conquistado" ? "★" : i + 1}
-            </text>
-            <text x={x} y={y + 24} textAnchor="middle" className="mh-nombre">
-              {conocido ? esc.nombre : "???"}
+            {st === "actual" && <ellipse cx={x} cy={y + 10} rx="22" ry="6" className="mh-halo" />}
+            <ellipse cx={x} cy={y + 10} rx="18" ry="4.5" fill="rgba(0,0,0,0.5)" />
+            <g transform={`translate(${x} ${y})`} opacity={conocido ? 1 : 0.4}>
+              <Edificio clave={esc.clave} encendido={st !== "incognita"} />
+            </g>
+            {st === "conquistado" && (
+              <text x={x + 16} y={y - 12} textAnchor="middle" className="mh-estrella">★</text>
+            )}
+            <text x={x} y={y + 24} textAnchor="middle" className={"mh-nombre" + (st === "actual" ? " mh-nombre--actual" : "")}>
+              {conocido ? esc.nombre.toUpperCase() : "???"}
             </text>
           </g>
         );

@@ -1599,3 +1599,10 @@ button:focus:not(:focus-visible) { outline: none; }
 .mh-nodo--conquistado .mh-aro { stroke: rgba(200, 162, 74, 0.35); }
 .mh-nodo--actual .mh-aro { stroke: rgba(200, 162, 74, 0.55); stroke-dasharray: 3 3; }
 .mh-tramo--recorrido { stroke-width: 2; filter: drop-shadow(0 0 3px rgba(200, 162, 74, 0.35)); }
+
+/* Mapa del Hampa v3: viñetas ilustradas por barrio. */
+.mh-estrella { font-size: 11px; fill: var(--oro); }
+.mh-nombre { font-size: 8px; letter-spacing: 1.2px; fill: var(--tenue); }
+.mh-nombre--actual { fill: var(--oro-claro); }
+.mh-nodo--conquistado .mh-nombre { fill: rgba(230, 200, 120, 0.75); }
+.mapa-hampa .mh-halo { fill: rgba(200, 162, 74, 0.12); stroke: none; }
