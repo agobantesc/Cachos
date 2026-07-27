@@ -1606,3 +1606,78 @@ button:focus:not(:focus-visible) { outline: none; }
 .mh-nombre--actual { fill: var(--oro-claro); }
 .mh-nodo--conquistado .mh-nombre { fill: rgba(230, 200, 120, 0.75); }
 .mapa-hampa .mh-halo { fill: rgba(200, 162, 74, 0.12); stroke: none; }
+
+/* ============================================================
+   NIVEL SIGUIENTE: materia y luz — la mesa como objeto físico,
+   el salón como fachada de club nocturno.
+   ============================================================ */
+
+/* EL SALÓN: la marca respira con un brillo de oro que recorre las letras. */
+.marca-fuerte {
+  background: linear-gradient(100deg, var(--oro) 20%, #f6e3ac 40%, var(--oro) 60%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: marca-brilla 6s ease-in-out infinite;
+}
+@keyframes marca-brilla {
+  0%, 100% { background-position: 100% 0; }
+  50% { background-position: 0% 0; }
+}
+/* Las tarjetas de modo, con acento propio y realce de vidrio. */
+.modo-card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 45%),
+    linear-gradient(180deg, #1c1e26, #14151b);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.historia-card { border-left: 3px solid var(--sangre-viva); }
+.solo-card { border-left: 3px solid var(--oro); }
+.online-card { border-left: 3px solid #4a7a5c; }
+.diaria-card { border-left: 3px solid #5a86a0; }
+
+/* LA MESA: el paño gana grano de fieltro, viñeteado y lámpara más presente. */
+.mesa {
+  background:
+    radial-gradient(90% 46% at 50% 26%, var(--pano-lampara, rgba(34, 61, 42, 0.5)), var(--pano-fondo, rgba(24, 44, 30, 0.28)) 60%, transparent 78%),
+    radial-gradient(60% 30% at 50% 12%, rgba(230, 200, 120, 0.09), transparent 70%),
+    repeating-linear-gradient(55deg, rgba(255, 255, 255, 0.008) 0 2px, transparent 2px 5px),
+    radial-gradient(120% 90% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.28) 100%);
+}
+/* Tu mano: el fieltro con RIBETE de madera, como mesa de club de verdad. */
+.mi-mano {
+  border: 1px solid rgba(90, 62, 30, 0.65);
+  box-shadow:
+    inset 0 0 0 3px rgba(38, 26, 12, 0.9),
+    inset 0 0 0 4px rgba(200, 162, 74, 0.25),
+    inset 0 10px 24px rgba(0, 0, 0, 0.35),
+    0 6px 18px rgba(0, 0, 0, 0.35);
+  border-radius: 16px;
+}
+/* Los vasos de los jugadores, con cuerpo y sombra propios. */
+.jugadores > * {
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
+}
+/* La apuesta central: placa con más presencia (metal sobre paño). */
+.apuesta-actual, .apuesta-centro {
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+/* LA REVELACIÓN: telón más denso y caja con canto de oro que respira. */
+.revelacion { backdrop-filter: blur(3px) saturate(0.9); }
+.revelacion-caja {
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(200, 162, 74, 0.2), 0 0 34px rgba(200, 162, 74, 0.08);
+}
+
+/* EL FIN DE MESA: el sello de la casa con doble filete y aire. */
+.fin-sello { position: relative; padding: 10px 0 12px; }
+.fin-sello::before, .fin-sello::after {
+  content: ""; position: absolute; left: 50%; transform: translateX(-50%);
+  width: 150px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--oro), transparent);
+}
+.fin-sello::before { top: 0; }
+.fin-sello::after { bottom: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .marca-fuerte { animation: none; }
+}
